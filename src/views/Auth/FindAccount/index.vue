@@ -2,10 +2,10 @@
 <template>
   <div class="card">
     <div class="card-header">
-      FindId
+      FindAccount
     </div>
     <div class="card-body">
-      
+			계정찾기 컴포넌트
     </div>
   </div >
 </template>

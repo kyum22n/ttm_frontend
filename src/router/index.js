@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import UserLoginRouting from './UserLoginRouting'
+import AuthRouting from './AuthRouting'
+import RegisterRouting from './RegisterRouting'
+import PostRouting from './PostRouting'
+import ProfileRouting from './ProfileRouting'
+import WalkRouting from './WalkRouting'
+import MessageRouting from './MessageRouting'
 
 const routes = [
   {
@@ -16,7 +21,12 @@ const routes = [
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   },
-  ...UserLoginRouting
+  ...AuthRouting,
+	...RegisterRouting,
+	...PostRouting,
+	...ProfileRouting,
+	...WalkRouting,
+	...MessageRouting
 ]
 
 const router = createRouter({

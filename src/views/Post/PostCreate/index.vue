@@ -1,20 +1,15 @@
 <!--컴포넌트의 UI-->
 <template>
   <div class="card">
-    <div class="card-header">
-      Login
-    </div>
-    <div class="card-body">
-      
-    </div>
-  </div >
+    <div class="card-header">PostCreate</div>
+    <div class="card-body">게시물 작성 컴포넌트</div>
+  </div>
 </template>
 
 <!--컴포넌트의 초기화 or 이벤트 처리-->
 <script setup>
-  //JavaScript를 작성
+//JavaScript를 작성
 </script>
 
 <!--컴포넌트의 스타일 정의-->
-<style scoped>
-</style>
+<style scoped></style>
