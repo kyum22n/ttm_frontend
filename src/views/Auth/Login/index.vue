@@ -4,10 +4,8 @@
     <div class="card-header">Login</div>
     <div class="card-body">로그인 컴포넌트</div>
     <nav>
-      <router-link to="/Post/MainFeed">로그인</router-link>
-    </nav>
-		<nav>
-      <router-link to="/Auth/FindId">아이디/비번 찾기</router-link>
+      <router-link to="/Post/MainFeed">로그인</router-link> |
+      <router-link to="/Register/Pet">회원가입</router-link>
     </nav>
   </div>
 </template>

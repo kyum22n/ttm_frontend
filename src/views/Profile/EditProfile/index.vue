@@ -1,9 +1,9 @@
 <!-- 컴포넌트의 UI -->
 <template>
   <div class="card">
-    <div class="card-header">My Profile</div>
+    <div class="card-header">Edit Profile</div>
     <div class="card-body">
-      내 프로필 컴포넌트
+      프로필 수정 컴포넌트
       <nav>
         <router-link to="/Post/MainFeed">메인 피드로</router-link>
       </nav>

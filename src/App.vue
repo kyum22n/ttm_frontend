@@ -1,10 +1,6 @@
 <template>
-  <router-view/>
-	<nav>
-    <router-link to="/">홈</router-link> |
-    <router-link to="/Auth/Login">로그인</router-link> |
-		<router-link to="/Auth/RegisterPet">회원가입</router-link>
-  </nav>
+  <router-view />
+  <nav><router-link to="/">홈</router-link> | <router-link to="/Auth/Login">로그인</router-link></nav>
 </template>
 
 <style>
@@ -17,7 +13,7 @@
 }
 
 nav {
-  padding: 30px;
+  padding: 10px;
 }
 
 nav a {

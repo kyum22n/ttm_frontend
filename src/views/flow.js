@@ -1,0 +1,52 @@
+- 뷰 전환 흐름도
+    - HomeView →
+        - Login
+            - Auth/Login/index.vue
+    - Login (Auth/Login/index.vue) →
+        - FindAccount
+            - Auth/FindAccount/index.vue
+        - RegisterPet
+            - Register/RegisterPet/index.vue
+        - MainFeed
+            - Post/MainFeed/index.vue
+    - FindAccount (Auth/FindAccount/index.vue) →
+        - Login
+            - Auth/FindAccount/index.vue
+        - RegisterPet
+            - Register/RegisterPet/index.vue
+		- RegisterPet (Register/RegisterPet/index.vue) →
+				- Login
+						- Auth/Login/index.vue
+				- RegisterUser
+						- Register/RegisterUser/index.vue
+		- RegisterUser (Register/RegisterUser/index.vue) →
+				- Login
+						- Auth/Login/index.vue
+		- MainFeed (Post/MainFeed/index.vue) →
+				- MyProfile
+						- Profile/MyProfile/index.vue
+				- PostCreate
+						- Post/PostCreate/index.vue
+				- PostDetail
+						- Post/PostDetail/index.vue
+				- Login
+						- Auth/Login/index.vue
+		- MyProfile (Profile/MyProfile/index.vue) →
+				- MainFeed
+						- Post/MainFeed/index.vue
+				- Login
+						- Auth/Login/index.vue
+				- EditProfile
+						- Profile/MyProfile/index.vue
+				- PostDetail
+						- Post/PostDetail/index.vue
+				
+		- PostCreate (Post/PostCreate/index.vue) →
+		- EditProfile (Profile/MyProfile/index.vue) →
+				- MainFeed
+						- Post/MainFeed/index.vue
+				- MyProfile
+						- Profile/MyProfile/index.vue
+				- OtherProfile
+
+
