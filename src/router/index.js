@@ -9,9 +9,9 @@ import MessageRouting from "./MessageRouting";
 const routes = [
   {
     path: "/",
-    name: "home",
     component: () => import(/* webpackChunkName: "home" */ "../views/HomeView.vue"),
   },
+
   ...AuthRouting,
   ...RegisterRouting,
   ...PostRouting,

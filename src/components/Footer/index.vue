@@ -1,13 +1,19 @@
+<!-- 컴포넌트의 UI -->
 <template>
-  <router-view />
+  <nav>
+    <router-link v-if="route.path !== '/'" to="/">홈</router-link> <router-link v-if="route.path !== '/Auth/Login'" to="/Auth/Login">로그인</router-link>
+  </nav>
 </template>
 
+<!-- 컴포넌트의 초기화 또는 이벤트 처리 -->
 <script setup>
 import { useRoute } from "vue-router";
+
 const route = useRoute();
 </script>
 
-<style>
+<!-- 컴포넌트의 스타일 정의 -->
+<style scoped>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

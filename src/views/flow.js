@@ -40,8 +40,10 @@
 						- Profile/MyProfile/index.vue
 				- PostDetail
 						- Post/PostDetail/index.vue
-				
 		- PostCreate (Post/PostCreate/index.vue) →
+				- MainFeed
+						- Post/MainFeed/index.vue
+				- MyProfile
 		- EditProfile (Profile/MyProfile/index.vue) →
 				- MainFeed
 						- Post/MainFeed/index.vue

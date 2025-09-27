@@ -7,6 +7,15 @@
       <nav>
         <router-link to="/Post/MainFeed">메인 피드로</router-link>
       </nav>
+      <nav>
+        <router-link to="/Auth/Login">로그아웃</router-link>
+      </nav>
+      <nav>
+        <router-link to="/Profile/Edit">프로필 수정</router-link>
+      </nav>
+      <nav>
+        <router-link to="/Post/Detail">내 게시글</router-link>
+      </nav>
     </div>
   </div>
 </template>
