@@ -9,6 +9,7 @@
 <script setup>
 import { useRoute } from "vue-router";
 
+// 현재 라우트 정보 가져오기 위해 사용
 const route = useRoute();
 </script>
 
