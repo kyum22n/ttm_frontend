@@ -36,16 +36,6 @@
         <button type="submit" class="login-btn">Login</button>
       </form>
     </div>
-    <RouterLink to="/Auth/View6">게시물 작성</RouterLink>
-    <RouterLink to="/Auth/View7">게시물 상세보기</RouterLink>
-    <RouterLink to="/Auth/View8">메인 페이지</RouterLink>
-    <RouterLink to="/Auth/View9">마이 페이지</RouterLink>
-    <RouterLink to="/Auth/View10">상대 페이지</RouterLink>
-    <RouterLink to="/Auth/View11">드롭다운</RouterLink>
-    <RouterLink to="/Auth/View12">산책신청목록</RouterLink>
-    <RouterLink to="/Auth/View13">산책리스트</RouterLink>
-    <RouterLink to="/Auth/View14">메세지목록</RouterLink>
-    <RouterLink to="/Auth/View15">메세지</RouterLink>
   </div>
 </template>
 
@@ -81,7 +71,7 @@ async function handleLogin() {
       store.dispatch("saveAuth", resultObject);
       await router.push("/post/MainFeed");
     } else {
-			console.log("fail");
+      console.log("fail");
       console.log(resultObject.message);
     }
   } catch (error) {
