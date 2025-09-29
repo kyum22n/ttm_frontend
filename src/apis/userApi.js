@@ -14,7 +14,7 @@ function userInfo(userId, jwt) {
     params: { userId },
     headers: {
       // 여기서 헤더에 넣음
-      Authorization: "Bearer " + jwt,
+      "Authorization": "Bearer " + jwt,
     },
   });
 }

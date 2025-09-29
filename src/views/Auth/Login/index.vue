@@ -36,9 +36,6 @@
         <button type="submit" class="login-btn">Login</button>
       </form>
     </div>
-    <RouterLink to="/Auth/View2">아이디 비밀번호 찾기</RouterLink>
-    <RouterLink to="/Auth/View3">펫등록</RouterLink>
-    <RouterLink to="/Auth/View5">마이프로필</RouterLink>
     <RouterLink to="/Auth/View6">게시물 작성</RouterLink>
     <RouterLink to="/Auth/View7">게시물 상세보기</RouterLink>
     <RouterLink to="/Auth/View8">메인 페이지</RouterLink>
@@ -84,6 +81,7 @@ async function handleLogin() {
       store.dispatch("saveAuth", resultObject);
       await router.push("/post/MainFeed");
     } else {
+			console.log("fail");
       console.log(resultObject.message);
     }
   } catch (error) {

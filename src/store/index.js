@@ -7,7 +7,14 @@ import axiosConfig from "@/apis/axiosConfig";
 const store = createStore({
   // 전역 상태 정의
   state: {
-    user: "",
+    user: {
+			userLoginId: "",
+    userPassword: "",
+    userName: "",
+    userEmail: "",
+    userAddress: "",
+    userBirthDate: ""
+		},
     jwt: "",
   },
   // state를 바꿔서 가져올때 사용
@@ -22,14 +29,10 @@ const store = createStore({
   // state를 실제로 변경
   mutations: {
     setUser(state, payload) {
-      
       state.user = payload;
     },
     setJwt(state, payload) {
       state.jwt = payload;
-    },
-    setLoginId(state, loginId) {
-      state.loginId = loginId;
     },
   },
   // 컴포넌트에서 호출 하기 위해
