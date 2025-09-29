@@ -13,7 +13,7 @@
     <div class="signup-box">
       <div class="top-bar">
         <h2>Create account</h2>
-        <a href="/login" class="login-btn">Login</a>
+        <router-link to="/Auth/Login" class="login-btn">Login</router-link>
       </div>
 
       <!-- 프로필 이미지 업로드 -->
@@ -25,10 +25,10 @@
       <form @submit.prevent="handleSignup" class="form-area">
         <div class="input-group">
           <span class="icon">👤</span>
-					<!-- 양방향 바인딩을 위한 v-model 사용 -->
-					<!-- 입력창의 입력값에 따라 데이터 변경 데이터에 따라 입력값 변경 -->
-					<!-- required 사용해 필수 값으로 지정 -->
-					<!-- 단순히 비었는지 여부만 검사 -->
+          <!-- 양방향 바인딩을 위한 v-model 사용 -->
+          <!-- 입력창의 입력값에 따라 데이터 변경 데이터에 따라 입력값 변경 -->
+          <!-- required 사용해 필수 값으로 지정 -->
+          <!-- 단순히 비었는지 여부만 검사 -->
           <input v-model="user.userName" type="text" placeholder="이름" required />
         </div>
 
@@ -63,7 +63,9 @@
 
         <div class="agree"><input type="checkbox" v-model="agree" /> 개인정보 처리방침 동의</div>
 
-        <button type="submit" class="signup-btn">회원가입</button>
+        <!-- api 연결 후 주석 해제 -->
+        <!-- <button type="submit" class="signup-btn">회원가입</button> -->
+        <router-link to="/Register/Pet" class="signup-btn text-decoration-none">회원가입</router-link>
       </form>
     </div>
   </div>
@@ -112,20 +114,20 @@ async function handleSignup() {
 
   try {
     //1) 순수 자바스크립트 객체로 변환
-		// 객체를 깊은 복사 하기 위해서 사용
-		// 새로운 객체 생성 가능
+    // 객체를 깊은 복사 하기 위해서 사용
+    // 새로운 객체 생성 가능
     const data = structuredClone(user.value);
     console.log(data);
 
     //2) 유효성 검사
 
     //3) REST API 호출
-		// Axios 응답 객체 생성
-		// axios.post는 promise 반환
+    // Axios 응답 객체 생성
+    // axios.post는 promise 반환
     const response = await userApi.memberCreate(data);
-		// response 안에는 data, status, headers 등 다양한 요소가 존재
-		// data 안에는 서버에서 실제 보낸 응답 데이터인 (JSON, text 등)이 존재
-		// resultObject 안에는 백엔드에서 응답 받은 데이터가 들어감
+    // response 안에는 data, status, headers 등 다양한 요소가 존재
+    // data 안에는 서버에서 실제 보낸 응답 데이터인 (JSON, text 등)이 존재
+    // resultObject 안에는 백엔드에서 응답 받은 데이터가 들어감
     const resultObject = response.data; //{result:"success"}, {result:"fail", message:"xxx"}
     if (resultObject.result === "success") {
       //4) 로그인 폼으로 이동

@@ -8,8 +8,8 @@
         </router-link>
       </div>
       <div class="nav-btns">
-        <router-link to="/Auth/View1" class="btn">Login</router-link>
-        <a href="/signup" class="btn">Sign up</a>
+        <router-link to="/Auth/Login" class="btn">Login</router-link>
+        <router-link to="/Register/User" class="btn">Sign up</router-link>
       </div>
     </header>
 
