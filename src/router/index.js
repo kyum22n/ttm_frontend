@@ -7,10 +7,10 @@ import WalkRouting from "./WalkRouting";
 import MessageRouting from "./MessageRouting";
 
 const routes = [
-  {
-    path: "/",
-    component: () => import(/* webpackChunkName: "home" */ "@/views/HomeView.vue"),
-  },
+  // {
+  //   path: "/",
+  //   component: () => import(/* webpackChunkName: "home" */ "../Home.vue"),
+  // },
 
   ...AuthRouting,
   ...RegisterRouting,
