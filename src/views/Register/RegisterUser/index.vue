@@ -90,12 +90,12 @@ import userApi from "@/apis/userApi";
 const router = useRouter();
 
 const user = ref({
-  userLoginId: "",
-  userPassword: "",
-  userName: "",
-  userEmail: "",
-  userAddress: "",
-  userBirthDate: "",
+  userLoginId: "user90",
+  userPassword: "12345",
+  userName: "kbh",
+  userEmail: "exam@exam100.com",
+  userAddress: "Anyang",
+  userBirthDate: "2025-09-30",
 });
 
 const confirm = ref("");
@@ -122,7 +122,7 @@ async function handleSignup() {
   }
 
   try {
-    const response = await userApi.memberCreate(user.value);
+    const response = await userApi.userJoin(user.value);
     const resultObject = response.data;
 
     if (resultObject.result === "success") {

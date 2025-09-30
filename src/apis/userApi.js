@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // 회원가입
-function userJoin(user) {
-  return axios.post("/user/join", user);
+function userJoin(user, pet) {
+  return axios.post("/user/join", user, pet);
 }
 
 // 사용자 정보를 가져옴
