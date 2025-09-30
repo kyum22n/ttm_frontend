@@ -5,7 +5,6 @@ import PostRouting from "./PostRouting";
 import ProfileRouting from "./ProfileRouting";
 import WalkRouting from "./WalkRouting";
 import MessageRouting from "./MessageRouting";
-import TestView from "@/views/TestView.vue";
 
 const routes = [
   {
