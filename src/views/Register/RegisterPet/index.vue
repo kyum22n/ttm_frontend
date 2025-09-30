@@ -13,7 +13,7 @@
     <div class="register-box">
       <div class="top-bar">
         <h2>Register Pet</h2>
-        <a href="/login" class="login-btn">Login</a>
+        <router-link to="/Auth/login" class="login-btn">Login</router-link>
       </div>
 
       <!-- 프로필 사진 업로드 -->
@@ -58,7 +58,9 @@
           <input v-model="breed" type="text" placeholder="Breed" />
         </div>
 
-        <button type="submit" class="register-btn">반려동물 등록하기</button>
+        <!-- <button type="submit" class="register-btn">회원가입</button> -->
+        <br />
+        <router-link to="/Auth/Login" class="register-btn text-decoration-none">회원가입</router-link>
       </form>
     </div>
   </div>
@@ -91,18 +93,20 @@ function handleRegister() {
 
 <style scoped>
 .pet-register-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 100vh;
-  padding: 40px;
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  margin: 0 auto;
   background: #fcfbf8;
   font-family: "Noto Sans KR", sans-serif;
 }
 
 /* 왼쪽 영역 */
 .left-area {
-  flex: 1;
+  position: absolute;
+  top: 300px;
+  left: 300px; /* 중앙 가까이 */
+  width: 500px;
   text-align: center;
 }
 
@@ -131,8 +135,10 @@ function handleRegister() {
 
 /* 오른쪽 박스 */
 .register-box {
-  flex: 1;
-  max-width: 500px;
+  position: absolute;
+  top: 100px;
+  left: 900px; /* 중앙 가까이 */
+  width: 500px;
   background: #fff;
   border: 2px solid #6b4a2b;
   border-radius: 12px;
@@ -207,9 +213,7 @@ function handleRegister() {
 
 /* 입력 폼 */
 .form-area {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: block;
 }
 
 .input-group {
@@ -218,6 +222,7 @@ function handleRegister() {
   background: #f1f1f1;
   border-radius: 6px;
   padding: 6px 10px;
+  margin-bottom: 14px;
 }
 
 .input-group input {
@@ -240,6 +245,7 @@ function handleRegister() {
 .birth {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 .age-label {

@@ -34,7 +34,8 @@
           <router-link to="/Auth/FindAccount" class="text-white small text-decoration-none">계정 찾기</router-link>
         </div>
 
-        <button type="submit" class="btn btn-warning w-100 fw-bold">Login</button>
+        <!-- <button type="submit" class="btn btn-warning w-100 fw-bold">Login</button> -->
+        <router-link to="/Post/MainFeed" class="btn btn-warning w-100 fw-bold">Login</router-link>
       </form>
     </div>
   </div>

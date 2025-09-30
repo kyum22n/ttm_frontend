@@ -78,17 +78,21 @@ function findPassword() {
 <style scoped>
 /* 전체 배경 */
 .account-find-container {
-  min-height: 100vh;
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  margin: 0 auto;
   background: #fcfbf8;
   font-family: "Noto Sans KR", sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 /* 상단 바 */
 .top-bar {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1920px; /* 고정 사이즈 */
+  height: 80px; /* 필요 시 고정 높이 추가 */
   background: #6b4a2b;
   padding: 12px 24px;
   display: flex;
@@ -98,7 +102,7 @@ function findPassword() {
 
 .home-link {
   text-decoration: none;
-  color: #fce9b6; /* 부모 색상 따라감 (#6b3f22) */
+  color: #fce9b6;
 }
 
 .top-bar .btn {
@@ -118,12 +122,14 @@ function findPassword() {
 
 /* 메인 박스 */
 .find-box {
+  position: absolute;
+  top: 200px;
+  left: 780px; /* 가운데 정렬: (1920 - 360) / 2 */
   background: #7b4a2d;
   color: white;
   padding: 30px;
   border-radius: 16px;
   width: 360px;
-  margin-top: 50px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   text-align: left;
 }
@@ -201,7 +207,9 @@ function findPassword() {
 
 /* 하단 캐릭터 */
 .pets {
-  margin-top: 20px;
+  position: absolute;
+  bottom: 200px;
+  left: 870px; /* 가운데 정렬: (1920 - (70 * 2 + 10)) / 2 */
   display: flex;
   gap: 10px;
 }

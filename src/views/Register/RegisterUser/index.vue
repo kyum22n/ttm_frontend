@@ -62,10 +62,10 @@
         </div>
 
         <div class="agree"><input type="checkbox" v-model="agree" /> 개인정보 처리방침 동의</div>
-
+        <br />
         <!-- api 연결 후 주석 해제 -->
-        <!-- <button type="submit" class="signup-btn">회원가입</button> -->
-        <router-link to="/Register/Pet" class="signup-btn text-decoration-none">회원가입</router-link>
+        <!-- <button type="submit" class="signup-btn">펫 등록하러 가기</button> -->
+        <router-link to="/Register/Pet" class="signup-btn text-decoration-none">펫 등록하러 가기</router-link>
       </form>
     </div>
   </div>
@@ -143,18 +143,20 @@ async function handleSignup() {
 
 <style scoped>
 .signup-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  width: 1920px;
+  height: 1080px;
+  margin: 0 auto;
   background: #6b4a2b;
   font-family: "Noto Sans KR", sans-serif;
-  padding: 40px;
+  position: relative;
 }
 
 /* 왼쪽 영역 */
 .left-area {
-  flex: 0 0 500px;
+  position: absolute;
+  top: 300px;
+  left: 300px; /* ✅ 좀 더 중앙으로 */
+  width: 500px;
   text-align: center;
   color: #fff6d9;
 }
@@ -181,10 +183,12 @@ async function handleSignup() {
   height: auto;
 }
 
-/* 오른쪽 박스 */
+/* 오른쪽 회원가입 박스 */
 .signup-box {
-  flex: 1;
-  max-width: 500px;
+  position: absolute;
+  top: 100px;
+  left: 900px; /* ✅ 오른쪽에서 왼쪽으로 위치 지정 */
+  width: 500px;
   background: #fff;
   border-radius: 12px;
   padding: 30px;
@@ -220,8 +224,7 @@ async function handleSignup() {
 
 /* 프로필 업로드 */
 .profile-upload {
-  display: flex;
-  justify-content: center;
+  text-align: center;
   position: relative;
   margin-bottom: 20px;
 }
@@ -243,9 +246,7 @@ async function handleSignup() {
 
 /* 입력 폼 */
 .form-area {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: block;
 }
 
 .input-group {
@@ -254,6 +255,7 @@ async function handleSignup() {
   background: #f1f1f1;
   border-radius: 6px;
   padding: 6px 10px;
+  margin-bottom: 14px;
 }
 
 .input-group input {
@@ -268,11 +270,7 @@ async function handleSignup() {
   margin-right: 8px;
 }
 
-.double {
-  display: flex;
-  gap: 8px;
-}
-
+/* 지역 검색 버튼 */
 .search-btn {
   margin-left: 6px;
   padding: 6px 12px;
@@ -293,6 +291,7 @@ async function handleSignup() {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-top: 10px;
 }
 
 /* 회원가입 버튼 */
@@ -307,6 +306,7 @@ async function handleSignup() {
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
+  text-align: center;
 }
 
 .signup-btn:hover {
