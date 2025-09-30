@@ -1,19 +1,14 @@
 <template>
   <div class="d-flex flex-column min-vh-100">
     <!-- 공통 헤더 -->
-    <Header/>
+    <!-- ✅ hideLayout이 true가 아닌 경우에만 헤더/푸터 표시 -->
+    <Header v-if="!$route.meta.hideLayout" />
 
     <!-- 메인 -->
-    <div class="flex-grow-1 container-fluid">
-      <div class="row">
-        <div class="col-md-7 py-2">
-          <RouterView/>
-        </div>
-      </div>
-    </div>
-
+    <router-view class="flex-grow-1" />
+    
     <!-- 공통 푸터 -->
-    <Footer />
+    <Footer v-if="!$route.meta.hideLayout" />
   </div >
 </template>
 
