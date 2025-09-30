@@ -1,31 +1,29 @@
 <template>
-  <router-view />
+  <div class="d-flex flex-column min-vh-100">
+    <!-- 공통 헤더 -->
+    <Header/>
+
+    <!-- 메인 -->
+    <div class="flex-grow-1 container-fluid">
+      <div class="row">
+        <div class="col-md-7 py-2">
+          <RouterView/>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공통 푸터 -->
+    <Footer />
+  </div >
 </template>
 
 <script setup>
 import { useRoute } from "vue-router";
+import Footer from './components/Footer';
+import Header from './components/Header';
 const route = useRoute();
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
 
-nav {
-  padding: 10px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
-}
 </style>

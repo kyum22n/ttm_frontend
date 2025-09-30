@@ -1,94 +1,79 @@
 <template>
-  <div class="walk-post-container">
-    <!-- 상단 네비 -->
-    <header class="top-bar">
-      <input type="text" class="search-input" placeholder="해시태그 또는 아이디 검색" />
-      <div class="logo">나와 <span class="paw">🐾</span> 산책가개</div>
-      <div class="user-info">
-        <div class="notify">🔔<span class="badge">1</span></div>
-        <span class="username">TWOTWO_MOM</span>
-        <img src="@/assets/default-profile.png" alt="프로필" class="user-img" />
+  <!-- 왼쪽: 메인 이미지 & 해시태그 -->
+  <div class="left-panel">
+    <div class="main-image">
+      <img :src="mainImage" alt="산책 이미지" />
+    </div>
+    <div class="hashtags">
+      <input v-model="hashtags" type="text" placeholder="#강아지 #사랑 #웰시코기" />
+      <button class="dropdown-btn">⬇</button>
+    </div>
+
+    <div class="action-btns">
+      <button class="cancel-btn">산책글 등록 취소</button>
+      <button class="submit-btn">산책글로 등록 🐾</button>
+    </div>
+  </div>
+
+  <!-- 중앙: 게시물 카드 -->
+  <div class="center-panel">
+    <div class="post-card">
+      <div class="post-header">
+        <img src="@/assets/default-profile.png" alt="작성자" class="post-profile" />
+        <div class="post-info">
+          <div class="username">TWOTWO_MOM</div>
+          <div class="time">12시간 전</div>
+        </div>
+        <button class="edit-btn">편집</button>
       </div>
-    </header>
+      <p class="post-content">서울 대공원에서 산책하실분 구해여</p>
 
-    <main class="content">
-      <!-- 왼쪽: 메인 이미지 & 해시태그 -->
-      <div class="left-panel">
-        <div class="main-image">
-          <img :src="mainImage" alt="산책 이미지" />
-        </div>
-        <div class="hashtags">
-          <input v-model="hashtags" type="text" placeholder="#강아지 #사랑 #웰시코기" />
-          <button class="dropdown-btn">⬇</button>
-        </div>
+      <button class="status-btn">산책 마감</button>
 
-        <div class="action-btns">
-          <button class="cancel-btn">산책글 등록 취소</button>
-          <button class="submit-btn">산책글로 등록 🐾</button>
-        </div>
-      </div>
-
-      <!-- 중앙: 게시물 카드 -->
-      <div class="center-panel">
-        <div class="post-card">
-          <div class="post-header">
-            <img src="@/assets/default-profile.png" alt="작성자" class="post-profile" />
-            <div class="post-info">
-              <div class="username">TWOTWO_MOM</div>
-              <div class="time">12시간 전</div>
-            </div>
-            <button class="edit-btn">편집</button>
-          </div>
-          <p class="post-content">서울 대공원에서 산책하실분 구해여</p>
-
-          <button class="status-btn">산책 마감</button>
-
-          <div class="tags">
-            <span v-for="tag in hashtagList" :key="tag" class="tag">{{ tag }}</span>
-          </div>
-
-          <div class="likes">❤️ Likes 19,867</div>
-        </div>
-
-        <!-- 댓글 -->
-        <div class="comment-section">
-          <input type="text" placeholder="댓글을 작성해주세요" />
-          <button class="comment-btn">댓글</button>
-        </div>
-
-        <div class="comments">
-          <div v-for="(c, i) in comments" :key="i" class="comment-item">
-            <img :src="c.avatar" class="comment-avatar" />
-            <div>
-              <strong>{{ c.user }}</strong>: {{ c.text }}
-            </div>
-          </div>
-        </div>
+      <div class="tags">
+        <span v-for="tag in hashtagList" :key="tag" class="tag">{{ tag }}</span>
       </div>
 
-      <!-- 오른쪽: 업로드 + 인원목록 -->
-      <div class="right-panel">
-        <div class="upload-area">
-          <button class="upload-btn">+</button>
-          <div class="preview-list">
-            <img v-for="(img, i) in previewImages" :key="i" :src="img" class="preview-img" />
-          </div>
-        </div>
+      <div class="likes">❤️ Likes 19,867</div>
+    </div>
 
-        <div class="member-list">
-          <h3>인원 목록 (5명)</h3>
-          <ul>
-            <li v-for="(m, i) in members" :key="i">
-              <img :src="m.avatar" class="member-avatar" />
-              {{ m.name }}
-              <button v-if="!m.accepted" class="accept-btn">O</button>
-              <button v-if="!m.accepted" class="reject-btn">X</button>
-              <span v-if="m.accepted" class="accepted">(수락됨)</span>
-            </li>
-          </ul>
+    <!-- 댓글 -->
+    <div class="comment-section">
+      <input type="text" placeholder="댓글을 작성해주세요" />
+      <button class="comment-btn">댓글</button>
+    </div>
+
+    <div class="comments">
+      <div v-for="(c, i) in comments" :key="i" class="comment-item">
+        <img :src="c.avatar" class="comment-avatar" />
+        <div>
+          <strong>{{ c.user }}</strong>: {{ c.text }}
         </div>
       </div>
-    </main>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 업로드 + 인원목록 -->
+  <div class="right-panel">
+    <div class="upload-area">
+      <button class="upload-btn">+</button>
+      <div class="preview-list">
+        <img v-for="(img, i) in previewImages" :key="i" :src="img" class="preview-img" />
+      </div>
+    </div>
+
+    <div class="member-list">
+      <h3>인원 목록 (5명)</h3>
+      <ul>
+        <li v-for="(m, i) in members" :key="i">
+          <img :src="m.avatar" class="member-avatar" />
+          {{ m.name }}
+          <button v-if="!m.accepted" class="accept-btn">O</button>
+          <button v-if="!m.accepted" class="reject-btn">X</button>
+          <span v-if="m.accepted" class="accepted">(수락됨)</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 

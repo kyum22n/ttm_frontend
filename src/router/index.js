@@ -12,8 +12,6 @@ const routes = [
     path: "/",
     component: () => import(/* webpackChunkName: "home" */ "@/views/HomeView.vue"),
   },
-  { path: "/", redirect: "/test" },   // ✅ 기본 진입을 TestView로
-  { path: "/test", name: "TestView", component: TestView },
 
   ...AuthRouting,
   ...RegisterRouting,
