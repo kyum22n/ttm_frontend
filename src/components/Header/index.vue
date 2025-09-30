@@ -1,63 +1,72 @@
-<!-- 컴포넌트의 UI -->
 <template>
-  <div class="container">
-    <div class="left ms-5">
-      <router-link to="MainFeed">
-        <img alt="Vue logo" src="@/assets/나와 산책가개 logo_white.png" height="50" />
-      </router-link>
-    </div>
-    <div class="right">
-      <nav>
-        <div v-if="store.state.loginId !== ''">
-          <span class="me-3">User: {{ $store.state.loginId }}</span>
-          <button class="btn btn-info btn-sm" @click="handleLogout">로그아웃</button>
+  <nav class="navbar bg-brown px-3">
+    <div class="container-fluid d-grid align-items-center"
+         style="grid-template-columns: 1fr auto 1fr;">
+      
+      <!-- 왼쪽: 검색창 -->
+      <form class="d-flex justify-content-start" role="search" style="max-width: 300px;">
+        <div class="input-group">
+          <span class="input-group-text bg-white">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            v-model="searchText"
+            class="form-control"
+            type="search"
+            placeholder="해시태그 또는 아이디 검색"
+          />
         </div>
-        <div v-if="store.state.loginId === ''">
-          <router-link to="/Register/Pet">회원가입</router-link>
+      </form>
+
+      <!-- 가운데: 로고 (항상 정중앙) -->
+      <div class="text-center">
+        <img
+          :src="logoImg"
+          alt="로고"
+          class="img-fluid"
+          style="max-width: 120px;"
+        />
+      </div>
+
+      <!-- 오른쪽: 알림 + 프로필 -->
+      <div class="d-flex align-items-center gap-3 justify-content-end">
+        <!-- 알림 -->
+        <div class="position-relative">
+          <i class="bi bi-bell fs-4 text-white"></i>
+          <span
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            style="font-size:0.6rem;"
+          >
+            1
+          </span>
         </div>
-      </nav>
+
+        <!-- 닉네임 -->
+        <span class="fw-bold text-white">{{ username }}</span>
+
+        <!-- 프로필 이미지 -->
+        <img
+          :src="profileImage"
+          alt="프로필"
+          class="rounded-circle border border-light"
+          style="width:35px; height:35px; object-fit:cover;"
+        />
+      </div>
     </div>
-  </div>
+  </nav>
 </template>
 
-<!-- 컴포넌트의 초기화 또는 이벤트 처리 -->
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useStore } from "vuex";
+import logoImg from "@/assets/logo_white.png";
 
-// 전역 상태를 저장하기 위해
-const store = useStore();
-
-// Router 얻기
-// 라우팅을 조작할때 사용
-const router = useRouter();
-
-// loginForm 초기값
-const loginForm = ref({
-  loginId: "userApi",
-  password: "1234",
-});
-
-// 입력값 초기화
-function handleReset() {
-  loginForm.value = {
-    loginId: "",
-    password: "",
-  };
-}
+const searchText = ref("");
+const username = ref("TWOTWO_MOM");
+const profileImage = ref("https://via.placeholder.com/40");
 </script>
 
-<!-- 컴포넌트의 스타일 정의 -->
 <style scoped>
-.container {
-  display: flex;
-  justify-content: space-between; /* 좌우 끝으로 배치 */
-  align-items: center;
-  width: 100vw; /* 화면 전체 너비 */
-  margin: 0;
-  padding: 0; /* 내부 여백 제거 */
-  box-sizing: border-box;
-  height: 50px;
+.bg-brown {
+  background-color: #6b4a2b;
 }
 </style>
