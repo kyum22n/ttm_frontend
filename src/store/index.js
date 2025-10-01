@@ -14,6 +14,7 @@ const store = createStore({
       userAddress: "",
       userBirthDate: "",
     },
+    signupUser: null, // 회원가입 단계에서 임시 저장
     jwt: "",
   },
 
@@ -32,8 +33,14 @@ const store = createStore({
 
   // state를 실제로 변경하는 곳 (동기적)
   mutations: {
-    setUser(state, payload) {
+    setUser(state, payload) { // 로그인용
       state.user = payload;
+    },
+    setSignupUser(state, payload){ // 회원가입 임시 저장용
+      state.signupUser = payload; 
+    },
+    clearUser(state) {
+      state.user = null;
     },
     setLoginId(state, loginId) {
       state.user.userLoginId = loginId;

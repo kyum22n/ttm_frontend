@@ -1,402 +1,160 @@
 <template>
-  <div class="walk-detail-container">
-    <!-- 상단 네비 -->
-    <header class="top-bar">
-      <input type="text" class="search-input" placeholder="해시태그 또는 아이디 검색" />
-      <div class="logo">나와 <span class="paw">🐾</span> 산책가개</div>
-      <div class="user-info">
-        <div class="notify">🔔<span class="badge">1</span></div>
-        <span class="username">TWOTWO_MOM</span>
-        <img src="@/assets/default-profile.png" alt="프로필" class="user-img" />
-      </div>
-    </header>
-
-    <main class="content">
-      <!-- 왼쪽: 메인 이미지 -->
-      <div class="left-panel">
-        <img :src="mainImage" alt="산책 이미지" class="main-photo" />
-      </div>
-
-      <!-- 중앙: 모집글 -->
-      <div class="center-panel">
-        <div class="post-card">
-          <div class="post-header">
-            <img src="@/assets/cat.png" alt="작성자" class="post-profile" />
-            <div class="post-info">
-              <div class="username">LOKI_YA</div>
-              <div class="time">2시간 전</div>
+  <div class="container my-5">
+    <div class="row g-4">
+      <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
+      <div class="col-md-5">
+        <div id="postCarousel" class="carousel slide shadow" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <div
+              v-for="(img, i) in post.images"
+              :key="i"
+              class="carousel-item"
+              :class="{ active: i === 0 }"
+            >
+              <img :src="img" class="d-block w-100 rounded" alt="게시물 이미지" />
             </div>
-            <span class="status-badge">산책 모집중</span>
           </div>
-
-          <p class="post-content">
-            서울 강서구 식물원에서 산책하실 분 구해여
-          </p>
-
-          <button class="apply-btn">산책 신청 🐾</button>
-
-          <div class="tags">
-            <span>#길냥이</span>
-            <span>#츄르</span>
-            <span>#삼색이</span>
-            <span>#ㅇㅇ</span>
-          </div>
-
-          <div class="likes">❤️ Likes 19,867</div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#postCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#postCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+          </button>
         </div>
+      </div>
 
-        <!-- 댓글 작성 -->
-        <div class="comment-input">
-          <input v-model="newComment" type="text" placeholder="댓글을 작성해주세요" />
-          <button @click="addComment">작성 🐾</button>
-        </div>
+      <!-- ===== 가운데: 게시글 + 댓글 ===== -->
+      <div class="col-md-5">
+        <!-- 게시글 카드 -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <!-- 작성자 정보 -->
+            <div class="d-flex align-items-center mb-3">
+              <img :src="post.author.profileImg" class="rounded-circle me-2" width="40" height="40" />
+              <div>
+                <strong>{{ post.author.name }}</strong>
+                <div class="text-muted small">{{ post.time }}</div>
+              </div>
+            </div>
 
-        <!-- 댓글 리스트 -->
-        <div class="comments">
-          <div v-for="(c, i) in comments" :key="i" class="comment-item">
-            <img :src="c.avatar" class="comment-avatar" />
-            <div>
-              <strong>{{ c.user }}</strong>: {{ c.text }}
+            <!-- 본문 -->
+            <p class="mb-2">{{ post.content }}</p>
+
+            <!-- 태그 -->
+            <div class="mb-3">
+              <span v-for="(tag, i) in post.tags" :key="i" class="badge bg-primary me-1">
+                {{ tag }}
+              </span>
+            </div>
+
+            <!-- 좋아요 -->
+            <div class="d-flex align-items-center">
+              <button class="btn btn-outline-danger btn-sm me-2" @click="toggleLike">
+                <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
+              </button>
+              <span>{{ post.likes }} Likes</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 오른쪽: 작성자 + 인원 목록 -->
-      <div class="right-panel">
-        <div class="author-card">
-          <img src="@/assets/cat.png" alt="작성자" class="author-photo" />
-          <p class="author-name">LOKI_YA 님의 게시물</p>
-          <button class="profile-btn">프로필 보러가기</button>
-          <div class="author-posts">
-            <img v-for="(img, i) in previewImages" :key="i" :src="img" class="preview-img" />
+        <!-- 댓글 카드 -->
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <!-- 댓글 작성 -->
+            <div class="input-group mb-3">
+              <input v-model="newComment" type="text" class="form-control" placeholder="댓글을 작성해주세요" />
+              <button class="btn btn-outline-secondary" @click="addComment">작성</button>
+            </div>
+
+            <!-- 댓글 목록 -->
+            <ul class="list-group list-group-flush">
+              <li
+                v-for="(c, i) in comments"
+                :key="i"
+                class="list-group-item d-flex align-items-start"
+              >
+                <img :src="c.profileImg" class="rounded-circle me-2" width="32" height="32" />
+                <div>
+                  <strong>{{ c.user }}</strong>: {{ c.text }}
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
+      </div>
 
-        <div class="member-list">
-          <h3>인원 목록 (5명)</h3>
-          <ul>
-            <li v-for="(m, i) in members" :key="i">
-              <img :src="m.avatar" class="member-avatar" />
-              <span>{{ m.name }}</span>
-              <span v-if="m.isHost" class="host-label">(작성자)</span>
-            </li>
-          </ul>
+      <!-- ===== 오른쪽: 작성자 프로필 + 피드 ===== -->
+      <div class="col-md-2">
+        <div class="card shadow-sm text-center">
+          <div class="card-body">
+            <!-- 작성자 프로필 -->
+            <img :src="post.author.profileImg" class="rounded-circle mb-2" width="60" height="60" />
+            <h6 class="card-title">{{ post.author.name }}</h6>
+            <router-link to="/Profile" class="btn btn-outline-dark btn-sm mb-3">프로필 놀러가기</router-link>
+
+            <hr />
+
+            <!-- 작성자 피드 미리보기 -->
+            <h6 class="fw-bold mb-2">작성자 피드</h6>
+            <div class="d-flex flex-column gap-2">
+              <img
+                v-for="(img, i) in post.authorFeed"
+                :key="i"
+                :src="img"
+                class="img-thumbnail"
+                style="max-height: 80px; object-fit: cover;"
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
 
-const mainImage = ref("https://placekitten.com/500/500");
+const liked = ref(false);
 const newComment = ref("");
 const comments = ref([
-  { user: "SucHea", text: "제 마음을 녹여내리는 눈이에요 너무 이뻐요", avatar: "https://placekitten.com/100/100" },
-  { user: "James", text: "BEAUTIFUL😍", avatar: "https://placekitten.com/101/100" },
+  { user: "SucHea", text: "저 눈 너무 이뻐요", profileImg: "https://placekitten.com/40/40" },
+  { user: "Peter", text: "SO FUNNY LOL", profileImg: "https://placekitten.com/41/40" },
 ]);
 
-const previewImages = ref([
-  "https://placekitten.com/150/150",
-  "https://placekitten.com/151/150",
-  "https://placekitten.com/152/150",
-]);
+const post = ref({
+  images: [
+    "https://placekitten.com/500/500",
+    "https://placekitten.com/501/500",
+    "https://placekitten.com/502/500",
+  ],
+  author: {
+    name: "LOKI_YA",
+    profileImg: "https://placekitten.com/60/60",
+  },
+  time: "2시간 전",
+  content: "퇴근길에 우리 로키 친구 만남\n댓글 예쁘게 달아라",
+  tags: ["#길냥이", "#츄르", "#삼색이", "#고양이"],
+  likes: 19867,
+  authorFeed: [
+    "https://placekitten.com/200/200",
+    "https://placekitten.com/201/200",
+    "https://placekitten.com/202/200",
+  ],
+});
 
-const members = ref([
-  { name: "LABR_4E", avatar: "https://place-puppy.com/50x50", isHost: true },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/51x50", isHost: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/52x50", isHost: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/53x50", isHost: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/54x50", isHost: false },
-]);
+function toggleLike() {
+  liked.value = !liked.value;
+  post.value.likes += liked.value ? 1 : -1;
+}
 
 function addComment() {
-  if (newComment.value.trim() === "") return;
+  if (!newComment.value.trim()) return;
   comments.value.push({
     user: "나",
     text: newComment.value,
-    avatar: "@/assets/default-profile.png",
+    profileImg: "https://placekitten.com/42/40",
   });
   newComment.value = "";
 }
 </script>
-
-<style scoped>
-.walk-detail-container {
-  background: #fcfbf8;
-  min-height: 100vh;
-  font-family: "Noto Sans KR", sans-serif;
-}
-
-/* 상단 네비 */
-.top-bar {
-  background: #6b4a2b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-}
-
-.search-input {
-  width: 280px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
-}
-
-.logo {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.paw {
-  font-size: 1.3rem;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-}
-
-.notify {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: red;
-  color: #fff;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  padding: 2px 5px;
-}
-
-/* 메인 레이아웃 */
-.content {
-  display: flex;
-  padding: 40px;
-  gap: 30px;
-}
-
-/* 왼쪽 */
-.left-panel {
-  flex: 1;
-}
-
-.main-photo {
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* 중앙 */
-.center-panel {
-  flex: 2;
-}
-
-.post-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.post-profile {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-}
-
-.post-info {
-  flex: 1;
-}
-
-.status-badge {
-  background: #fce9b6;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #6b4a2b;
-}
-
-.post-content {
-  margin: 12px 0;
-}
-
-.apply-btn {
-  background: #6b4a2b;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
-
-.apply-btn:hover {
-  background: #56351f;
-}
-
-.tags {
-  margin-bottom: 10px;
-}
-
-.tags span {
-  margin-right: 6px;
-  color: #3b82f6;
-  font-size: 0.9rem;
-}
-
-.likes {
-  font-size: 0.9rem;
-  color: #d33;
-  margin-top: 8px;
-}
-
-/* 댓글 */
-.comment-input {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.comment-input input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.comment-input button {
-  padding: 8px 14px;
-  background: #fce9b6;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.comment-input button:hover {
-  background: #fbdc89;
-}
-
-.comments {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.comment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-/* 오른쪽 */
-.right-panel {
-  flex: 1;
-}
-
-.author-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.author-photo {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-}
-
-.profile-btn {
-  margin-top: 10px;
-  padding: 6px 14px;
-  border: 1px solid #6b4a2b;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b4a2b;
-  cursor: pointer;
-}
-
-.author-posts {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.preview-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-/* 인원 목록 */
-.member-list {
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.member-list h3 {
-  margin-bottom: 10px;
-  color: #6b4a2b;
-}
-
-.member-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.member-list li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.member-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-.host-label {
-  font-size: 0.8rem;
-  color: #6b4a2b;
-  margin-left: 4px;
-}
-</style>
