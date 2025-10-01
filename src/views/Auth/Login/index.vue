@@ -34,8 +34,8 @@
           <router-link to="/Auth/FindAccount" class="text-white small text-decoration-none">계정 찾기</router-link>
         </div>
 
-        <!-- <button type="submit" class="btn btn-warning w-100 fw-bold">Login</button> -->
-        <router-link to="/Post/MainFeed" class="btn btn-warning w-100 fw-bold">Login</router-link>
+        <button type="submit" class="btn btn-warning w-100 fw-bold">Login</button>
+        <!-- <router-link to="/Post/MainFeed" class="btn btn-warning w-100 fw-bold">Login</router-link> -->
       </form>
     </div>
   </div>
@@ -60,12 +60,27 @@ async function handleLogin() {
     const data = structuredClone(loginForm.value);
     const response = await userLoginApi.userLogin(data);
     const resultObject = response.data;
+
+    console.log("API 응답 확인:", resultObject); // 🔍 여기 추가
+
     if (resultObject.result === "success") {
-      console.log("로그인 성공: ", resultObject.loginId);
-      store.dispatch("saveAuth", resultObject);
+      // 구조 맞춰서 Vuex로 저장
+      const user = {
+        userId: resultObject.userId,
+        userLoginId: resultObject.loginId,
+        userName: resultObject.userName,
+        userEmail: resultObject.userEmail,
+        userAddress: resultObject.userAddress,
+        userBirthDate: resultObject.userBirthDate,
+        profileImage: resultObject.profileImage || "https://via.placeholder.com/40",
+      };
+      console.log("Vuex에 저장할 user:", user); // 🔍 여기서 확인
+
+      store.dispatch("saveAuth", { user, jwt: resultObject.jwt });
+
       await router.push("/post/MainFeed");
     } else {
-      console.log("fail", resultObject.message);
+      console.log("로그인 실패:", resultObject.message);
     }
   } catch (error) {
     console.log(error);
