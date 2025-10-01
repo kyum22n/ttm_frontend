@@ -166,7 +166,33 @@
 
 <script setup>
 import HashtagDisplayBox from '../../../components/reviewDisplayBox.vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
+import reviewApi from '@/apis/reviewApi'
+
+const userId = 1 // 테스트용 고정값
+
+const loading = ref(false)
+const error = ref(null)
+const reviews = ref([]) // ★ 서버에서 온 리뷰 배열
+const count = ref(0)
+const message = ref('')
+
+async function load() {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await reviewApi.getReceivedReviews(userId)
+    // 응답: { result, message, count, data: [...] }
+    reviews.value = Array.isArray(res.data?.data) ? res.data.data : []
+    count.value   = typeof res.data?.count === 'number' ? res.data.count : reviews.value.length
+    message.value = res.data?.message ?? ''
+  } catch (e) {
+    error.value = e?.response?.data?.message || '리뷰 조회 실패'
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(load)
 
 
 
