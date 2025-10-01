@@ -113,17 +113,4 @@ function goNext() {
 .btn-brown:hover { background-color: #56351f; }
 .btn-outline-brown { color: #6b4a2b; border: 1px solid #6b4a2b; }
 .btn-outline-brown:hover { background-color: #f9f4ef; }
-/* style.css or <style scoped> */
-.logo-img {
-  max-width: 300px;
-  display: block;
-  margin-bottom: 5px;   /* 원하는 만큼 조절 */
-}
-
-.pet-img {
-  width: 300px;
-  display: block;
-  margin-top: 0;        /* 혹시 상단 여백 생기면 0으로 */
-}
-
 </style>
