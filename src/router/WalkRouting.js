@@ -1,26 +1,26 @@
 const routes = [
   {
-    path: "/Walk/List",
+    path: "/Walk/WalkList",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkList"),
   },
   {
-    path: "/Walk/Request",
+    path: "/Walk/WalkRequest",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkRequest"),
   },
   {
-    path: "/Walk/Item",
+    path: "/Walk/WalkItem",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkItem"),
   },
   {
-    path: "/Walk/AppItem",
+    path: "/Walk/WalkApplicantModal/WalkApplicantItem",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkApplicantsModal/WalkApplicantItem.vue"),
   },
   {
-    path: "/Walk/App",
+    path: "/Walk/WalkApplicantsModal",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkApplicantsModal"),
   },
   {
-    path: "/Walk/",
+    path: "/Walk/Walk",
     component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/Walk.vue"),
   },
 ];

@@ -13,7 +13,9 @@
 
       <!-- 가운데: 로고 (항상 정중앙) -->
       <div class="text-center">
-        <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
+        <router-link to="/Post/MainFeed">
+          <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
+        </router-link>
       </div>
 
       <!-- 오른쪽: 알림 + 프로필 -->
@@ -25,7 +27,7 @@
         </div>
 
         <!-- 닉네임 -->
-        <span class="fw-bold text-white">{{ username }}</span>
+        <span class="fw-bold text-white">user:{{ store.state.user.userLoginId }}</span>
 
         <!-- 프로필 이미지 -->
         <img :src="profileImage" alt="프로필" class="rounded-circle border border-light" style="width: 35px; height: 35px; object-fit: cover" />
@@ -39,11 +41,14 @@
 
 <script setup>
 import { ref } from "vue";
+import { computed } from "vue";
+import { useStore } from "vuex";
 import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
 
+const store = useStore();
 const searchText = ref("");
-const username = ref("TWOTWO_MOM");
+const userLoginId = computed(() => store.state.user.userLoginId);
 const profileImage = ref("https://via.placeholder.com/40");
 
 import { useRouter } from "vue-router";
@@ -77,5 +82,4 @@ function handleSelect(key) {
 .bg-brown {
   background-color: #6b4a2b;
 }
-
 </style>

@@ -55,11 +55,7 @@
         <!-- 필터 탭 -->
         <ul class="nav nav-pills mb-3">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button
-              class="nav-link"
-              :class="{ active: activeTab === t.key }"
-              @click="activeTab = t.key"
-            >
+            <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
               {{ t.label }}
             </button>
           </li>
@@ -91,13 +87,13 @@
         <nav class="mt-4">
           <ul class="pagination pagination-sm">
             <li class="page-item" :class="{ disabled: page === 1 }">
-              <button class="page-link" @click="page--" :disabled="page===1">Prev</button>
+              <button class="page-link" @click="page--" :disabled="page === 1">Prev</button>
             </li>
             <li class="page-item" v-for="n in totalPages" :key="n" :class="{ active: page === n }">
               <button class="page-link" @click="page = n">{{ n }}</button>
             </li>
             <li class="page-item" :class="{ disabled: page === totalPages }">
-              <button class="page-link" @click="page++" :disabled="page===totalPages">Next</button>
+              <button class="page-link" @click="page++" :disabled="page === totalPages">Next</button>
             </li>
           </ul>
         </nav>
@@ -144,6 +140,15 @@
 
         <div class="card border-0 shadow-sm">
           <div class="card-body">
+
+            <!-- 해시태그 박스 -->
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-body">
+                <HashtagDisplayBox title="해시태그" :tags="tags" :max-visible="10" prefix="#" pill clickable
+                  @select="onSelect" />
+              </div>
+            </div>
+
             <strong class="d-block mb-2">통계</strong>
             <div class="d-flex justify-content-between small text-muted">
               <span>게시물</span><span>{{ posts.length }}</span>
@@ -160,7 +165,24 @@
 </template>
 
 <script setup>
+import HashtagDisplayBox from '../../../components/reviewDisplayBox.vue'
 import { computed, reactive, ref } from 'vue'
+
+
+
+//
+
+const tags = [
+  '강아지', '산책', '주말번개', '@Loki', '댕댕이', '고양이', '서울', '송파',
+  '러프', '카페', '사진', '훈련'
+]
+function onSelect(tag) {
+  // 조회용이어도 클릭 시 검색/필터 연동 가능
+  // router.push({ name: 'search', query: { tag } })
+  console.log('select:', tag)
+}
+
+//
 
 const profile = reactive({
   id: 'TWOTWO_MOM',
@@ -196,8 +218,8 @@ const categories = ['강아지', '고양이', '일상', '산책', '모임']
 const posts = reactive([
   { id: 1, type: 'feed', cats: ['강아지', '산책'], img: 'https://picsum.photos/seed/p1/600/400', title: '주말에 강변 산책', subtitle: '러프에게 행복한 날', desc: '가을바람과 함께 산책했어요.', likes: 718, time: '1시간 전' },
   { id: 2, type: 'story', cats: ['강아지'], img: 'https://picsum.photos/seed/p2/600/400', title: '오늘의 놀이', subtitle: '소파 위에서', desc: '간식 숨바꼭질!', likes: 423, time: '2시간 전' },
-  { id: 3, type: 'group', cats: ['산책','모임'], img: 'https://picsum.photos/seed/p3/600/400', title: '그룹 워크 모집', subtitle: '한강공원', desc: '내일 아침 9시', likes: 220, time: '어제' },
-  { id: 4, type: 'feed', cats: ['고양이','일상'], img: 'https://picsum.photos/seed/p4/600/400', title: '고양이 졸림', subtitle: '집사일기', desc: '햇살 맛집 창가', likes: 91, time: '2일 전' },
+  { id: 3, type: 'group', cats: ['산책', '모임'], img: 'https://picsum.photos/seed/p3/600/400', title: '그룹 워크 모집', subtitle: '한강공원', desc: '내일 아침 9시', likes: 220, time: '어제' },
+  { id: 4, type: 'feed', cats: ['고양이', '일상'], img: 'https://picsum.photos/seed/p4/600/400', title: '고양이 졸림', subtitle: '집사일기', desc: '햇살 맛집 창가', likes: 91, time: '2일 전' },
   { id: 5, type: 'feed', cats: ['강아지'], img: 'https://picsum.photos/seed/p5/600/400', title: '낮잠 타임', subtitle: '러프', desc: '푹 쉬는 중', likes: 310, time: '3일 전' },
   { id: 6, type: 'group', cats: ['모임'], img: 'https://picsum.photos/seed/p6/600/400', title: '주말 번개 산책', subtitle: '잠실', desc: '참가자 5/8', likes: 150, time: '3일 전' },
 ])
@@ -231,29 +253,39 @@ const totalPages = computed(() => Math.max(1, Math.ceil(
 
 const totalLikes = computed(() => posts.reduce((acc, p) => acc + p.likes, 0))
 
-function resetFilters () {
+function resetFilters() {
   filters.q = ''
   filters.cats = []
   filters.sort = 'latest'
 }
-function applyFilters () {
+function applyFilters() {
   page.value = 1
 }
 </script>
 
 <style scoped>
-.object-cover { object-fit: cover; }
+.object-cover {
+  object-fit: cover;
+}
 
 /* 하이라이트 링 */
 .story-ring {
-  width: 64px; height: 64px;
+  width: 64px;
+  height: 64px;
   padding: 3px;
   border-radius: 50%;
   background: linear-gradient(45deg, #ff6ea8, #f7b2d9, #fcd5e8);
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
 }
-.story-ring img { width: 100%; height: 100%; }
+
+.story-ring img {
+  width: 100%;
+  height: 100%;
+}
 
 /* 부트스트랩 ratio가 4x3만 제공되진 않아서 카드 이미지 고정용 */
-.ratio-4x3 { aspect-ratio: 4 / 3; }
+.ratio-4x3 {
+  aspect-ratio: 4 / 3;
+}
 </style>
