@@ -1,5 +1,5 @@
 <template>
-  <div class="container my-5">
+  <div class="container my-5" v-if="post">
     <div class="row g-4">
       <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
       <div class="col-md-5">
@@ -30,20 +30,20 @@
           <div class="card-body">
             <!-- 작성자 정보 -->
             <div class="d-flex align-items-center mb-3">
-              <img :src="post.author.profileImg" class="rounded-circle me-2" width="40" height="40" />
+              <img :src="post.authorImg" class="rounded-circle me-2" width="40" height="40" />
               <div>
-                <strong>{{ post.author.name }}</strong>
-                <div class="text-muted small">{{ post.time }}</div>
+                <strong>{{ post.authorName }}</strong>
+                <div class="text-muted small">{{ post.createdAt }}</div>
               </div>
             </div>
 
             <!-- 본문 -->
-            <p class="mb-2">{{ post.content }}</p>
+            <p class="mb-2">{{ post.postContent }}</p>
 
             <!-- 태그 -->
             <div class="mb-3">
-              <span v-for="(tag, i) in post.tags" :key="i" class="badge bg-primary me-1">
-                {{ tag }}
+              <span v-for="(tag, i) in tags" :key="i" class="badge bg-primary me-1">
+                {{ tag.tagName }}
               </span>
             </div>
 
@@ -52,7 +52,7 @@
               <button class="btn btn-outline-danger btn-sm me-2" @click="toggleLike">
                 <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
               </button>
-              <span>{{ post.likes }} Likes</span>
+              <span>{{ post.postLikeCount }} Likes</span>
             </div>
           </div>
         </div>
@@ -73,9 +73,9 @@
                 :key="i"
                 class="list-group-item d-flex align-items-start"
               >
-                <img :src="c.profileImg" class="rounded-circle me-2" width="32" height="32" />
+                <img :src="c.profileImg || 'https://placekitten.com/32/32'" class="rounded-circle me-2" width="32" height="32" />
                 <div>
-                  <strong>{{ c.user }}</strong>: {{ c.text }}
+                  <strong>{{ c.cwriter }}</strong>: {{ c.commentContent }}
                 </div>
               </li>
             </ul>
@@ -87,22 +87,18 @@
       <div class="col-md-2">
         <div class="card shadow-sm text-center">
           <div class="card-body">
-            <!-- 작성자 프로필 -->
-            <img :src="post.author.profileImg" class="rounded-circle mb-2" width="60" height="60" />
-            <h6 class="card-title">{{ post.author.name }}</h6>
-            <router-link to="/Profile" class="btn btn-outline-dark btn-sm mb-3">프로필 놀러가기</router-link>
+            <img :src="post.authorImg" class="rounded-circle mb-2" width="60" height="60" />
+            <h6 class="card-title">{{ post.authorName }}</h6>
+            <router-link :to="`/profile/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">프로필 놀러가기</router-link>
 
             <hr />
-
-            <!-- 작성자 피드 미리보기 -->
             <h6 class="fw-bold mb-2">작성자 피드</h6>
             <div class="d-flex flex-column gap-2">
               <img
-                v-for="(img, i) in post.authorFeed"
+                v-for="(img, i) in post.authorFeed || []"
                 :key="i"
                 :src="img"
                 class="img-thumbnail"
-                style="max-height: 80px; object-fit: cover;"
               />
             </div>
           </div>
@@ -113,48 +109,40 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useStore } from "vuex";
+
+const store = useStore();
+const route = useRoute();
 
 const liked = ref(false);
 const newComment = ref("");
-const comments = ref([
-  { user: "SucHea", text: "저 눈 너무 이뻐요", profileImg: "https://placekitten.com/40/40" },
-  { user: "Peter", text: "SO FUNNY LOL", profileImg: "https://placekitten.com/41/40" },
-]);
 
-const post = ref({
-  images: [
-    "https://placekitten.com/500/500",
-    "https://placekitten.com/501/500",
-    "https://placekitten.com/502/500",
-  ],
-  author: {
-    name: "LOKI_YA",
-    profileImg: "https://placekitten.com/60/60",
-  },
-  time: "2시간 전",
-  content: "퇴근길에 우리 로키 친구 만남\n댓글 예쁘게 달아라",
-  tags: ["#길냥이", "#츄르", "#삼색이", "#고양이"],
-  likes: 19867,
-  authorFeed: [
-    "https://placekitten.com/200/200",
-    "https://placekitten.com/201/200",
-    "https://placekitten.com/202/200",
-  ],
+const post = computed(() => store.state.post.detail);
+const comments = computed(() => store.state.post.comments);
+const tags = computed(() => store.state.post.tags);
+
+onMounted(() => {
+  const id = route.params.id;
+  if (id) {
+    store.dispatch("post/fetchDetail", id);
+  }
 });
 
 function toggleLike() {
   liked.value = !liked.value;
-  post.value.likes += liked.value ? 1 : -1;
+  // TODO: 백엔드 좋아요 API 연동 필요
 }
 
-function addComment() {
+async function addComment() {
   if (!newComment.value.trim()) return;
-  comments.value.push({
-    user: "나",
-    text: newComment.value,
-    profileImg: "https://placekitten.com/42/40",
-  });
+  const payload = {
+    cpostId: post.value.postId,
+    cwriter: 1, // TODO: 로그인 사용자 ID
+    commentContent: newComment.value,
+  };
+  await store.dispatch("post/writeComment", payload);
   newComment.value = "";
 }
 </script>

@@ -1,12 +1,13 @@
+<!-- src/views/PostEdit.vue (예시) -->
 <template>
-  <div class="container my-5">
+  <div class="container my-5" v-if="loaded">
     <div class="row">
       <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
       <div class="col-md-4">
         <div class="card mb-3 shadow-sm">
           <img v-if="previewImage" :src="previewImage" class="card-img-top" alt="대표 미리보기" />
           <div v-else class="card-body text-muted text-center">
-            이미지 미리보기
+            이미지 미리보기 (신규 첨부만 표시)
           </div>
         </div>
       </div>
@@ -16,12 +17,27 @@
         <div class="card shadow-sm">
           <div class="card-body">
             <h5 class="card-title">게시글 수정</h5>
+
+            <!-- 제목 (백엔드가 postTitle 받으므로 포함 권장) -->
+            <input
+              v-model="title"
+              type="text"
+              class="form-control mb-2"
+              placeholder="제목을 입력하세요"
+            />
+
             <textarea
               v-model="content"
               rows="6"
               class="form-control mb-3"
               placeholder="내용을 입력하세요"
             ></textarea>
+
+            <!-- 산책 모집글 여부 -->
+            <div class="form-check mb-3">
+              <input id="isRequest" class="form-check-input" type="checkbox" v-model="isRequest" />
+              <label class="form-check-label" for="isRequest">산책 모집글</label>
+            </div>
 
             <!-- 선택된 태그 표시 -->
             <div class="mb-3">
@@ -43,13 +59,13 @@
               <!-- 항상 보이는 기본 태그 -->
               <div class="d-flex flex-wrap gap-2 mb-2">
                 <button
-                  v-for="(tag, i) in availableTags.slice(0, 5)"
-                  :key="i"
+                  v-for="(t, i) in topTags"
+                  :key="`top-${i}`"
                   class="btn btn-sm"
-                  :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'"
-                  @click="toggleTag(tag)"
+                  :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
+                  @click="toggleTag(t.tagName)"
                 >
-                  {{ tag }}
+                  {{ t.tagName }}
                 </button>
               </div>
 
@@ -57,13 +73,13 @@
               <div class="collapse" id="moreTags">
                 <div class="d-flex flex-wrap gap-2 mt-2">
                   <button
-                    v-for="(tag, i) in availableTags.slice(5)"
-                    :key="'more-' + i"
+                    v-for="(t, i) in moreTags"
+                    :key="`more-${i}`"
                     class="btn btn-sm"
-                    :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'"
-                    @click="toggleTag(tag)"
+                    :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleTag(t.tagName)"
                   >
-                    {{ tag }}
+                    {{ t.tagName }}
                   </button>
                 </div>
               </div>
@@ -83,13 +99,27 @@
             </div>
           </div>
 
-          <div class="card-footer d-flex justify-content-end gap-2">
-            <button class="btn btn-success" @click="updatePost">수정 저장</button>
+          <div class="card-footer d-flex flex-wrap gap-3 justify-content-between align-items-center">
+            <!-- 이미지 추가 방식 -->
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="modeAppend" value="append" v-model="imageMode">
+                <label class="form-check-label" for="modeAppend">이미지 추가(append)</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="modeReplace" value="replace" v-model="imageMode">
+                <label class="form-check-label" for="modeReplace">이미지 교체(replace)</label>
+              </div>
+            </div>
+
+            <button class="btn btn-success" :disabled="submitting" @click="updatePost">
+              {{ submitting ? "저장 중..." : "수정 저장" }}
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- ===== 오른쪽: 첨부 이미지 영역 ===== -->
+      <!-- ===== 오른쪽: 첨부 이미지 영역 (신규 첨부 미리보기) ===== -->
       <div class="col-md-3">
         <h6 class="fw-bold mb-3">첨부 이미지</h6>
 
@@ -104,13 +134,15 @@
               type="file"
               class="d-none"
               accept="image/*"
+              multiple
               @change="onFileChange"
             />
           </label>
           <div class="small text-muted mt-2">이미지 추가 (최대 10장)</div>
+          <div class="small text-muted">※ 기존 이미지는 서버에 남아있으며, <b>replace</b> 선택 + 새 이미지 업로드 시 교체됩니다.</div>
         </div>
 
-        <!-- 썸네일 리스트 -->
+        <!-- 썸네일 리스트(신규 업로드만 표시) -->
         <div class="d-flex flex-column gap-2">
           <div
             v-for="(img, idx) in previewImages"
@@ -140,100 +172,121 @@
               ✕
             </button>
           </div>
+
+          <div v-if="!previewImages.length" class="text-muted small">
+            아직 선택된 새 이미지가 없습니다.
+          </div>
         </div>
       </div>
 
     </div>
   </div>
+
+  <!-- 로딩/초기 -->
+  <div class="container my-5" v-else>
+    <div class="alert alert-light border text-center">불러오는 중...</div>
+  </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
+import postApi from "@/api/postApi";
 
-/**
- * 1) 기존 게시글(원본) 데이터 — 실제에선 API로 받아오면 됨
- */
-const originalPost = ref({
-  content:
-    "퇴근길에 우리 로키 친구 만남\n댓글 예쁘게 달아라 (원본 내용입니다)",
-  tags: ["#고양이", "#일상", "#산책"],
-  images: [
-    "https://placekitten.com/400/250",
-    "https://placekitten.com/401/250",
-    "https://placekitten.com/402/250",
-  ],
+const route = useRoute();
+const router = useRouter();
+const store = useStore();
+
+const loaded = ref(false);
+const submitting = ref(false);
+
+// 폼 상태
+const title = ref("");
+const content = ref("");
+const isRequest = ref(false);
+
+// 태그
+const selectedTags = ref([]);
+const allTags = ref([]); // [{tagId, tagName}, ...]
+const showMore = ref(false);
+const topTags = computed(() => allTags.value.slice(0, 5));
+const moreTags = computed(() => allTags.value.slice(5));
+
+// 신규 업로드 파일/미리보기
+const files = ref([]);          // File[]
+const previewImages = ref([]);  // base64[]
+const previewImage = ref(null); // 대표(첫 이미지)
+const imageMode = ref("append"); // 'append' | 'replace'
+
+// 기존 상세
+const detail = computed(() => store.state.post.detail);
+
+// 초기 로딩
+onMounted(async () => {
+  const postId = route.params.id;
+  if (!postId) return;
+
+  // 1) 상세 불러오기
+  await store.dispatch("post/fetchDetail", postId);
+
+  // 2) 전체 태그 목록(이름→id 매핑용)
+  const tagRes = await postApi.getTagList();
+  allTags.value = (tagRes.data && tagRes.data.tags) ? tagRes.data.tags : [];
+
+  // 3) 폼에 기존 값 채우기
+  if (detail.value) {
+    title.value = detail.value.postTitle || "";
+    content.value = detail.value.postContent || "";
+    isRequest.value = (String(detail.value.isRequest || "N").toUpperCase() === "Y");
+
+    // 현재 게시물의 태그 → 이름 배열로 변환
+    const currentTags = (store.state.post.tags || []).map(t => t.tagName);
+    selectedTags.value = currentTags;
+  }
+
+  // (참고) 기존 이미지는 서버에서 내려주는 이미지 URL/엔드포인트가 없으므로
+  // 신규로 추가한 이미지들만 미리보기로 표시합니다.
+  loaded.value = true;
 });
 
-/**
- * 2) 수정용 상태 (폼에 바인딩)
- */
-const content = ref(originalPost.value.content);
-const selectedTags = ref([...originalPost.value.tags]);
-const previewImages = ref([...originalPost.value.images]);
-const previewImage = ref(previewImages.value[0] || null);
-
-/**
- * 태그 소스 (선택형)
- */
-const availableTags = ref([
-  "#강아지",
-  "#고양이",
-  "#산책",
-  "#귀여움",
-  "#추억",
-  "#일상",
-  "#댕댕이",
-  "#냥스타",
-  "#훈련",
-  "#여행",
-  "#캠핑",
-  "#간식",
-]);
-
-const showMore = ref(false);
+// 태그 토글
+function toggleTag(name) {
+  const idx = selectedTags.value.indexOf(name);
+  if (idx >= 0) selectedTags.value.splice(idx, 1);
+  else selectedTags.value.push(name);
+}
+function removeTag(name) {
+  const idx = selectedTags.value.indexOf(name);
+  if (idx >= 0) selectedTags.value.splice(idx, 1);
+}
 function toggleMore() {
   showMore.value = !showMore.value;
 }
 
-function toggleTag(tag) {
-  if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter((t) => t !== tag);
-  } else {
-    selectedTags.value.push(tag);
-  }
-}
-function removeTag(tag) {
-  selectedTags.value = selectedTags.value.filter((t) => t !== tag);
-}
-
-/**
- * 이미지 업로드 — 기존 썸네일에 추가로 “쌓임”
- */
+// 파일 추가
 function onFileChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  const picked = Array.from(e.target.files || []);
+  if (!picked.length) return;
 
-  if (previewImages.value.length >= 10) {
-    alert("이미지는 최대 10장까지 업로드할 수 있습니다.");
-    e.target.value = "";
-    return;
+  for (const f of picked) {
+    if (files.value.length >= 10) break;
+    files.value.push(f);
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      previewImages.value.push(ev.target.result);
+      if (!previewImage.value) previewImage.value = ev.target.result;
+    };
+    reader.readAsDataURL(f);
   }
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    previewImages.value.push(event.target.result);
-    if (!previewImage.value) previewImage.value = event.target.result;
-  };
-  reader.readAsDataURL(file);
-
   e.target.value = "";
 }
 
-/**
- * 썸네일 삭제/대표 지정
- */
+// 썸네일 삭제/대표 지정
 function removeImage(idx) {
   const removed = previewImages.value.splice(idx, 1)[0];
+  files.value.splice(idx, 1);
   if (previewImage.value === removed) {
     previewImage.value = previewImages.value[0] || null;
   }
@@ -242,19 +295,61 @@ function setAsMain(idx) {
   previewImage.value = previewImages.value[idx] || null;
 }
 
+// 저장
+async function updatePost() {
+  if (!detail.value) return;
 
-/**
- * 수정 저장(업데이트)
- */
-function updatePost() {
-  // 실제론 API 호출 (PUT/PATCH)로 바꿔서 보내면 됨
-  const payload = {
-    content: content.value,
-    tags: selectedTags.value,
-    images: previewImages.value,
-    mainImage: previewImage.value,
-  };
-  console.log("수정 요청 payload:", payload);
-  alert("수정이 저장되었습니다!");
+  submitting.value = true;
+  try {
+    // 1) 글/이미지 업데이트 (multipart)
+    const fd = new FormData();
+    fd.append("postId", String(detail.value.postId));
+    if (title.value) fd.append("postTitle", title.value);
+    if (content.value) fd.append("postContent", content.value);
+    fd.append("isRequest", isRequest.value ? "Y" : "N");
+
+    // 새로 추가한 이미지
+    for (const f of files.value) {
+      fd.append("postAttaches", f);
+    }
+
+    await store.dispatch("post/update", {
+      formData: fd,
+      imageMode: imageMode.value, // 'append' or 'replace'
+    });
+
+    // 2) 태그 변경(추가/삭제)
+    // 기존 태그 이름 집합
+    const oldNames = new Set((store.state.post.tags || []).map(t => t.tagName));
+    // 새 태그 이름 집합
+    const newNames = new Set(selectedTags.value);
+
+    const toAddNames = [...newNames].filter(n => !oldNames.has(n));
+    const toDelNames = [...oldNames].filter(n => !newNames.has(n));
+
+    if (toAddNames.length || toDelNames.length) {
+      // 이름→id 매핑
+      const nameToId = new Map(allTags.value.map(t => [t.tagName, t.tagId]));
+      const addIds = toAddNames.map(n => nameToId.get(n)).filter(Boolean);
+      const delIds = toDelNames.map(n => nameToId.get(n)).filter(Boolean);
+
+      if (addIds.length) {
+        await store.dispatch("post/addTags", { postId: detail.value.postId, tagIds: addIds });
+      }
+      if (delIds.length) {
+        await store.dispatch("post/deleteTags", { postId: detail.value.postId, tagIds: delIds });
+      }
+      // 상세 리프레시
+      await store.dispatch("post/fetchDetail", detail.value.postId);
+    }
+
+    // 3) 상세로 이동
+    router.push(`/post/${detail.value.postId}`);
+  } catch (e) {
+    console.error(e);
+    alert("수정 중 오류가 발생했습니다.");
+  } finally {
+    submitting.value = false;
+  }
 }
 </script>
