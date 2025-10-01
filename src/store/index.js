@@ -43,6 +43,9 @@ const store = createStore({
     clearUser(state) {
       state.user = null;
     },
+    clearSignupUser(state) {
+    state.signupUser = null;
+    },
     setLoginId(state, loginId) {
       state.user.userLoginId = loginId;
     },
