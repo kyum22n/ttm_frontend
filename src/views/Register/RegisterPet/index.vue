@@ -3,12 +3,14 @@
     <div class="row w-100">
       <!-- 왼쪽 영역 -->
       <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
-        <h1 class="fw-bold text-brown text-center mb-4">
-          나와 <span class="fs-2">🐾</span><br />산책가개
-        </h1>
+        <img
+          src="@/assets/logo_white_bigsize.png"
+          alt="로고"
+          class="img-fluid"
+          style="max-width: 300px;"
+        />
         <div class="d-flex gap-4">
-          <img src="@/assets/cat.png" alt="고양이" class="img-fluid" style="width:80px;" />
-          <img src="@/assets/dog.png" alt="강아지" class="img-fluid" style="width:80px;" />
+          <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
         </div>
       </div>
 

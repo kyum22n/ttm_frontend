@@ -3,12 +3,14 @@
     <div class="row w-100">
       <!-- 왼쪽 -->
       <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
-        <h1 class="fw-bold text-center mb-4">
-          나와 <span class="fs-2">🐾</span><br />산책가개
-        </h1>
-        <div class="d-flex gap-4">
-          <img src="@/assets/cat.png" alt="고양이" class="img-fluid" style="width:80px;" />
-          <img src="@/assets/dog.png" alt="강아지" class="img-fluid" style="width:80px;" />
+        <img
+          src="@/assets/logo_white_bigsize.png"
+          alt="로고"
+          class="img-fluid"
+          style="max-width: 300px;"
+        />
+        <div class="d-flex gap-0">
+          <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
         </div>
       </div>
 
@@ -111,4 +113,17 @@ function goNext() {
 .btn-brown:hover { background-color: #56351f; }
 .btn-outline-brown { color: #6b4a2b; border: 1px solid #6b4a2b; }
 .btn-outline-brown:hover { background-color: #f9f4ef; }
+/* style.css or <style scoped> */
+.logo-img {
+  max-width: 300px;
+  display: block;
+  margin-bottom: 5px;   /* 원하는 만큼 조절 */
+}
+
+.pet-img {
+  width: 300px;
+  display: block;
+  margin-top: 0;        /* 혹시 상단 여백 생기면 0으로 */
+}
+
 </style>
