@@ -5,20 +5,20 @@
     <Header v-if="!$route.meta.hideLayout" />
 
     <!-- 메인 -->
-    <router-view class="flex-grow-1" />
-    
+    <div class="flex-grow-1">
+      <RouterView />
+    </div>
+
     <!-- 공통 푸터 -->
     <Footer v-if="!$route.meta.hideLayout" />
-  </div >
+  </div>
 </template>
 
 <script setup>
 import { useRoute } from "vue-router";
-import Footer from './components/Footer';
-import Header from './components/Header';
+import Footer from "./components/Footer";
+import Header from "./components/Header";
 const route = useRoute();
 </script>
 
-<style>
-
-</style>
+<style></style>
