@@ -1,432 +1,170 @@
 <template>
-  <!-- 왼쪽: 메인 이미지 & 해시태그 -->
-  <div class="left-panel">
-    <div class="main-image">
-      <img :src="mainImage" alt="산책 이미지" />
-    </div>
-    <div class="hashtags">
-      <input v-model="hashtags" type="text" placeholder="#강아지 #사랑 #웰시코기" />
-      <button class="dropdown-btn">⬇</button>
-    </div>
-
-    <div class="action-btns">
-      <button class="cancel-btn">산책글 등록 취소</button>
-      <button class="submit-btn">산책글로 등록 🐾</button>
-    </div>
-  </div>
-
-  <!-- 중앙: 게시물 카드 -->
-  <div class="center-panel">
-    <div class="post-card">
-      <div class="post-header">
-        <img src="@/assets/default-profile.png" alt="작성자" class="post-profile" />
-        <div class="post-info">
-          <div class="username">TWOTWO_MOM</div>
-          <div class="time">12시간 전</div>
-        </div>
-        <button class="edit-btn">편집</button>
-      </div>
-      <p class="post-content">서울 대공원에서 산책하실분 구해여</p>
-
-      <button class="status-btn">산책 마감</button>
-
-      <div class="tags">
-        <span v-for="tag in hashtagList" :key="tag" class="tag">{{ tag }}</span>
-      </div>
-
-      <div class="likes">❤️ Likes 19,867</div>
-    </div>
-
-    <!-- 댓글 -->
-    <div class="comment-section">
-      <input type="text" placeholder="댓글을 작성해주세요" />
-      <button class="comment-btn">댓글</button>
-    </div>
-
-    <div class="comments">
-      <div v-for="(c, i) in comments" :key="i" class="comment-item">
-        <img :src="c.avatar" class="comment-avatar" />
-        <div>
-          <strong>{{ c.user }}</strong>: {{ c.text }}
+  <div class="container my-5">
+    <div class="row">
+      <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
+      <div class="col-md-4">
+        <div class="card mb-3 shadow-sm">
+          <img v-if="previewImage" :src="previewImage" class="card-img-top" alt="대표 미리보기" />
+          <div v-else class="card-body text-muted text-center">
+            이미지 미리보기
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- 오른쪽: 업로드 + 인원목록 -->
-  <div class="right-panel">
-    <div class="upload-area">
-      <button class="upload-btn">+</button>
-      <div class="preview-list">
-        <img v-for="(img, i) in previewImages" :key="i" :src="img" class="preview-img" />
+
+      <!-- ===== 중앙: 글 작성 ===== -->
+      <div class="col-md-5">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">게시글 작성</h5>
+            <textarea v-model="content" rows="6" class="form-control mb-3" placeholder="내용을 입력하세요"></textarea>
+
+            <!-- 선택된 태그 표시 -->
+            <div class="mb-3">
+              <span v-for="(tag, idx) in selectedTags" :key="idx" class="badge bg-primary me-2" @click="removeTag(tag)"
+                style="cursor:pointer">
+                {{ tag }} ✕
+              </span>
+            </div>
+
+            <!-- 태그 선택 영역 -->
+            <div>
+              <h6 class="fw-bold">태그 선택</h6>
+
+              <!-- 항상 보이는 기본 태그 -->
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button v-for="(tag, i) in availableTags.slice(0, 5)" :key="i" class="btn btn-sm"
+                  :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'" @click="toggleTag(tag)">
+                  {{ tag }}
+                </button>
+              </div>
+
+              <!-- collapse 안에 숨겨진 태그 -->
+              <div class="collapse" id="moreTags">
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <button v-for="(tag, i) in availableTags.slice(5)" :key="'more-' + i" class="btn btn-sm"
+                    :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleTag(tag)">
+                    {{ tag }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- 더보기/접기 버튼 -->
+              <button class="btn btn-link p-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreTags"
+                aria-expanded="false" aria-controls="moreTags" @click="toggleMore">
+                {{ showMore ? "접기 ▲" : "더보기 ▼" }}
+              </button>
+            </div>
+
+
+          </div>
+          <div class="card-footer text-end">
+            <button class="btn btn-success" @click="submitPost">게시</button>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="member-list">
-      <h3>인원 목록 (5명)</h3>
-      <ul>
-        <li v-for="(m, i) in members" :key="i">
-          <img :src="m.avatar" class="member-avatar" />
-          {{ m.name }}
-          <button v-if="!m.accepted" class="accept-btn">O</button>
-          <button v-if="!m.accepted" class="reject-btn">X</button>
-          <span v-if="m.accepted" class="accepted">(수락됨)</span>
-        </li>
-      </ul>
+      <!-- ===== 오른쪽: 첨부 이미지 영역 ===== -->
+      <div class="col-md-3">
+        <h6 class="fw-bold mb-3">첨부 이미지</h6>
+
+        <!-- 파일 업로드 버튼 -->
+        <div class="mb-3 text-center">
+          <label class="d-inline-flex align-items-center justify-content-center bg-dark text-white rounded p-3"
+            style="cursor:pointer; width:80px; height:80px;">
+            <i class="bi bi-folder-plus fs-3"></i>
+            <input type="file" class="d-none" accept="image/*" @change="onFileChange" />
+          </label>
+        </div>
+
+        <!-- 썸네일 리스트 (최대 10장) -->
+        <div class="d-flex flex-column gap-2">
+          <div v-for="(img, idx) in previewImages" :key="idx" class="position-relative">
+            <img :src="img" class="img-thumbnail w-100" style="max-height:120px; object-fit:cover;" />
+            <!-- 삭제 버튼 -->
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+              @click="removeImage(idx)">
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 
-const mainImage = ref("https://place-puppy.com/500x400");
-const hashtags = ref("#강아지 #사랑 #웰시코기");
-const comments = ref([
-  { user: "SucHea", text: "제 마음을 녹여내리는 눈이에요 너무 이뻐요", avatar: "https://placekitten.com/100/100" },
-  { user: "James", text: "BEAUTIFUL😍", avatar: "https://placekitten.com/101/100" }
-]);
-const previewImages = ref([
-  "https://place-puppy.com/200x200",
-  "https://place-puppy.com/201x200",
-  "https://place-puppy.com/202x200",
-  "https://place-puppy.com/203x200"
-]);
+// 글 작성 내용
+const content = ref("");
 
-const members = ref([
-  { name: "LABR_4E", avatar: "https://place-puppy.com/50x50", accepted: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/51x50", accepted: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/52x50", accepted: true },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/53x50", accepted: false },
-  { name: "LABR_4E", avatar: "https://place-puppy.com/54x50", accepted: false }
+// 태그 선택 로직
+const availableTags = ref([
+  "#강아지", "#고양이", "#산책", "#귀여움", "#추억",
+  "#일상", "#댕댕이", "#냥스타", "#훈련", "#여행", "#캠핑", "#간식"
 ]);
+const selectedTags = ref([]);
+const showMore = ref(false); // 더보기 상태
 
-const hashtagList = computed(() =>
-  hashtags.value.split(" ").filter((tag) => tag.startsWith("#"))
-);
+function toggleTag(tag) {
+  if (selectedTags.value.includes(tag)) {
+    selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+  } else {
+    selectedTags.value.push(tag);
+  }
+}
+function removeTag(tag) {
+  selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+}
+function toggleMore() {
+  showMore.value = !showMore.value;
+}
+
+
+// 이미지 미리보기
+const previewImages = ref([]);
+const previewImage = ref(null); // 대표 이미지(왼쪽 큰 프리뷰 용)
+
+function onFileChange(e) {
+  const file = e.target.files[0]; // 여러 개 선택해도 첫 번째만
+  if (!file) return;
+
+  if (previewImages.value.length >= 10) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    previewImages.value.push(event.target.result);
+
+    // 대표 이미지가 아직 없으면 첫 번째 걸로 지정
+    if (!previewImage.value) {
+      previewImage.value = event.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
+
+  // 같은 파일 다시 선택 가능하게 input 초기화
+  e.target.value = "";
+}
+
+function removeImage(idx) {
+  previewImages.value.splice(idx, 1);
+  previewImage.value = previewImages.value[0] || null;
+}
+
+// 게시하기
+function submitPost() {
+  console.log("내용:", content.value);
+  console.log("태그:", selectedTags.value);
+  console.log("이미지:", previewImages.value);
+  alert("게시물이 등록되었습니다!");
+}
+
+
 </script>
-
-<style scoped>
-.walk-post-container {
-  background: #fcfbf8;
-  min-height: 100vh;
-  font-family: "Noto Sans KR", sans-serif;
-}
-
-/* 상단 네비 */
-.top-bar {
-  background: #6b4a2b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-}
-
-.search-input {
-  width: 280px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
-}
-
-.logo {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.paw {
-  font-size: 1.3rem;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-}
-
-.notify {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: red;
-  color: #fff;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  padding: 2px 5px;
-}
-
-/* 메인 레이아웃 */
-.content {
-  display: flex;
-  padding: 40px;
-  gap: 30px;
-}
-
-/* 왼쪽 */
-.left-panel {
-  flex: 1;
-}
-
-.main-image img {
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.hashtags {
-  display: flex;
-  align-items: center;
-  margin: 12px 0;
-}
-
-.hashtags input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dropdown-btn {
-  margin-left: 6px;
-  background: #6b4a2b;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.action-btns {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.cancel-btn {
-  background: #f88;
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.submit-btn {
-  background: #6b4a2b;
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* 중앙 */
-.center-panel {
-  flex: 2;
-}
-
-.post-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.post-profile {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-}
-
-.post-info {
-  flex: 1;
-}
-
-.edit-btn {
-  background: #eee;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  cursor: pointer;
-}
-
-.post-content {
-  margin: 12px 0;
-}
-
-.status-btn {
-  background: #fce9b6;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  margin-bottom: 12px;
-}
-
-.tags {
-  margin-bottom: 10px;
-}
-
-.tag {
-  margin-right: 6px;
-  color: #3b82f6;
-  font-size: 0.9rem;
-}
-
-.likes {
-  font-size: 0.9rem;
-  color: #d33;
-}
-
-/* 댓글 */
-.comment-section {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.comment-section input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.comment-btn {
-  padding: 8px 12px;
-  background: #fce9b6;
-  border: none;
-  border-radius: 6px;
-}
-
-.comments {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.comment-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-/* 오른쪽 */
-.right-panel {
-  flex: 1;
-}
-
-.upload-area {
-  margin-bottom: 20px;
-}
-
-.upload-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #6b4a2b;
-  color: white;
-  font-size: 1.5rem;
-  border: none;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.preview-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.preview-img {
-  width: 70px;
-  height: 70px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.member-list {
-  margin-top: 20px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.member-list h3 {
-  margin-bottom: 10px;
-  color: #6b4a2b;
-}
-
-.member-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.member-list li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.member-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-}
-
-.accept-btn,
-.reject-btn {
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.accept-btn {
-  background: #8f8;
-}
-
-.reject-btn {
-  background: #f88;
-  color: white;
-}
-
-.accepted {
-  color: green;
-  font-size: 0.85rem;
-}
-</style>
