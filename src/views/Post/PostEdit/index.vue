@@ -192,7 +192,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
-import postApi from "@/api/postApi";
+import postApi from "@/apis/postApi";
 
 const route = useRoute();
 const router = useRouter();

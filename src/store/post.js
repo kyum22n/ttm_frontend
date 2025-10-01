@@ -1,5 +1,5 @@
 // src/store/post.js
-import postApi from "@/api/postApi";
+import postApi from "@/apis/postApi";
 
 const post = {
   namespaced: true,
