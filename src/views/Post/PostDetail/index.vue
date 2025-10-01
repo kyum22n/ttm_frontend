@@ -89,7 +89,7 @@
           <div class="card-body">
             <img :src="post.authorImg" class="rounded-circle mb-2" width="60" height="60" />
             <h6 class="card-title">{{ post.authorName }}</h6>
-            <router-link :to="`/profile/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">프로필 놀러가기</router-link>
+            <router-link :to="`/Profile/OtherProfile/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">프로필 놀러가기</router-link>
 
             <hr />
             <h6 class="fw-bold mb-2">작성자 피드</h6>

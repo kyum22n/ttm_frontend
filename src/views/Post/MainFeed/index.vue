@@ -28,13 +28,8 @@
     <!-- 강아지 프로필 리스트 -->
     <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
       <div v-for="(dog, i) in dogs" :key="i" class="text-center">
-        <img
-          :src="dog.img"
-          class="rounded-circle border border-4 border-primary mb-2"
-          width="100"
-          height="100"
-          alt="강아지 프로필"
-        />
+        <img :src="dog.img" class="rounded-circle border border-4 border-primary mb-2" width="100" height="100"
+          alt="강아지 프로필" />
         <div class="fw-semibold small">{{ dog.name }}</div>
       </div>
     </div>
@@ -70,10 +65,7 @@
                 </button>
               </div>
               <!-- 카드 전체 클릭 → 상세 -->
-              <router-link
-                :to="`/post/${post.postId}`"
-                class="stretched-link"
-              >
+              <router-link :to="`/post/${post.postId}`" class="stretched-link">
                 <span class="visually-hidden">상세보기로 이동</span>
               </router-link>
             </div>
@@ -85,7 +77,7 @@
       <div class="col-lg-4">
         <div class="card border-0 shadow-sm">
           <div class="card-body">
-            <button class="btn w-100 btn-outline-dark mb-3">
+            <button class="btn w-100 btn-outline-dark mb-3" @click="$router.push({ path: '/post/create' })">
               <i class="bi bi-pencil"></i> 글쓰기
             </button>
             <input type="text" v-model="filters.q" class="form-control mb-2" placeholder="검색어 입력" />

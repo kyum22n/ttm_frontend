@@ -51,20 +51,16 @@ const store = useStore();
 const router = useRouter();
 
 const loginForm = ref({
-  loginId: "userApi",
-  password: "1234",
+  loginId: "",
+  password: "",
 });
 
 async function handleLogin() {
   try {
-    const data = structuredClone(loginForm.value);
-    const response = await userLoginApi.userLogin(data);
+    const response = await userLoginApi.userLogin(loginForm.value);
     const resultObject = response.data;
 
-    console.log("API 응답 확인:", resultObject); // 🔍 여기 추가
-
     if (resultObject.result === "success") {
-      // 구조 맞춰서 Vuex로 저장
       const user = {
         userId: resultObject.userId,
         userLoginId: resultObject.loginId,
@@ -72,18 +68,18 @@ async function handleLogin() {
         userEmail: resultObject.userEmail,
         userAddress: resultObject.userAddress,
         userBirthDate: resultObject.userBirthDate,
+        // 서버에서 내려주는 첫 번째 펫 이미지 URL
         profileImage: resultObject.profileImage || "https://via.placeholder.com/40",
       };
-      console.log("Vuex에 저장할 user:", user); // 🔍 여기서 확인
 
       store.dispatch("saveAuth", { user, jwt: resultObject.jwt });
-
-      await router.push("/post/MainFeed");
+      router.push("/Post/MainFeed");
     } else {
-      console.log("로그인 실패:", resultObject.message);
+      alert(resultObject.message || "로그인 실패");
     }
   } catch (error) {
-    console.log(error);
+    console.error("로그인 중 오류:", error);
+    alert("로그인 중 오류 발생");
   }
 }
 </script>

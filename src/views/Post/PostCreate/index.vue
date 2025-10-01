@@ -16,20 +16,10 @@
             <h5 class="card-title">게시글 작성</h5>
 
             <!-- 제목 -->
-            <input
-              v-model="title"
-              type="text"
-              class="form-control mb-2"
-              placeholder="제목을 입력하세요"
-            />
+            <input v-model="title" type="text" class="form-control mb-2" placeholder="제목을 입력하세요" />
 
             <!-- 내용 -->
-            <textarea
-              v-model="content"
-              rows="6"
-              class="form-control mb-3"
-              placeholder="내용을 입력하세요"
-            ></textarea>
+            <textarea v-model="content" rows="6" class="form-control mb-3" placeholder="내용을 입력하세요"></textarea>
 
             <!-- 산책 모집글 여부 -->
             <div class="form-check mb-3">
@@ -37,60 +27,40 @@
               <label class="form-check-label" for="isRequest">산책 모집글</label>
             </div>
 
-            <!-- 선택된 태그 -->
+            <!-- 선택된 태그 보여주기 -->
             <div class="mb-3">
-              <span
-                v-for="(tag, idx) in selectedTags"
-                :key="idx"
-                class="badge bg-primary me-2"
-                style="cursor:pointer"
-                @click="removeTag(tag)"
-              >
-                {{ tag }} ✕
+              <span v-for="tagId in selectedTags" :key="tagId" class="badge bg-primary me-2" style="cursor:pointer"
+                @click="removeTag(tagId)">
+                {{availableTags.find(t => t.tagId === tagId)?.tagName}} ✕
               </span>
             </div>
 
-            <!-- 태그 선택 -->
+            <!-- 태그 선택 버튼 -->
             <h6 class="fw-bold">태그 선택</h6>
             <div class="d-flex flex-wrap gap-2 mb-2">
-              <button
-                v-for="(tag, i) in availableTags.slice(0, 5)"
-                :key="i"
-                type="button"
-                class="btn btn-sm"
-                :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'"
-                @click="toggleTag(tag)"
-              >
-                {{ tag }}
+              <button v-for="tag in availableTags.slice(0, 5)" :key="tag.tagId" type="button" class="btn btn-sm"
+                :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
+                @click="toggleTag(tag.tagId)">
+                {{ tag.tagName }}
               </button>
             </div>
 
+
             <div class="collapse" id="moreTags">
               <div class="d-flex flex-wrap gap-2 mt-2">
-                <button
-                  v-for="(tag, i) in availableTags.slice(5)"
-                  :key="'more-' + i"
-                  type="button"
-                  class="btn btn-sm"
-                  :class="selectedTags.includes(tag) ? 'btn-secondary' : 'btn-outline-primary'"
-                  @click="toggleTag(tag)"
-                >
-                  {{ tag }}
+                <button v-for="tag in availableTags.slice(5)" :key="tag.tagId" type="button" class="btn btn-sm"
+                  :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
+                  @click="toggleTag(tag.tagId)">
+                  {{ tag.tagName }}
                 </button>
               </div>
             </div>
 
-            <button
-              class="btn btn-link p-0 mt-2"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#moreTags"
-              aria-expanded="false"
-              aria-controls="moreTags"
-              @click="toggleMore"
-            >
+            <button class="btn btn-link p-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreTags"
+              aria-expanded="false" aria-controls="moreTags" @click="toggleMore">
               {{ showMore ? "접기 ▲" : "더보기 ▼" }}
             </button>
+
           </div>
 
           <div class="card-footer d-flex justify-content-between">
@@ -112,17 +82,10 @@
       <div class="col-md-3">
         <h6 class="fw-bold mb-3">첨부 이미지</h6>
         <div class="d-flex flex-column gap-2">
-          <div
-            v-for="(img, idx) in previewImages"
-            :key="idx"
-            class="position-relative"
-          >
+          <div v-for="(img, idx) in previewImages" :key="idx" class="position-relative">
             <img :src="img" class="img-thumbnail w-100" style="max-height:120px; object-fit:cover;" />
-            <button
-              type="button"
-              class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-              @click="removeImage(idx)"
-            >
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+              @click="removeImage(idx)">
               ✕
             </button>
           </div>
@@ -151,22 +114,34 @@ const isRequest = ref(false);
 const userId = 1; // TODO: 로그인 값 연동
 
 // 태그
-const availableTags = ["#강아지", "#고양이", "#산책", "#귀여움", "#추억", "#일상", "#여행", "#캠핑"];
-const selectedTags = ref([]);
-const showMore = ref(false);
-function toggleTag(tag) {
-  if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+const availableTags = [
+  { tagId: 1, tagName: "강아지산책" },
+  { tagId: 2, tagName: "애견카페" },
+  { tagId: 3, tagName: "반려견일상" },
+  { tagId: 4, tagName: "멍스타그램" },
+  { tagId: 5, tagName: "귀여운강아지" },
+];
+
+const selectedTags = ref([]); // tagId만 담김
+
+function toggleTag(tagId) {
+  if (selectedTags.value.includes(tagId)) {
+    selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
   } else {
-    selectedTags.value.push(tag);
+    selectedTags.value.push(tagId);
   }
 }
-function removeTag(tag) {
-  selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+
+function removeTag(tagId) {
+  selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
 }
+
+const showMore = ref(false);
+
 function toggleMore() {
   showMore.value = !showMore.value;
 }
+
 
 // 이미지
 const previewImages = ref([]);
@@ -201,14 +176,15 @@ async function submitPost() {
   if (!title.value.trim() || !content.value.trim()) return;
   submitting.value = true;
   try {
-    const fd = new FormData();
-    fd.append("postTitle", title.value);
-    fd.append("postContent", content.value);
-    fd.append("isRequest", isRequest.value ? "Y" : "N");
-    fd.append("postUserId", String(userId));
-    files.value.forEach((f) => f && fd.append("postAttaches", f));
+    const post = {
+      postTitle: title.value,
+      postContent: content.value,
+      isRequest: isRequest.value ? "Y" : "N",
+      postUserId: userId,
+      postAttaches: files.value   // 첨부 이미지 배열
+    };
 
-    const created = await store.dispatch("post/create", fd);
+    const created = await store.dispatch("post/create", post);
     const newId = created?.postId;
     if (!newId) return;
 
@@ -225,4 +201,5 @@ async function submitPost() {
     submitting.value = false;
   }
 }
+
 </script>

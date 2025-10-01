@@ -24,7 +24,7 @@ import axios from "axios";
         // 일반 필드
         for (const key in post) {
             if (post[key] != null && key !== "postAttach" && key !== "postAttaches") {
-            formData.append(key, post[key]);
+                formData.append(key, post[key]);
             }
         }
 
@@ -36,7 +36,7 @@ import axios from "axios";
         // 첨부 이미지 여러 장
         if (post.postAttaches && Array.isArray(post.postAttaches)) {
             post.postAttaches.forEach((file) => {
-            if (file) formData.append("postAttaches", file);
+                if (file) formData.append("postAttaches", file);
             });
         }
 

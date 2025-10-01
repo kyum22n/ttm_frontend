@@ -106,11 +106,14 @@ const post = {
     },
 
     // 작성
-    create: function(context, formData) {
-      return postApi.postWrite(formData)
+    create: function(context, post) {
+      return postApi.postWrite(post)
         .then(function(res) {
           if (res.data && res.data.postId) {
-            return context.dispatch("fetchDetail", res.data.postId);
+            //스토어 detail 갱신
+            context.dispatch("fetchDetail", res.data.postId);
+            // 방금 등록한 게시물 데이터 반환
+            return res.data;
           }
         })
         .catch(function(err) {

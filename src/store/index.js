@@ -15,6 +15,7 @@ const store = createStore({
       userEmail: "",
       userAddress: "",
       userBirthDate: "",
+      profileImage: "",
     },
     signupUser: null, // 회원가입 단계에서 임시 저장
     jwt: "",
