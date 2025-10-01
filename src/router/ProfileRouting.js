@@ -8,8 +8,9 @@ const routes = [
     component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/EditProfile"),
   },
   {
-    path: "/Profile/OtherProfile",
+    path: "/Profile/OtherProfile/:userId",
     component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/OtherProfile"),
+    props: true
   },
   {
     path: "/Profile/PetEditProfile",
