@@ -1,277 +1,218 @@
+<!-- ProfileEdit.vue -->
 <template>
-  <div class="profile-container">
-    <!-- 상단 네비 -->
-    <header class="top-bar">
-      <input
-        type="text"
-        class="search-input"
-        placeholder="해시태그 또는 아이디 검색"
-      />
-      <div class="logo">나와 <span class="paw">🐾</span> 산책가개</div>
-      <div class="user-info">
-        <div class="notify">🔔<span class="badge">1</span></div>
-        <span class="username">TWOTWO_MOM</span>
-        <img src="@/assets/default-profile.png" alt="프로필" class="user-img" />
-      </div>
-    </header>
+  <div class="container py-5">
+    <div class="card border-3 rounded-4 shadow-sm profile-frame">
+      <div class="card-body p-4 p-md-5">
+        <h4 class="fw-bold text-brown mb-4">My Profile</h4>
 
-    <!-- 프로필 박스 -->
-    <div class="profile-box">
-      <h2>My Profile</h2>
-      <div class="profile-content">
-        <div class="profile-left">
-          <img src="@/assets/default-profile.png" alt="프로필" class="profile-photo" />
+        <div class="row g-5 align-items-start">
+          <!-- 왼쪽: 아바타 -->
+          <div class="col-12 col-md-4 d-flex flex-column align-items-center">
+            <div class="avatar-wrap mb-3">
+              <img :src="avatarPreview" class="rounded-circle object-cover" width="220" height="220" alt="avatar" />
+            </div>
+            <div class="d-grid gap-2 w-100" style="max-width:260px">
+              <label class="btn btn-outline-secondary btn-sm rounded-pill">
+                사진 업로드
+                <input type="file" accept="image/*" class="d-none" @change="onPickAvatar" />
+              </label>
+              <button v-if="form.avatarFile" class="btn btn-outline-danger btn-sm rounded-pill" @click="clearAvatar">
+                사진 제거
+              </button>
+            </div>
+          </div>
+
+          <!-- 오른쪽: 폼 -->
+          <div class="col-12 col-md-8">
+            <form @submit.prevent="submit">
+              <div class="vstack gap-3">
+
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input v-model.trim="form.name" type="text" class="form-control" placeholder="이름" required />
+                </div>
+
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input v-model="form.birth" type="text" class="form-control" placeholder="2001.07.24" />
+                </div>
+
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-badge-ad"></i></span>
+                  <input v-model.trim="form.username" type="text" class="form-control" placeholder="아이디" readonly />
+                </div>
+
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input v-model.trim="form.email" type="email" class="form-control" placeholder="email@example.com" />
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                      <input v-model="form.password" :type="showPw ? 'text' : 'password'" class="form-control" placeholder="비밀번호" />
+                      <button type="button" class="btn btn-outline-secondary" @click="showPw = !showPw">
+                        <i :class="showPw ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                      <input v-model="form.password2" :type="showPw2 ? 'text' : 'password'" class="form-control" placeholder="비밀번호 확인" />
+                      <button type="button" class="btn btn-outline-secondary" @click="showPw2 = !showPw2">
+                        <i :class="showPw2 ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-sm-8">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                      <input v-model.trim="form.address" type="text" class="form-control" placeholder="서울시 송파구" />
+                    </div>
+                  </div>
+                  <div class="col-sm-4 d-grid">
+                    <button type="button" class="btn btn-ivory" @click="$emit('search-address')">Search</button>
+                  </div>
+                </div>
+
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" id="denyWalk" v-model="form.denyWalkRequest">
+                  <label class="form-check-label" for="denyWalk">
+                    산책 메이트 신청을 받고 싶지 않아요
+                  </label>
+                </div>
+
+                <div class="text-center mt-3">
+                  <button type="submit" class="btn btn-brown px-5 py-2 rounded-pill">
+                    <span class="paw me-2">🐾</span> 변경사항 저장
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
         </div>
-        <div class="profile-right">
-          <div class="input-group">
-            <span class="icon">👤</span>
-            <input v-model="name" type="text" placeholder="이름" />
-          </div>
 
-          <div class="input-group">
-            <span class="icon">📅</span>
-            <input v-model="birth" type="date" />
-          </div>
-
-          <div class="input-group">
-            <span class="icon">🆔</span>
-            <input v-model="userId" type="text" disabled />
-          </div>
-
-          <div class="input-group">
-            <span class="icon">✉️</span>
-            <input v-model="email" type="email" />
-          </div>
-
-          <div class="input-group double">
-            <span class="icon">🔒</span>
-            <input v-model="password" type="password" placeholder="비밀번호" />
-            <input v-model="confirm" type="password" placeholder="확인" />
-          </div>
-
-          <div class="input-group">
-            <span class="icon">📍</span>
-            <input v-model="region" type="text" placeholder="지역" />
-            <button class="search-btn">Search</button>
-          </div>
-
-          <div class="agree">
-            <input type="checkbox" v-model="allowMate" /> 산책 메이트 신청을 받고 싶지 않아요
-          </div>
-        </div>
-      </div>
-
-      <button class="save-btn">변경사항 저장</button>
-      <div class="bottom-pets">
-        <img src="@/assets/cat.png" alt="고양이" class="pet" />
-        <img src="@/assets/dog.png" alt="강아지" class="pet" />
+        <!-- 귀여운 구석 아이콘(선택) -->
+        <div class="d-none d-md-block cute-pets">🐱 🐶</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, reactive, ref, watch } from 'vue'
 
-const name = ref("김병현");
-const birth = ref("2001-07-24");
-const userId = ref("TWOTWO_MOM");
-const email = ref("twotwomom@naver.com");
-const password = ref("");
-const confirm = ref("");
-const region = ref("서울시 송파구");
-const allowMate = ref(false);
+const props = defineProps({
+  /** 초기값 주입 가능 (백엔드 데이터 매핑) */
+  modelValue: {
+    type: Object,
+    default: () => ({
+      name: '김병현',
+      birth: '2001.07.24',
+      username: 'TWOTWO_MOM',
+      email: 'twotwomom@naver.com',
+      address: '서울시 송파구',
+      denyWalkRequest: false,
+      avatarUrl: 'https://picsum.photos/seed/dog1/600/600',
+    }),
+  },
+})
+const emit = defineEmits(['update:modelValue', 'save', 'search-address'])
 
-function saveChanges() {
-  console.log("변경사항 저장:", {
-    name: name.value,
-    birth: birth.value,
-    userId: userId.value,
-    email: email.value,
-    region: region.value,
-    allowMate: allowMate.value,
-  });
+const form = reactive({
+  name: props.modelValue.name,
+  birth: props.modelValue.birth,
+  username: props.modelValue.username,
+  email: props.modelValue.email,
+  password: '',
+  password2: '',
+  address: props.modelValue.address,
+  denyWalkRequest: props.modelValue.denyWalkRequest,
+  avatarUrl: props.modelValue.avatarUrl,
+  avatarFile: null,
+})
+
+watch(form, () => emit('update:modelValue', { ...form }), { deep: true })
+
+const showPw = ref(false)
+const showPw2 = ref(false)
+
+const avatarPreview = computed(() =>
+  form.avatarFile ? URL.createObjectURL(form.avatarFile) : (form.avatarUrl || placeholder)
+)
+const placeholder = 'https://dummyimage.com/600x600/e9e9e9/aaaaaa&text=avatar'
+
+function onPickAvatar(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  form.avatarFile = file
+}
+function clearAvatar() {
+  form.avatarFile = null
+}
+
+function submit() {
+  // 간단 검증
+  if (form.password || form.password2) {
+    if (form.password.length < 8) return alert('비밀번호는 8자 이상으로 입력하세요.')
+    if (form.password !== form.password2) return alert('비밀번호 확인이 일치하지 않습니다.')
+  }
+  // 저장 payload
+  const payload = {
+    name: form.name,
+    birth: form.birth,
+    username: form.username,
+    email: form.email,
+    password: form.password || undefined,
+    address: form.address,
+    denyWalkRequest: form.denyWalkRequest,
+    avatarFile: form.avatarFile, // 파일이 있는 경우에만 업로드
+  }
+  emit('save', payload)
 }
 </script>
 
 <style scoped>
-.profile-container {
-  background: #fcfbf8;
-  min-height: 100vh;
-  font-family: "Noto Sans KR", sans-serif;
+/* 테마 */
+:root { --brown: #6b3f2a; --ivory:#f2e2c9; }
+.text-brown { color: var(--brown); }
+
+.profile-frame { border-color: var(--brown); }
+.object-cover { object-fit: cover; }
+
+.avatar-wrap {
+  border: 4px solid var(--brown);
+  border-radius: 50%;
+  padding: 4px;
 }
 
-/* 상단 네비 */
-.top-bar {
-  background: #6b4a2b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-}
-
-.search-input {
-  width: 300px;
-  padding: 6px 10px;
-  border-radius: 6px;
+.btn-brown {
+  background: var(--brown);
+  color:#fff;
   border: none;
-  outline: none;
 }
+.btn-brown:hover { filter: brightness(0.95); }
 
-.logo {
-  font-weight: bold;
-  font-size: 1.2rem;
+.btn-ivory {
+  background: var(--ivory);
+  border: 1px solid #c7b6ac;
 }
+.btn-ivory:hover { filter: brightness(0.98); }
 
-.paw {
-  font-size: 1.3rem;
-}
+.paw { font-size: 1.2rem; vertical-align: middle; }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.notify {
-  position: relative;
-  font-size: 1.2rem;
-}
-
-.badge {
+/* 배경 느낌 */
+.cute-pets {
   position: absolute;
-  top: -6px;
-  right: -8px;
-  background: red;
-  color: #fff;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  padding: 2px 5px;
-}
-
-.user-img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-}
-
-/* 프로필 박스 */
-.profile-box {
-  background: #fff;
-  border: 2px solid #6b4a2b;
-  border-radius: 12px;
-  padding: 30px;
-  margin: 40px auto;
-  width: 80%;
-  max-width: 800px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.profile-box h2 {
-  margin-bottom: 20px;
-  color: #6b4a2b;
-}
-
-.profile-content {
-  display: flex;
-  gap: 40px;
-  margin-bottom: 20px;
-}
-
-.profile-left {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: start;
-}
-
-.profile-photo {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  border: 2px solid #6b4a2b;
-  object-fit: cover;
-}
-
-.profile-right {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  background: #f1f1f1;
-  border-radius: 6px;
-  padding: 6px 10px;
-}
-
-.input-group input {
-  border: none;
-  flex: 1;
-  padding: 6px;
-  background: none;
-  outline: none;
-}
-
-.icon {
-  margin-right: 8px;
-}
-
-.double {
-  display: flex;
-  gap: 8px;
-}
-
-.search-btn {
-  margin-left: 6px;
-  padding: 6px 12px;
-  background: #fce9b6;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.search-btn:hover {
-  background: #fbdc89;
-}
-
-/* 동의 체크 */
-.agree {
-  font-size: 0.9rem;
-  margin-top: 10px;
-}
-
-/* 저장 버튼 */
-.save-btn {
-  margin: 20px auto 0;
-  display: block;
-  background: #6b4a2b;
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-  width: 60%;
-  max-width: 300px;
-}
-
-.save-btn:hover {
-  background: #56351f;
-}
-
-.bottom-pets {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.pet {
-  width: 70px;
-  margin: 0 10px;
+  right: 28px;
+  bottom: 18px;
+  font-size: 1.8rem;
+  opacity: .8;
 }
 </style>

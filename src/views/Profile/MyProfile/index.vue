@@ -1,346 +1,259 @@
+<!-- ProfilePage.vue -->
 <template>
-  <div class="mypage-container">
-    <!-- 상단 네비 -->
-    <header class="top-bar">
-      <input type="text" class="search-input" placeholder="해시태그 또는 아이디 검색" />
-      <div class="logo">나와 <span class="paw">🐾</span> 산책가개</div>
-      <div class="user-info">
-        <div class="notify">🔔<span class="badge">1</span></div>
-        <span class="username">{{ profile.id }}</span>
-        <img src="@/assets/default-profile.png" alt="프로필" class="user-img" />
-      </div>
-    </header>
+  <div class="container py-4">
 
-    <!-- 프로필 카드 (상단) -->
-    <section class="profile-card">
-      <div class="profile-left">
-        <img :src="profile.img" alt="프로필" class="profile-photo" />
-      </div>
+    <!-- 프로필 헤더 -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <div class="row align-items-center g-3">
+          <div class="col-auto">
+            <img :src="profile.avatar" class="rounded-circle object-cover" width="88" height="88" alt="avatar" />
+          </div>
+          <div class="col">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h5 class="mb-0">ID: {{ profile.id }}</h5>
+              <span class="text-muted small">·</span>
+              <button class="btn btn-sm btn-outline-secondary">설정</button>
+            </div>
 
-      <div class="profile-center">
-        <p class="profile-id">ID: {{ profile.id }}</p>
-        <ul class="profile-info">
-          <li><strong>이름:</strong> {{ profile.name }}</li>
-          <li><strong>생일:</strong> {{ profile.birth }}</li>
-          <li><strong>성별:</strong> {{ profile.gender }}</li>
-          <li><strong>몸무게:</strong> {{ profile.weight }}</li>
-          <li><strong>지역:</strong> {{ profile.region }}</li>
+            <ul class="list-inline text-muted small mb-2 mt-2">
+              <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
+                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
+              </li>
+            </ul>
+
+            <div class="row g-3">
+              <div class="col-lg-8">
+                <div class="p-3 bg-light rounded">
+                  <p class="mb-0 small">{{ profile.bio }}</p>
+                </div>
+              </div>
+              <div class="col-lg-4 text-lg-end">
+                <button class="btn btn-primary">친구맺기+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하이라이트/펫 썸네일 -->
+    <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
+      <button class="btn btn-outline-secondary btn-sm">Add Pets</button>
+      <div v-for="h in highlights" :key="h.id" class="text-center">
+        <div class="story-ring mx-auto mb-1">
+          <img :src="h.img" alt="" class="rounded-circle object-cover" />
+        </div>
+        <div class="small text-muted">{{ h.name }}</div>
+      </div>
+    </div>
+
+    <!-- 콘텐츠 + 사이드바 -->
+    <div class="row g-4">
+      <div class="col-lg-8">
+
+        <!-- 필터 탭 -->
+        <ul class="nav nav-pills mb-3">
+          <li v-for="t in tabs" :key="t.key" class="nav-item">
+            <button
+              class="nav-link"
+              :class="{ active: activeTab === t.key }"
+              @click="activeTab = t.key"
+            >
+              {{ t.label }}
+            </button>
+          </li>
         </ul>
-      </div>
 
-      <div class="profile-right">
-        <p class="profile-intro">{{ profile.intro }}</p>
-        <button class="logout-btn">LogOut</button>
-      </div>
-    </section>
-
-    <!-- 메인 콘텐츠: 피드 + 필터 -->
-    <main class="content">
-      <!-- 중앙: 게시물 피드 -->
-      <section class="feed-section">
-        <div class="tabs">
-          <button v-for="tab in tabs" :key="tab" :class="{active: activeTab===tab}" @click="activeTab=tab">
-            {{ tab }}
-          </button>
-        </div>
-
-        <div class="feed-grid">
-          <div v-for="(post, i) in posts" :key="i" class="feed-card">
-            <img :src="post.img" class="feed-img" />
-            <p class="feed-title">{{ post.title }}</p>
-            <div class="likes">♡ {{ post.likes }}</div>
+        <!-- 카드 그리드 -->
+        <div class="row g-3">
+          <div v-for="post in filteredPosts" :key="post.id" class="col-md-6">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="ratio ratio-4x3">
+                <img :src="post.img" class="card-img-top object-cover" alt="" />
+              </div>
+              <div class="card-body">
+                <div class="small text-muted mb-1">{{ post.subtitle }}</div>
+                <h6 class="card-title mb-1">{{ post.title }}</h6>
+                <p class="card-text text-muted small mb-0">{{ post.desc }}</p>
+              </div>
+              <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                <span class="small text-muted">{{ post.time }}</span>
+                <button class="btn btn-sm btn-outline-secondary">
+                  ♥ {{ post.likes }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- 오른쪽: 필터 -->
-      <aside class="filter-section">
-        <button class="write-btn">✍️ 글쓰기</button>
-        <div class="filter-box">
-          <h3>필터</h3>
-          <input type="text" placeholder="제목 검색" />
-          <input type="text" placeholder="사용자 검색" />
-
-          <h4>해시태그</h4>
-          <div class="checkbox-group">
-            <label><input type="checkbox" /> 산책</label>
-            <label><input type="checkbox" /> 귀여움</label>
-            <label><input type="checkbox" /> 자랑</label>
-          </div>
-
-          <h4>지역</h4>
-          <div class="checkbox-group">
-            <label><input type="checkbox" /> 서울</label>
-            <label><input type="checkbox" /> 경기</label>
-            <label><input type="checkbox" /> 부산</label>
-          </div>
-
-          <button class="apply-btn">적용</button>
-          <button class="reset-btn">초기화</button>
-        </div>
-      </aside>
-    </main>
-
-    <!-- 푸터 -->
-    <footer class="footer">
-      <div class="footer-left">🐱</div>
-      <div class="footer-info">
-        산책 매칭 플랫폼 "나와 산책가개"<br />
-        고객센터 0000-0000 | 사업자등록번호 000-00-00000
+        <!-- 페이지네이션 -->
+        <nav class="mt-4">
+          <ul class="pagination pagination-sm">
+            <li class="page-item" :class="{ disabled: page === 1 }">
+              <button class="page-link" @click="page--" :disabled="page===1">Prev</button>
+            </li>
+            <li class="page-item" v-for="n in totalPages" :key="n" :class="{ active: page === n }">
+              <button class="page-link" @click="page = n">{{ n }}</button>
+            </li>
+            <li class="page-item" :class="{ disabled: page === totalPages }">
+              <button class="page-link" @click="page++" :disabled="page===totalPages">Next</button>
+            </li>
+          </ul>
+        </nav>
       </div>
-      <div class="footer-right">🐶</div>
-    </footer>
+
+      <!-- 사이드바 -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <strong>필터</strong>
+              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">초기화</button>
+            </div>
+
+            <!-- 검색 -->
+            <div class="mb-3">
+              <label class="form-label small">검색</label>
+              <input v-model="filters.q" type="search" class="form-control form-control-sm" placeholder="키워드..." />
+            </div>
+
+            <!-- 카테고리 -->
+            <div class="mb-3">
+              <label class="form-label small">종류</label>
+              <div class="d-flex flex-wrap gap-2">
+                <div v-for="c in categories" :key="c" class="form-check">
+                  <input class="form-check-input" type="checkbox" :id="`cat-${c}`" :value="c" v-model="filters.cats" />
+                  <label class="form-check-label small" :for="`cat-${c}`">{{ c }}</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 정렬 -->
+            <div class="mb-2">
+              <label class="form-label small">정렬</label>
+              <select v-model="filters.sort" class="form-select form-select-sm">
+                <option value="latest">최신순</option>
+                <option value="likes">좋아요순</option>
+              </select>
+            </div>
+
+            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">적용</button>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <strong class="d-block mb-2">통계</strong>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>게시물</span><span>{{ posts.length }}</span>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>좋아요 합계</span><span>{{ totalLikes }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, reactive, ref } from 'vue'
 
-const profile = ref({
-  id: "TWOTWO_MOM",
-  name: "TwoTwo",
-  birth: "2016.02.02 (만 10세)",
-  gender: "남",
-  weight: "5kg",
-  region: "서울 송파구",
-  img: "https://place-puppy.com/200x200",
-  intro: `안녕하세요 저는 투투예요 🐾
-나이는 10살이고 강남과 산책을 정말 좋아해요.
-특기라면 언제까지고 간식 찾기!
-낮가리곤 좀 있지만, 친해지면 꼬리를 흔들면서 엄청 좋아한답니다.`,
-});
+const profile = reactive({
+  id: 'TWOTWO_MOM',
+  avatar: 'https://picsum.photos/seed/dog1/200/200',
+  bio: '반려견/반려묘와 함께하는 기록장입니다. 산책 메이트 구해요!',
+  stats: [
+    { label: '게시물', value: 128 },
+    { label: '팔로워', value: 912 },
+    { label: '팔로잉', value: 180 },
+  ],
+})
 
-const tabs = ref(["작성", "조회수", "좋아요순", "공개일자"]);
-const activeTab = ref("작성");
+const highlights = [
+  { id: 1, name: 'Siberian Husky', img: 'https://picsum.photos/seed/h1/120/120' },
+  { id: 2, name: 'Poodle', img: 'https://picsum.photos/seed/h2/120/120' },
+  { id: 3, name: 'German Shepherd', img: 'https://picsum.photos/seed/h3/120/120' },
+  { id: 4, name: 'Pug', img: 'https://picsum.photos/seed/h4/120/120' },
+  { id: 5, name: 'Tortoise', img: 'https://picsum.photos/seed/h5/120/120' },
+  { id: 6, name: 'Loki', img: 'https://picsum.photos/seed/h6/120/120' },
+]
 
-const posts = ref([
-  {
-    title: "세상에서 가장 따뜻한 순간, 나와 함께라서 행복해",
-    img: "https://place-puppy.com/400x250",
-    likes: 718,
-  },
-  {
-    title: "오늘도 나와 함께 해주는 🐶",
-    img: "https://place-puppy.com/401x250",
-    likes: 718,
-  },
-  {
-    title: "작은 관심이 전하는 큰 위로",
-    img: "https://placekitten.com/400/250",
-    likes: 718,
-  },
-  {
-    title: "오늘 산책의 MVP는 나다 🏆",
-    img: "https://placekitten.com/401/250",
-    likes: 718,
-  },
-]);
+const tabs = [
+  { key: 'all', label: '전체' },
+  { key: 'story', label: '스토리' },
+  { key: 'group', label: '그룹산책' },
+  { key: 'feed', label: '피드' },
+]
+const activeTab = ref('all')
+
+const categories = ['강아지', '고양이', '일상', '산책', '모임']
+
+// 더미 포스트
+const posts = reactive([
+  { id: 1, type: 'feed', cats: ['강아지', '산책'], img: 'https://picsum.photos/seed/p1/600/400', title: '주말에 강변 산책', subtitle: '러프에게 행복한 날', desc: '가을바람과 함께 산책했어요.', likes: 718, time: '1시간 전' },
+  { id: 2, type: 'story', cats: ['강아지'], img: 'https://picsum.photos/seed/p2/600/400', title: '오늘의 놀이', subtitle: '소파 위에서', desc: '간식 숨바꼭질!', likes: 423, time: '2시간 전' },
+  { id: 3, type: 'group', cats: ['산책','모임'], img: 'https://picsum.photos/seed/p3/600/400', title: '그룹 워크 모집', subtitle: '한강공원', desc: '내일 아침 9시', likes: 220, time: '어제' },
+  { id: 4, type: 'feed', cats: ['고양이','일상'], img: 'https://picsum.photos/seed/p4/600/400', title: '고양이 졸림', subtitle: '집사일기', desc: '햇살 맛집 창가', likes: 91, time: '2일 전' },
+  { id: 5, type: 'feed', cats: ['강아지'], img: 'https://picsum.photos/seed/p5/600/400', title: '낮잠 타임', subtitle: '러프', desc: '푹 쉬는 중', likes: 310, time: '3일 전' },
+  { id: 6, type: 'group', cats: ['모임'], img: 'https://picsum.photos/seed/p6/600/400', title: '주말 번개 산책', subtitle: '잠실', desc: '참가자 5/8', likes: 150, time: '3일 전' },
+])
+
+// 필터 상태
+const filters = reactive({
+  q: '',
+  cats: [],
+  sort: 'latest',
+})
+const page = ref(1)
+const pageSize = 6
+
+const filteredPosts = computed(() => {
+  let list = posts
+    .filter(p => (activeTab.value === 'all' ? true : p.type === activeTab.value))
+    .filter(p => (filters.cats.length ? filters.cats.some(c => p.cats.includes(c)) : true))
+    .filter(p => (filters.q ? (p.title + p.subtitle + p.desc).includes(filters.q) : true))
+
+  if (filters.sort === 'likes') {
+    list = [...list].sort((a, b) => b.likes - a.likes)
+  }
+  // 간단 페이지네이션 (데모)
+  const start = (page.value - 1) * pageSize
+  return list.slice(start, start + pageSize)
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(
+  posts.filter(p => (activeTab.value === 'all' ? true : p.type === activeTab.value)).length / pageSize
+)))
+
+const totalLikes = computed(() => posts.reduce((acc, p) => acc + p.likes, 0))
+
+function resetFilters () {
+  filters.q = ''
+  filters.cats = []
+  filters.sort = 'latest'
+}
+function applyFilters () {
+  page.value = 1
+}
 </script>
 
 <style scoped>
-.mypage-container {
-  background: #fcfbf8;
-  min-height: 100vh;
-  font-family: "Noto Sans KR", sans-serif;
-}
+.object-cover { object-fit: cover; }
 
-/* 상단 네비 */
-.top-bar {
-  background: #6b4a2b;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-}
-.search-input {
-  width: 280px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
-}
-.logo {
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.user-img {
-  width: 35px;
-  height: 35px;
+/* 하이라이트 링 */
+.story-ring {
+  width: 64px; height: 64px;
+  padding: 3px;
   border-radius: 50%;
+  background: linear-gradient(45deg, #ff6ea8, #f7b2d9, #fcd5e8);
+  display: grid; place-items: center;
 }
-.notify {
-  position: relative;
-}
-.badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: red;
-  color: #fff;
-  font-size: 0.7rem;
-  border-radius: 50%;
-  padding: 2px 5px;
-}
+.story-ring img { width: 100%; height: 100%; }
 
-/* 프로필 카드 */
-.profile-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background: #fff;
-  margin: 20px 40px;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  gap: 20px;
-}
-.profile-left {
-  flex: 1;
-  text-align: center;
-}
-.profile-photo {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-}
-.profile-center {
-  flex: 1;
-}
-.profile-id {
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-.profile-info {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  line-height: 1.6;
-}
-.profile-right {
-  flex: 2;
-}
-.profile-intro {
-  font-size: 0.9rem;
-  color: #444;
-  margin-bottom: 12px;
-}
-.logout-btn {
-  padding: 8px 14px;
-  border: none;
-  background: #6b4a2b;
-  color: #fff;
-  border-radius: 6px;
-}
-
-/* 메인 콘텐츠 */
-.content {
-  display: flex;
-  gap: 30px;
-  padding: 20px 40px;
-}
-
-/* 피드 */
-.feed-section {
-  flex: 2;
-}
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.tabs button {
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-}
-.tabs button.active {
-  background: #6b4a2b;
-  color: #fff;
-}
-.feed-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-.feed-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  padding: 12px;
-}
-.feed-img {
-  width: 100%;
-  border-radius: 12px;
-}
-.feed-title {
-  margin: 10px 0;
-}
-.likes {
-  margin-top: 6px;
-  color: #d33;
-}
-
-/* 오른쪽 필터 */
-.filter-section {
-  flex: 1;
-}
-.write-btn {
-  width: 100%;
-  padding: 10px;
-  background: #6b4a2b;
-  border: none;
-  color: white;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
-.filter-box {
-  background: #fff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.apply-btn,
-.reset-btn {
-  margin-top: 10px;
-  padding: 8px;
-  width: 100%;
-  border: none;
-  border-radius: 6px;
-}
-.apply-btn {
-  background: #6b4a2b;
-  color: white;
-}
-.reset-btn {
-  background: #eee;
-}
-
-/* 푸터 */
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f7f7f7;
-  padding: 20px 40px;
-  margin-top: 40px;
-  color: #444;
-}
-.footer-info {
-  text-align: center;
-  font-size: 0.85rem;
-}
+/* 부트스트랩 ratio가 4x3만 제공되진 않아서 카드 이미지 고정용 */
+.ratio-4x3 { aspect-ratio: 4 / 3; }
 </style>
