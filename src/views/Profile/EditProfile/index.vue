@@ -106,10 +106,9 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, nextTick } from 'vue'
 
 const props = defineProps({
-  /** 초기값 주입 가능 (백엔드 데이터 매핑) */
   modelValue: {
     type: Object,
     default: () => ({
@@ -143,27 +142,35 @@ watch(form, () => emit('update:modelValue', { ...form }), { deep: true })
 const showPw = ref(false)
 const showPw2 = ref(false)
 
+const placeholder = 'https://dummyimage.com/600x600/e9e9e9/aaaaaa&text=avatar'
 const avatarPreview = computed(() =>
   form.avatarFile ? URL.createObjectURL(form.avatarFile) : (form.avatarUrl || placeholder)
 )
-const placeholder = 'https://dummyimage.com/600x600/e9e9e9/aaaaaa&text=avatar'
 
 function onPickAvatar(e) {
   const file = e.target.files?.[0]
   if (!file) return
   form.avatarFile = file
+  // DOM 접근 필요 시 안전하게 nextTick 사용
+  nextTick(() => {
+    const imgEl = document.querySelector('.avatar-wrap img')
+    if (imgEl && imgEl.parentNode) {
+      // 필요 시 여기서 DOM 조작 가능
+      // console.log('avatar img parentNode ready')
+    }
+  })
 }
+
 function clearAvatar() {
   form.avatarFile = null
 }
 
 function submit() {
-  // 간단 검증
   if (form.password || form.password2) {
     if (form.password.length < 8) return alert('비밀번호는 8자 이상으로 입력하세요.')
     if (form.password !== form.password2) return alert('비밀번호 확인이 일치하지 않습니다.')
   }
-  // 저장 payload
+
   const payload = {
     name: form.name,
     birth: form.birth,
@@ -172,10 +179,11 @@ function submit() {
     password: form.password || undefined,
     address: form.address,
     denyWalkRequest: form.denyWalkRequest,
-    avatarFile: form.avatarFile, // 파일이 있는 경우에만 업로드
+    avatarFile: form.avatarFile,
   }
   emit('save', payload)
 }
+
 </script>
 
 <style scoped>

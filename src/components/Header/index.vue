@@ -13,7 +13,9 @@
 
       <!-- 가운데: 로고 (항상 정중앙) -->
       <div class="text-center">
-        <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
+        <router-link to="/Post/MainFeed">
+          <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
+        </router-link>
       </div>
 
       <!-- 오른쪽: 알림 + 프로필 -->
@@ -77,5 +79,4 @@ function handleSelect(key) {
 .bg-brown {
   background-color: #6b4a2b;
 }
-
 </style>
