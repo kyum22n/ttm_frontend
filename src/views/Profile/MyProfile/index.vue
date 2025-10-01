@@ -144,7 +144,7 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <HashtagDisplayBox title="해시태그" :tags="tags" :max-visible="10" prefix="#" pill clickable
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
                   @select="onSelect" />
               </div>
             </div>
@@ -165,48 +165,49 @@
 </template>
 
 <script setup>
-import HashtagDisplayBox from '../../../components/reviewDisplayBox.vue'
+import ReviewDisplayBox from '@/components/ReviewDisplayBox.vue'
 import { computed, reactive, ref, onMounted } from 'vue'
-import reviewApi from '@/apis/reviewApi'
+import { useStore } from 'vuex'
 
-const userId = 1 // 테스트용 고정값
+const store = useStore()
+const userId = 1
 
-const loading = ref(false)
-const error = ref(null)
-const reviews = ref([]) // ★ 서버에서 온 리뷰 배열
-const count = ref(0)
-const message = ref('')
+onMounted(() => {
+  store.dispatch('review/fetchReceived', userId)
+})
 
-async function load() {
-  loading.value = true
-  error.value = null
-  try {
-    const res = await reviewApi.getReceivedReviews(userId)
-    // 응답: { result, message, count, data: [...] }
-    reviews.value = Array.isArray(res.data?.data) ? res.data.data : []
-    count.value   = typeof res.data?.count === 'number' ? res.data.count : reviews.value.length
-    message.value = res.data?.message ?? ''
-  } catch (e) {
-    error.value = e?.response?.data?.message || '리뷰 조회 실패'
-  } finally {
-    loading.value = false
-  }
+const reviews = computed(() => store.getters['review/reviews'])
+const count   = computed(() => store.getters['review/count'])
+const loading = computed(() => store.getters['review/loading'])
+const error   = computed(() => store.getters['review/error'])
+
+const tagsFromReviews = computed(() => {
+  const byField = reviews.value.map(r => r.reviewTagName).filter(Boolean)
+  const byArray = reviews.value.flatMap(r => Array.isArray(r.tags) ? r.tags : [])
+  return [...new Set(
+    [...byField, ...byArray]
+      .map(s => String(s).trim())
+      .filter(Boolean)
+      .map(s => (s.startsWith('#') || s.startsWith('@')) ? s : `#${s}`)
+  )]
+})
+
+function onSelect(tag) {
+  console.log('tag clicked:', tag)
 }
-onMounted(load)
-
 
 
 //
 
-const tags = [
-  '강아지', '산책', '주말번개', '@Loki', '댕댕이', '고양이', '서울', '송파',
-  '러프', '카페', '사진', '훈련'
-]
-function onSelect(tag) {
-  // 조회용이어도 클릭 시 검색/필터 연동 가능
-  // router.push({ name: 'search', query: { tag } })
-  console.log('select:', tag)
-}
+// const tags = [
+//   '강아지', '산책', '주말번개', '@Loki', '댕댕이', '고양이', '서울', '송파',
+//   '러프', '카페', '사진', '훈련'
+// ]
+// function onSelect(tag) {
+//   // 조회용이어도 클릭 시 검색/필터 연동 가능
+//   // router.push({ name: 'search', query: { tag } })
+//   console.log('select:', tag)
+// }
 
 //
 
