@@ -38,5 +38,13 @@ function userInfo(userId, jwt) {
   });
 }
 
-const userApi = { userJoin, userInfo };
+function userUpdate(user){
+  return axios.put("/user/update", user);
+}
+
+const userApi = { 
+  userJoin, 
+  userInfo,
+  userUpdate
+};
 export default userApi;
