@@ -7,6 +7,7 @@
     <!-- 메인 -->
     <router-view class="flex-grow-1" />
     
+    
     <!-- 공통 푸터 -->
     <Footer v-if="!$route.meta.hideLayout" />
   </div >

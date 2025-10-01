@@ -4,11 +4,11 @@ const routes = [
     component: () => import(/*webpackChunkName: "PostRouting"*/ "@/views/Post/MainFeed"),
   },
 	{
-		path: "/Post/Create",
+		path: "/Post/PostCreate",
 		component: () => import(/*webpackChunkName: "PostRouting"*/ "@/views/Post/PostCreate"),
 	},
 	{
-		path: "/Post/Detail",
+		path: "/Post/PostDetail",
 		component: () => import(/*webpackChunkName: "PostRouting"*/ "@/views/Post/PostDetail"),
 	}
 ];
