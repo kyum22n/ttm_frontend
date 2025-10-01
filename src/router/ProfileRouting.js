@@ -1,15 +1,23 @@
 const routes = [
   {
-    path: "/Profile/My",
+    path: "/Profile/MyProfile",
     component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/MyProfile"),
   },
 	{
-    path: "/Profile/Edit",
+    path: "/Profile/EditProfile",
     component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/EditProfile"),
   },
 	{
-		path: "/Profile/Other",
+		path: "/Profile/OtherProfile",
 		component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/OtherProfile"),
+	},
+	{
+		path: "/Profile/PetProfile",
+		component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/PetProfile"),
+	},
+	{
+		path: "/Profile/PetEditProfile",
+		component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/PetEditProfile"),
 	}
 ];
 

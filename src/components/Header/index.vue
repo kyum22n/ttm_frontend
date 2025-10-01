@@ -2,7 +2,7 @@
   <nav class="navbar bg-brown px-3">
     <div class="container-fluid d-grid align-items-center"
          style="grid-template-columns: 1fr auto 1fr;">
-      
+
       <!-- 왼쪽: 검색창 -->
       <form class="d-flex justify-content-start" role="search" style="max-width: 300px;">
         <div class="input-group">

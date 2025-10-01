@@ -6,6 +6,18 @@ const routes = [
 	{
 		path: "/Walk/Request",
 		component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkRequest"),
+	},
+	{
+		path: "/Walk/Item",
+		component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkItem"),
+	},
+	{
+		path: "/Walk/AppItem",
+		component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkApplicantsModal/WalkApplicantItem.vue"),
+	},
+	{
+		path: "/Walk/App",
+		component: () => import(/*webpackChunkName: "WalkRouting"*/ "@/views/Walk/WalkApplicantsModal"),
 	}
 ];
 
