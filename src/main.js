@@ -8,5 +8,5 @@ import "@/apis/axiosConfig";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css"; // 🔔 아이콘용
-
+store.dispatch("loadAuthFromStorage");
 createApp(App).use(store).use(router).mount("#app");

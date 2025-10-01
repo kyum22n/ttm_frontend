@@ -27,7 +27,7 @@
         </div>
 
         <!-- 닉네임 -->
-        <span class="fw-bold text-white">user:{{ store.state.user.userLoginId }}</span>
+        <span class="fw-bold text-white">{{ store.state.user.userLoginId }}</span>
 
         <!-- 프로필 이미지 -->
         <img :src="profileImage" alt="프로필" class="rounded-circle border border-light" style="width: 35px; height: 35px; object-fit: cover" />
