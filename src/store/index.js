@@ -3,6 +3,7 @@ import { createStore } from "vuex";
 // JWT 토큰을 요청 헤더에 추가 제거 할때
 import axiosConfig from "@/apis/axiosConfig";
 import post from "./post";
+import review from "./review";
 
 const store = createStore({
   // 전역 상태 정의
@@ -105,6 +106,7 @@ const store = createStore({
 
   modules: {
     post,
+    review
   },
 });
 
