@@ -121,7 +121,7 @@ async function handleRegister() {
       return;
     }
 
-    // ✅ API 모듈에서 FormData 생성
+    // API 모듈에서 FormData 생성
     const response = await userApi.userJoin(user, pet.value);
     const result = response.data;
 
