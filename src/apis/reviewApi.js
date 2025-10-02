@@ -7,4 +7,18 @@ function getReceivedReviews(userId) {
   return axios.get(`/review/users/${userId}/reviews`);
 }
 
-export default { getReceivedReviews };
+// 리뷰 작성 (JSON 전송 + JSON 응답 기대)
+function createReview(review) {
+  // review: { writerId, targetId, postId|null, requestOneId|null, reviewTagId }
+  return axios.post(`/review/write`, review, {
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    },
+  });
+}
+
+export default {
+   getReceivedReviews,
+   createReview 
+};
