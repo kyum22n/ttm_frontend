@@ -30,10 +30,11 @@
         <span class="fw-bold text-white">{{ store.state.user.userLoginId }}</span>
 
         <!-- 프로필 이미지 (첫 번째 펫) -->
-        <img :src="`http://localhost:8080${store.state.user.profileImage}`"
-              alt="프로필"
-              style="width:35px; height:35px; object-fit:cover" 
-              class="rounded-circle border border-light"/>
+        <img v-if="profileImgUrl"
+             :src="profileImgUrl"
+             alt="프로필"
+             style="width:35px; height:35px; object-fit:cover" 
+             class="rounded-circle border border-light"/>
 
         <ProfileMenuDropdown label="내 메뉴" :items="items" align="bottom" @select="handleSelect" />
       </div>
@@ -42,15 +43,19 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
+import axios from "axios";
 
 const store = useStore();
 const router = useRouter();
 const searchText = ref("");
+
+// 프로필 이미지 Blob URL
+const profileImgUrl = ref(null);
 
 const items = [
   { key: "profile", text: "내 프로필", icon: "🧑‍💻" },
@@ -73,6 +78,24 @@ function handleSelect(key) {
   };
   if (map[key]) router.push(map[key]);
 }
+
+// 프로필 이미지 불러오기 (blob 방식)
+async function loadProfileImage() {
+  try {
+    if (store.state.user && store.state.user.profileImage) {
+      const res = await axios.get(`http://localhost:8080${store.state.user.profileImage}`, {
+        responseType: "blob"
+      });
+      profileImgUrl.value = URL.createObjectURL(res.data);
+    }
+  } catch (error) {
+    console.error("프로필 이미지 불러오기 실패:", error);
+  }
+}
+
+onMounted(() => {
+  loadProfileImage();
+});
 </script>
 
 <style scoped>
