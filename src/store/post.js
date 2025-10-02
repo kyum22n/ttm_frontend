@@ -91,6 +91,12 @@ const post = {
       context.commit("setList", res.data);
     },
 
+    // 사용자 게시물 목록
+    async fetchUserPostList(context, { userId }) {
+      const res = await postApi.getUserPost(userId);
+      context.commit("setList", { posts: res.data.posts, pager: null });
+    },
+
     // 상세
     async fetchDetail(context, postId) {
       const res = await postApi.postDetail(postId);

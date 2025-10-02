@@ -10,11 +10,9 @@ import axios from "axios";
         return axios.get("/post/list", { params: { pageNo } });
     }
 
-    /** 사용자 게시물 목록 (페이징) */    
-    function getUserPost(userId, pageNo = 1) {
-        return axios.get(`/post/${userId}/posts`, {
-            params: {pageNo}
-        });
+    /** 사용자 게시물 목록 */    
+    function getUserPost(userId) {
+        return axios.get(`/post/${userId}/posts`);
     }
 
     /** 게시물 작성 (multipart/form-data) */

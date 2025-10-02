@@ -11,10 +11,6 @@
               우리 아이와 어울릴 친구, 나와 산책할 이웃을 쉽게 만나는 공간.<br class="d-none d-lg-block" />
               반려인들의 따뜻한 동네 커뮤니티가 열립니다.
             </p>
-            <div class="d-flex gap-2 justify-content-center justify-content-lg-start">
-              <button type="button" class="btn btn-outline-secondary">시작하기 🐾</button>
-              <button type="button" class="btn btn-light border">더 알아보기</button>
-            </div>
           </div>
         </div>
       </div>
@@ -71,32 +67,40 @@
             </div>
           </div>
         </div>
-        <!--
-        <nav class="mt-4">
+
+        <!-- 페이지네이션 -->
+        <nav class="mt-4" v-if="pager">
           <ul class="pagination justify-content-center">
+            <!-- 처음 -->
             <li class="page-item" :class="{ disabled: pager.pageNo === 1 }">
-              <button class="page-link" @click="changePage(1)">처음</button>
+              <button class="page-link" @click="changePage(1)" :disabled="pager.pageNo === 1">처음</button>
             </li>
 
+            <!-- 이전 그룹 -->
             <li class="page-item" :class="{ disabled: pager.groupNo <= 1 }">
-              <button class="page-link" @click="changePage(pager.startPageNo - 1)">이전</button>
+              <button class="page-link" @click="changePage(pager.startPageNo - 1)"
+                :disabled="pager.groupNo <= 1">이전</button>
             </li>
 
-            <li v-for="page in pager.pageArray" :key="page" class="page-item"
-              :class="{ active: pager.pageNo === page }">
-              <button class="page-link" @click="changePage(page)">{{ page }}</button>
+            <!-- 페이지 번호 -->
+            <li v-for="pno in pager.pageArray" :key="pno" class="page-item" :class="{ active: pager.pageNo === pno }">
+              <button class="page-link" @click="changePage(pno)">{{ pno }}</button>
             </li>
 
+            <!-- 다음 그룹 -->
             <li class="page-item" :class="{ disabled: pager.groupNo >= pager.totalGroupNo }">
-              <button class="page-link" @click="changePage(pager.endPageNo + 1)">다음</button>
+              <button class="page-link" @click="changePage(pager.endPageNo + 1)"
+                :disabled="pager.groupNo >= pager.totalGroupNo">다음</button>
             </li>
 
+            <!-- 맨끝 -->
             <li class="page-item" :class="{ disabled: pager.pageNo === pager.totalPageNo }">
-              <button class="page-link" @click="changePage(pager.totalPageNo)">맨끝</button>
+              <button class="page-link" @click="changePage(pager.totalPageNo)"
+                :disabled="pager.pageNo === pager.totalPageNo">맨끝</button>
             </li>
           </ul>
         </nav>
-        -->
+
 
       </div>
 
@@ -172,22 +176,10 @@ const filteredPosts = computed(() => {
 // 페이징
 const pager = computed(() => store.getters["post/getPager"]);
 
-// 페이지 번호 배열
-const pageNum = computed(() => {
-  if (!pager.value) return [];
-  const start = pager.value.startPage || 1;
-  const end = pager.value.endPage || pager.value.totalPage || 1;
-  const arr = [];
-  for (let i = start; i <= end; i++) {
-    arr.push(i);
-  }
-  return arr;
-});
-
 // 페이지 변경
 function changePage(pageNo) {
   if (!pager.value) return;
-  if (pageNo < 1 || pageNo > pager.value.totalPage) return;
+  if (pageNo < 1 || pageNo > pager.value.totalPageNo) return;
   store.dispatch("post/fetchList", pageNo);
 }
 
