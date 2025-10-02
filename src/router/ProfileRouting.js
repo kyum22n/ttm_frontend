@@ -10,6 +10,7 @@ const routes = [
   {
     path: "/Profile/OtherProfile/:userId",
     component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/OtherProfile"),
+    props: true
   },
   {
     path: "/Profile/PetEditProfile",
