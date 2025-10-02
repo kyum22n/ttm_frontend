@@ -13,7 +13,7 @@
 
       <!-- 가운데: 로고 -->
       <div class="text-center">
-        <router-link to="/Post/MainFeed">
+        <router-link :to="targetRoute">
           <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
         </router-link>
       </div>
@@ -52,6 +52,7 @@ import { useRouter } from "vue-router";
 import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
 import axios from "axios";
+import { computed } from "vue";
 
 const store = useStore();
 const router = useRouter();
@@ -114,6 +115,10 @@ watch(
     if (newVal) loadProfileImage();
   }
 );
+
+const targetRoute = computed(() => {
+  return store.state.user.userId ? "/Post/MainFeed" : "/auth/login";
+});
 </script>
 
 <style scoped>
