@@ -66,6 +66,9 @@ function handleSelect(tag) {
 }
 </script>
 
+
+
+<!-- 일단은 스타일 사용 추후 수정 -->
 <style scoped>
 :root { --brown:#6b3f2a; --chip-bg:#fff7ee; --chip-bd:#e9dfcf; }
 .tagbox { border-color: var(--brown); }

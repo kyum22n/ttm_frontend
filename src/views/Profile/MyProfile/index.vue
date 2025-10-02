@@ -1,7 +1,6 @@
 <!-- ProfilePage.vue -->
 <template>
   <div class="container py-4">
-
     <!-- 프로필 헤더 -->
     <div class="card border-0 shadow-sm mb-4">
       <div class="card-body">
@@ -18,7 +17,8 @@
 
             <ul class="list-inline text-muted small mb-2 mt-2">
               <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
-                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
+                <span class="me-1">{{ s.label }}</span
+                ><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
@@ -28,8 +28,11 @@
                   <p class="mb-0 small">{{ profile.bio }}</p>
                 </div>
               </div>
-              <div class="col-lg-4 text-lg-end">
-                <button class="btn btn-primary">친구맺기+</button>
+              <div class="col-lg-2 text-lg-end">
+                <button class="btn btn-primary">산책신청+</button>
+              </div>
+              <div class="col-lg-2 ">
+                <button class="btn btn-primary">메세지 목록</button>
               </div>
             </div>
           </div>
@@ -39,8 +42,11 @@
 
     <!-- 하이라이트/펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
+      <!-- Add Pets 버튼 -->
       <button class="btn btn-outline-secondary btn-sm">Add Pets</button>
-      <div v-for="h in highlights" :key="h.id" class="text-center">
+
+      <!-- 하이라이트 리스트 -->
+      <div v-for="h in highlights2" :key="h.id" class="text-center" @click="openPetModal(h)" style="cursor: pointer">
         <div class="story-ring mx-auto mb-1">
           <img :src="h.img" alt="" class="rounded-circle object-cover" />
         </div>
@@ -48,10 +54,19 @@
       </div>
     </div>
 
+    <!-- 모달 컴포넌트 -->
+    <PetProfileModal
+      :pet="selectedPet"
+      :show="showModal"
+      :currentUserId="currentUserId"
+      @update:show="showModal = $event"
+      @edit="handleEdit"
+      @chat="handleChat"
+    />
+
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
       <div class="col-lg-8">
-
         <!-- 필터 탭 -->
         <ul class="nav nav-pills mb-3">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
@@ -75,9 +90,7 @@
               </div>
               <div class="card-footer bg-white d-flex justify-content-between align-items-center">
                 <span class="small text-muted">{{ post.time }}</span>
-                <button class="btn btn-sm btn-outline-secondary">
-                  ♥ {{ post.likes }}
-                </button>
+                <button class="btn btn-sm btn-outline-secondary">♥ {{ post.likes }}</button>
               </div>
             </div>
           </div>
@@ -140,7 +153,6 @@
 
         <div class="card border-0 shadow-sm">
           <div class="card-body">
-
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
@@ -158,7 +170,6 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -166,127 +177,248 @@
 
 <script setup>
 import ReviewDisplayBox from '@/components/ReviewDisplayBox.vue'
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
-const userId = 1
 
+// 1) 로그인 유저 로드 (새로고침 대비)
 onMounted(() => {
-  store.dispatch('review/fetchReceived', userId)
+  if (!store.getters.isLogin) {
+    // localStorage에 있던 auth 복구 + axios 헤더 세팅
+    store.dispatch('loadAuthFromStorage')
+  }
 })
+
+// 2) Vuex의 user에서 userId 계산
+const authUser = computed(() => store.state.user) // 루트 state.user
+const userId = computed(() => {
+  const id = authUser.value?.userId
+  return id ? Number(id) : null
+})
+
+// (선택) 다른 유저 프로필을 보는 페이지라면 라우터 param 우선
+// import { useRoute } from 'vue-router'
+// const route = useRoute()
+// const effectiveUserId = computed(() => Number(route.params.userId) || userId.value)
+
+// 3) userId 준비되면 리뷰 로드
+watch(
+  userId,
+  (id) => {
+    if (id) {
+      store.dispatch('review/fetchReceived', id)
+    }
+  },
+  { immediate: true }
+)
 
 const reviews = computed(() => store.getters['review/reviews'])
-const count   = computed(() => store.getters['review/count'])
-const loading = computed(() => store.getters['review/loading'])
-const error   = computed(() => store.getters['review/error'])
+// const count   = computed(() => store.getters['review/count'])
+// const loading = computed(() => store.getters['review/loading'])
+// const error   = computed(() => store.getters['review/error'])
 
 const tagsFromReviews = computed(() => {
-  const byField = reviews.value.map(r => r.reviewTagName).filter(Boolean)
-  const byArray = reviews.value.flatMap(r => Array.isArray(r.tags) ? r.tags : [])
-  return [...new Set(
-    [...byField, ...byArray]
-      .map(s => String(s).trim())
-      .filter(Boolean)
-      .map(s => (s.startsWith('#') || s.startsWith('@')) ? s : `#${s}`)
-  )]
-})
+  // 서버에서 넘어온 reviewTagId만 뽑아 중복 제거 후 문자열로 변환
+  // 일단은 중복 제거 유지함
+  const ids = reviews.value
+    .map(r => r?.reviewTagId)
+    .filter(id => id !== null && id !== undefined);
 
-function onSelect(tag) {
-  console.log('tag clicked:', tag)
-}
+  return [...new Set(ids)].map(id => String(id));
+});
 
 
-//
-
-// const tags = [
-//   '강아지', '산책', '주말번개', '@Loki', '댕댕이', '고양이', '서울', '송파',
-//   '러프', '카페', '사진', '훈련'
-// ]
-// function onSelect(tag) {
-//   // 조회용이어도 클릭 시 검색/필터 연동 가능
-//   // router.push({ name: 'search', query: { tag } })
-//   console.log('select:', tag)
-// }
-
-//
 
 const profile = reactive({
-  id: 'TWOTWO_MOM',
-  avatar: 'https://picsum.photos/seed/dog1/200/200',
-  bio: '반려견/반려묘와 함께하는 기록장입니다. 산책 메이트 구해요!',
+  id: "TWOTWO_MOM",
+  avatar: "https://picsum.photos/seed/dog1/200/200",
+  bio: "반려견/반려묘와 함께하는 기록장입니다. 산책 메이트 구해요!",
   stats: [
-    { label: '게시물', value: 128 },
-    { label: '팔로워', value: 912 },
-    { label: '팔로잉', value: 180 },
+    { label: "게시물", value: 128 },
+    { label: "팔로워", value: 912 },
+    { label: "팔로잉", value: 180 },
   ],
-})
+});
 
 const highlights = [
-  { id: 1, name: 'Siberian Husky', img: 'https://picsum.photos/seed/h1/120/120' },
-  { id: 2, name: 'Poodle', img: 'https://picsum.photos/seed/h2/120/120' },
-  { id: 3, name: 'German Shepherd', img: 'https://picsum.photos/seed/h3/120/120' },
-  { id: 4, name: 'Pug', img: 'https://picsum.photos/seed/h4/120/120' },
-  { id: 5, name: 'Tortoise', img: 'https://picsum.photos/seed/h5/120/120' },
-  { id: 6, name: 'Loki', img: 'https://picsum.photos/seed/h6/120/120' },
-]
+  { id: 1, name: "Siberian Husky", img: "https://picsum.photos/seed/h1/120/120" },
+  { id: 2, name: "Poodle", img: "https://picsum.photos/seed/h2/120/120" },
+  { id: 3, name: "German Shepherd", img: "https://picsum.photos/seed/h3/120/120" },
+  { id: 4, name: "Pug", img: "https://picsum.photos/seed/h4/120/120" },
+  { id: 5, name: "Tortoise", img: "https://picsum.photos/seed/h5/120/120" },
+  { id: 6, name: "Loki", img: "https://picsum.photos/seed/h6/120/120" },
+];
 
 const tabs = [
-  { key: 'all', label: '전체' },
-  { key: 'story', label: '스토리' },
-  { key: 'group', label: '그룹산책' },
-  { key: 'feed', label: '피드' },
-]
-const activeTab = ref('all')
+  { key: "all", label: "전체" },
+  { key: "story", label: "스토리" },
+  { key: "group", label: "그룹산책" },
+  { key: "feed", label: "피드" },
+];
+const activeTab = ref("all");
 
-const categories = ['강아지', '고양이', '일상', '산책', '모임']
+const categories = ["강아지", "고양이", "일상", "산책", "모임"];
 
 // 더미 포스트
 const posts = reactive([
-  { id: 1, type: 'feed', cats: ['강아지', '산책'], img: 'https://picsum.photos/seed/p1/600/400', title: '주말에 강변 산책', subtitle: '러프에게 행복한 날', desc: '가을바람과 함께 산책했어요.', likes: 718, time: '1시간 전' },
-  { id: 2, type: 'story', cats: ['강아지'], img: 'https://picsum.photos/seed/p2/600/400', title: '오늘의 놀이', subtitle: '소파 위에서', desc: '간식 숨바꼭질!', likes: 423, time: '2시간 전' },
-  { id: 3, type: 'group', cats: ['산책', '모임'], img: 'https://picsum.photos/seed/p3/600/400', title: '그룹 워크 모집', subtitle: '한강공원', desc: '내일 아침 9시', likes: 220, time: '어제' },
-  { id: 4, type: 'feed', cats: ['고양이', '일상'], img: 'https://picsum.photos/seed/p4/600/400', title: '고양이 졸림', subtitle: '집사일기', desc: '햇살 맛집 창가', likes: 91, time: '2일 전' },
-  { id: 5, type: 'feed', cats: ['강아지'], img: 'https://picsum.photos/seed/p5/600/400', title: '낮잠 타임', subtitle: '러프', desc: '푹 쉬는 중', likes: 310, time: '3일 전' },
-  { id: 6, type: 'group', cats: ['모임'], img: 'https://picsum.photos/seed/p6/600/400', title: '주말 번개 산책', subtitle: '잠실', desc: '참가자 5/8', likes: 150, time: '3일 전' },
-])
+  {
+    id: 1,
+    type: "feed",
+    cats: ["강아지", "산책"],
+    img: "https://picsum.photos/seed/p1/600/400",
+    title: "주말에 강변 산책",
+    subtitle: "러프에게 행복한 날",
+    desc: "가을바람과 함께 산책했어요.",
+    likes: 718,
+    time: "1시간 전",
+  },
+  {
+    id: 2,
+    type: "story",
+    cats: ["강아지"],
+    img: "https://picsum.photos/seed/p2/600/400",
+    title: "오늘의 놀이",
+    subtitle: "소파 위에서",
+    desc: "간식 숨바꼭질!",
+    likes: 423,
+    time: "2시간 전",
+  },
+  {
+    id: 3,
+    type: "group",
+    cats: ["산책", "모임"],
+    img: "https://picsum.photos/seed/p3/600/400",
+    title: "그룹 워크 모집",
+    subtitle: "한강공원",
+    desc: "내일 아침 9시",
+    likes: 220,
+    time: "어제",
+  },
+  {
+    id: 4,
+    type: "feed",
+    cats: ["고양이", "일상"],
+    img: "https://picsum.photos/seed/p4/600/400",
+    title: "고양이 졸림",
+    subtitle: "집사일기",
+    desc: "햇살 맛집 창가",
+    likes: 91,
+    time: "2일 전",
+  },
+  {
+    id: 5,
+    type: "feed",
+    cats: ["강아지"],
+    img: "https://picsum.photos/seed/p5/600/400",
+    title: "낮잠 타임",
+    subtitle: "러프",
+    desc: "푹 쉬는 중",
+    likes: 310,
+    time: "3일 전",
+  },
+  {
+    id: 6,
+    type: "group",
+    cats: ["모임"],
+    img: "https://picsum.photos/seed/p6/600/400",
+    title: "주말 번개 산책",
+    subtitle: "잠실",
+    desc: "참가자 5/8",
+    likes: 150,
+    time: "3일 전",
+  },
+]);
 
 // 필터 상태
 const filters = reactive({
-  q: '',
+  q: "",
   cats: [],
-  sort: 'latest',
-})
-const page = ref(1)
-const pageSize = 6
+  sort: "latest",
+});
+const page = ref(1);
+const pageSize = 6;
 
 const filteredPosts = computed(() => {
   let list = posts
-    .filter(p => (activeTab.value === 'all' ? true : p.type === activeTab.value))
-    .filter(p => (filters.cats.length ? filters.cats.some(c => p.cats.includes(c)) : true))
-    .filter(p => (filters.q ? (p.title + p.subtitle + p.desc).includes(filters.q) : true))
+    .filter((p) => (activeTab.value === "all" ? true : p.type === activeTab.value))
+    .filter((p) => (filters.cats.length ? filters.cats.some((c) => p.cats.includes(c)) : true))
+    .filter((p) => (filters.q ? (p.title + p.subtitle + p.desc).includes(filters.q) : true));
 
-  if (filters.sort === 'likes') {
-    list = [...list].sort((a, b) => b.likes - a.likes)
+  if (filters.sort === "likes") {
+    list = [...list].sort((a, b) => b.likes - a.likes);
   }
   // 간단 페이지네이션 (데모)
-  const start = (page.value - 1) * pageSize
-  return list.slice(start, start + pageSize)
-})
+  const start = (page.value - 1) * pageSize;
+  return list.slice(start, start + pageSize);
+});
 
-const totalPages = computed(() => Math.max(1, Math.ceil(
-  posts.filter(p => (activeTab.value === 'all' ? true : p.type === activeTab.value)).length / pageSize
-)))
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(posts.filter((p) => (activeTab.value === "all" ? true : p.type === activeTab.value)).length / pageSize))
+);
 
-const totalLikes = computed(() => posts.reduce((acc, p) => acc + p.likes, 0))
+const totalLikes = computed(() => posts.reduce((acc, p) => acc + p.likes, 0));
 
 function resetFilters() {
-  filters.q = ''
-  filters.cats = []
-  filters.sort = 'latest'
+  filters.q = "";
+  filters.cats = [];
+  filters.sort = "latest";
 }
 function applyFilters() {
-  page.value = 1
+  page.value = 1;
+}
+import PetProfileModal from "@/components/PetProfileModal";
+
+// 하이라이트 데이터 예시
+const highlights2 = [
+  {
+    id: 1,
+    name: "뽀삐",
+    img: "https://via.placeholder.com/80",
+    petUserId: 1,
+    userLoginId: "userA",
+    petName: "뽀삐",
+    petBreed: "말티즈",
+    petGender: "여",
+    birthDate: "2023-01-01",
+    weight: 3.2,
+    address: "서울",
+    intro: "안녕하세요~",
+    imageUrl: "https://via.placeholder.com/100",
+  },
+  {
+    id: 2,
+    name: "콩이",
+    img: "https://via.placeholder.com/80",
+    petUserId: 2,
+    userLoginId: "userB",
+    petName: "콩이",
+    petBreed: "푸들",
+    petGender: "남",
+    birthDate: "2022-06-10",
+    weight: 4.5,
+    address: "부산",
+    intro: "콩이입니다.",
+    imageUrl: "https://via.placeholder.com/100",
+  },
+];
+
+const selectedPet = ref(null);
+const showModal = ref(false);
+const currentUserId = 1; // 로그인한 내 유저 ID
+
+// 클릭 시 모달 열기
+function openPetModal(pet) {
+  selectedPet.value = pet;
+  showModal.value = true;
+}
+
+// 모달 이벤트
+function handleEdit(pet) {
+  console.log("편집:", pet);
+}
+function handleChat(pet) {
+  console.log("채팅 신청:", pet);
 }
 </script>
 

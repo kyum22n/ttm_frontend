@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar bg-brown px-3">
     <div class="container-fluid d-grid align-items-center" style="grid-template-columns: 1fr auto 1fr">
-      
+
       <!-- 왼쪽: 검색창 -->
       <form class="d-flex justify-content-start" role="search" style="max-width: 300px">
         <div class="input-group">
@@ -22,6 +22,8 @@
       <!-- 오른쪽: 알림 + 프로필 -->
       <div class="d-flex align-items-center gap-3 justify-content-end">
         <div class="position-relative">
+          <!-- 로그아웃 버튼 (닉네임 있을 때만 보이게) -->
+          <button v-if="userLoginId" class="btn btn-outline-light btn-sm" @click="logout">로그아웃</button>
           <i class="bi bi-bell fs-4 text-white"></i>
           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem">1</span>
         </div>
@@ -33,7 +35,7 @@
         <img v-if="profileImgUrl"
              :src="profileImgUrl"
              alt="프로필"
-             style="width:35px; height:35px; object-fit:cover" 
+             style="width:35px; height:35px; object-fit:cover"
              class="rounded-circle border border-light"/>
 
         <ProfileMenuDropdown label="내 메뉴" :items="items" align="bottom" @select="handleSelect" />
@@ -96,6 +98,12 @@ async function loadProfileImage() {
 onMounted(() => {
   loadProfileImage();
 });
+
+function logout() {
+  // Vuex에 LOGOUT mutation/액션 만들어두셔야 합니다.
+  store.dispatch("removeAuth");
+  router.push("/"); // 로그인 페이지로 이동
+}
 </script>
 
 <style scoped>
