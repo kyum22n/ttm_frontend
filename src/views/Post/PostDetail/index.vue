@@ -67,6 +67,7 @@
             </div>
 
             <!-- 댓글 목록 -->
+            <button @click="reviewCreate()">리뷰 쓰기(임시위치)</button>
             <ul class="list-group list-group-flush">
               <li
                 v-for="(c, i) in comments"
@@ -113,6 +114,9 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 
+// 임시 리뷰쓰기 기능 임포트
+import reviewApi from '@/apis/reviewApi'
+
 const store = useStore();
 const route = useRoute();
 
@@ -151,4 +155,62 @@ async function addComment() {
   await store.dispatch("post/writeComment", payload);
   newComment.value = "";
 }
+////////////////////////////////////////////////////////////////////////////////////////////
+// 리뷰 작성 스크립트(임시 위치)
+
+// 이미 위에 있음 임시라서 주석처리
+// const store = useStore()
+
+// 로그인 유저의 writerId (로그인 복구 로직은 네가 기존에 넣어둔 loadAuthFromStorage 사용)
+const writerId = computed(() => Number(store.state.user?.userId) || null)
+
+// 예: 대상 유저(프로필 주인) 아이디 — 라우터/상태에서 가져오면 좋음. 일단 데모값:
+const targetId = computed(() => 2) // TODO: 실제 대상 유저 ID로 치환
+
+// 예: 어떤 산책 건에 대한 리뷰인지 선택된 값 (둘 중 하나만 채워야 함)
+const selectedPostId = 1           // 그룹산책 리뷰면 postId 사용
+const selectedRequestOneId = null     // 1:1 산책이면 requestOneId 사용
+
+// 예: 선택된 리뷰 태그 ID (서버가 검증)
+const selectedReviewTagId = 2         // 데모: '친절' 같은 의미의 id라고 가정
+
+async function reviewCreate() {
+  try {
+    // 클라 검증 (서버도 검증하지만, 사용자 UX 위해 미리 체크)
+    if (!writerId.value) throw new Error('로그인이 필요합니다.')
+    if (!targetId.value) throw new Error('대상 유저가 없습니다.')
+    if (!selectedPostId && !selectedRequestOneId) {
+      throw new Error('postId 또는 requestOneId 중 하나는 필수입니다.')
+    }
+    if (writerId.value === Number(targetId.value)) {
+      throw new Error('본인에게 리뷰를 작성할 수 없습니다.')
+    }
+    if (!selectedReviewTagId) {
+      throw new Error('reviewTagId는 필수입니다.')
+    }
+
+    const payload = {
+      writerId: writerId.value,
+      targetId: Number(targetId.value),
+      postId: selectedPostId,                 // 그룹 산책이면 숫자, 아니면 null
+      requestOneId: selectedRequestOneId,     // 1:1 산책이면 숫자, 아니면 null
+      reviewTagId: selectedReviewTagId,
+    }
+
+    const { data } = await reviewApi.createReview(payload)
+    // data = { result: "success", review: { ...저장된 리뷰... } }
+
+    // 성공 후 UI 처리 (알림/리스트 갱신)
+    alert('리뷰가 등록되었습니다.')
+    // 방금 대상 유저의 받은 리뷰를 다시 불러와 태그 박스도 갱신
+    await store.dispatch('review/fetchReceived', payload.targetId)
+
+  } catch (e) {
+    const msg = e?.response?.data?.message || e.message || '리뷰 작성 실패'
+    alert(msg)
+  }
+}
+
+
+
 </script>
