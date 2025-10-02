@@ -22,6 +22,8 @@
       <div class="d-flex align-items-center gap-3 justify-content-end">
         <!-- 알림 -->
         <div class="position-relative">
+          <!-- 로그아웃 버튼 (닉네임 있을 때만 보이게) -->
+          <button v-if="userLoginId" class="btn btn-outline-light btn-sm" @click="logout">로그아웃</button>
           <i class="bi bi-bell fs-4 text-white"></i>
           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem"> 1 </span>
         </div>
@@ -75,6 +77,12 @@ function handleSelect(key) {
     settings: "/settings",
   };
   if (map[key]) router.push(map[key]);
+}
+
+function logout() {
+  // Vuex에 LOGOUT mutation/액션 만들어두셔야 합니다.
+  store.dispatch("removeAuth");
+  router.push("/"); // 로그인 페이지로 이동
 }
 </script>
 
