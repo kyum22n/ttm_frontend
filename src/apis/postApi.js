@@ -94,23 +94,40 @@ import axios from "axios";
     /** =========================
      *  Tags
      *  ========================= */
-
+    
     /** 전체 태그 목록 */
     function getTagList() {
         return axios.get("/post/tags");
     }
-
+    
     /** 게시물에 태그 달기 (JSON) */
     function addPostTag({ postId, tagId }) {
         return axios.post("/post/add-tag", {
             postId, tagId
         });
     }
-
+    
     /** 게시물 태그 삭제 (JSON) */
     function deletePostTag({ postId, tagId }) {
         return axios.delete("/post/delete-tag", { 
             data: { postId, tagId }
+        });
+    }
+    
+    /** =========================
+     *  Likes
+     *  ========================= */
+    /** 좋아요 등록 */
+    function postLike(userId, postId) {
+        return axios.post("/like/post-like", null, {
+            params: {userId, postId}
+        });
+    }
+
+    /** 좋아요 취소 */
+    function postLikeCancel(userId, postId) {
+        return axios.delete("/like/post-like/cancel", {
+            params: {userId, postId}
         });
     }
 
@@ -163,6 +180,8 @@ export default {
     getTagList,
     addPostTag,
     deletePostTag,
+    postLike,
+    postLikeCancel,
     groupwalkRecruitmentList,
     groupwalkEndedList,
     groupwalkStatus,
