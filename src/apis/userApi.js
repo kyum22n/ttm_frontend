@@ -43,8 +43,8 @@ function userInfo(userId, jwt) {
     params: { userId },
     headers: {
       // JWT 토큰을 Authorization 헤더에 담아 인증
-      Authorization: `Bearer ${jwt}`,
-    },
+      "Authorization": "Bearer" +jwt
+    }
   });
 }
 

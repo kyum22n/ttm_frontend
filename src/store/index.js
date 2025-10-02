@@ -23,15 +23,15 @@ const store = createStore({
 
   // state를 읽기 전용으로 가져올 때 사용
   getters: {
-		// 현재 로그인 사용자 정보 반환
+    // 현재 로그인 사용자 정보 반환
     getUser(state) {
       return state.user;
     },
-		// 현재 JWT 반환
+    // 현재 JWT 반환
     getJwt(state) {
       return state.jwt;
     },
-		// 로그인 상태 판단
+    // 로그인 상태 판단
     isLogin(state) {
       return !!state.jwt; // jwt 있으면 true
     },
@@ -40,17 +40,17 @@ const store = createStore({
   // state를 실제로 변경하는 곳 (동기적)
   mutations: {
     setUser(state, payload) { // 로그인용
-			// payload로 받은 사용자 정보를 state.user에 저장
+      // payload로 받은 사용자 정보를 state.user에 저장
       state.user = payload;
     },
-    setSignupUser(state, payload){ // 회원가입 임시 저장용
+    setSignupUser(state, payload) { // 회원가입 임시 저장용
       state.signupUser = payload;
     },
     clearUser(state) {
       state.user = null;
     },
     clearSignupUser(state) {
-    state.signupUser = null;
+      state.signupUser = null;
     },
     setLoginId(state, loginId) {
       state.user.userLoginId = loginId;
@@ -79,7 +79,7 @@ const store = createStore({
       context.commit("setJwt", payload.jwt);
 
       // LocalStorage에 저장
-      localStorage.setItem("user", JSON.stringify(payload.user));
+      localStorage.setItem("user", payload.user);
       localStorage.setItem("jwt", payload.jwt);
 
       // Axios Authorization 헤더 추가
@@ -98,11 +98,12 @@ const store = createStore({
     },
 
     loadAuthFromStorage(context) {
-      const user = localStorage.getItem("user");
-      const jwt = localStorage.getItem("jwt");
-      if (user && jwt) {
-        context.commit("setUser", JSON.parse(user));
-        context.commit("setJwt", jwt);
+      const user = localStorage.getItem("user") || "";
+      const jwt = localStorage.getItem("jwt") || "";
+
+      context.commit("setUser", user);
+      context.commit("setJwt", jwt);
+      if (jwt != "") {
         axiosConfig.addAuthHeader(jwt);
       }
     },

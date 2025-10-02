@@ -156,7 +156,7 @@ const posts = computed(() => store.getters["post/getList"]);
 /* 탭/검색 필터링 */
 const filteredPosts = computed(() => {
   return posts.value.filter((p) => {
-    console.log(posts.value.map(p => p.isRequest));
+    // console.log(posts.value.map(p => p.isRequest));
 
     const isReq = (p.isRequest || "").trim();
     const matchTab =
