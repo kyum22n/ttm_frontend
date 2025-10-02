@@ -122,6 +122,7 @@ const route = useRoute();
 
 const liked = ref(false);
 const newComment = ref("");
+const userId = 1;
 
 const post = computed(() => store.state.post.detail);
 const comments = computed(() => store.state.post.comments);
@@ -134,9 +135,14 @@ onMounted(() => {
   }
 });
 
-function toggleLike() {
+async function toggleLike() {
+  if (!post.value) return;
+  if (!liked.value) {
+    await store.dispatch("post/likePost", { userId, postId: post.value.postId });
+  } else {
+    await store.dispatch("post/likePostCancel", { userId, postId: post.value.postId });
+  }
   liked.value = !liked.value;
-  // TODO: 백엔드 좋아요 API 연동 필요
 }
 
 async function addComment() {

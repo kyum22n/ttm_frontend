@@ -60,7 +60,7 @@
               </div>
               <div class="card-footer bg-white d-flex justify-content-between align-items-center">
                 <span class="small text-muted">{{ formatDate(post.createdAt) }}</span>
-                <button class="btn btn-sm btn-outline-secondary" @click.stop="toggleLike(post)">
+                <button class="btn btn-sm btn-outline-secondary">
                   ♡ {{ post.postLikeCount }}
                 </button>
               </div>
@@ -71,6 +71,33 @@
             </div>
           </div>
         </div>
+        <!--
+        <nav class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" :class="{ disabled: pager.pageNo === 1 }">
+              <button class="page-link" @click="changePage(1)">처음</button>
+            </li>
+
+            <li class="page-item" :class="{ disabled: pager.groupNo <= 1 }">
+              <button class="page-link" @click="changePage(pager.startPageNo - 1)">이전</button>
+            </li>
+
+            <li v-for="page in pager.pageArray" :key="page" class="page-item"
+              :class="{ active: pager.pageNo === page }">
+              <button class="page-link" @click="changePage(page)">{{ page }}</button>
+            </li>
+
+            <li class="page-item" :class="{ disabled: pager.groupNo >= pager.totalGroupNo }">
+              <button class="page-link" @click="changePage(pager.endPageNo + 1)">다음</button>
+            </li>
+
+            <li class="page-item" :class="{ disabled: pager.pageNo === pager.totalPageNo }">
+              <button class="page-link" @click="changePage(pager.totalPageNo)">맨끝</button>
+            </li>
+          </ul>
+        </nav>
+        -->
+
       </div>
 
       <!-- 오른쪽 필터 -->
@@ -95,6 +122,7 @@ import { computed, ref, reactive, onMounted } from "vue";
 import { useStore } from "vuex";
 import logoBrown from "@/assets/logo_brown.png";
 import heroImage from "@/assets/heroImage_main.jpg";
+
 
 const store = useStore();
 
@@ -128,8 +156,11 @@ const posts = computed(() => store.getters["post/getList"]);
 /* 탭/검색 필터링 */
 const filteredPosts = computed(() => {
   return posts.value.filter((p) => {
+    console.log(posts.value.map(p => p.isRequest));
+
+    const isReq = (p.isRequest || "").trim();
     const matchTab =
-      activeTab.value === "all" || (activeTab.value === "recruit" && p.isRequest === "Y");
+      activeTab.value === "all" || (activeTab.value === "recruit" && isReq === "Y");
     const matchQ =
       filters.q === "" ||
       (p.postTitle && p.postTitle.includes(filters.q)) ||
@@ -138,10 +169,28 @@ const filteredPosts = computed(() => {
   });
 });
 
-/* 좋아요 토글 (데모: 단순 증가) */
-function toggleLike(post) {
-  post.postLikeCount = (post.postLikeCount || 0) + 1;
+// 페이징
+const pager = computed(() => store.getters["post/getPager"]);
+
+// 페이지 번호 배열
+const pageNum = computed(() => {
+  if (!pager.value) return [];
+  const start = pager.value.startPage || 1;
+  const end = pager.value.endPage || pager.value.totalPage || 1;
+  const arr = [];
+  for (let i = start; i <= end; i++) {
+    arr.push(i);
+  }
+  return arr;
+});
+
+// 페이지 변경
+function changePage(pageNo) {
+  if (!pager.value) return;
+  if (pageNo < 1 || pageNo > pager.value.totalPage) return;
+  store.dispatch("post/fetchList", pageNo);
 }
+
 
 function applyFilters() {
   console.log("적용:", filters);

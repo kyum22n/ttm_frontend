@@ -1,4 +1,3 @@
-<!-- ProfilePage.vue -->
 <template>
   <div class="container py-4">
     <!-- 프로필 헤더 -->
@@ -6,13 +5,14 @@
       <div class="card-body">
         <div class="row align-items-center g-3">
           <div class="col-auto">
-            <img :src="profile.avatar" class="rounded-circle object-cover" width="88" height="88" alt="avatar" />
+						<!-- profileImgUrl이 존재하면 표시 -->
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88" height="88" />
           </div>
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">ID: {{ profile.id }}</h5>
-              <span class="text-muted small">·</span>
-              <button class="btn btn-sm btn-outline-secondary">설정</button>
+              <h5 class="mb-0">ID: {{ store.state.user.userLoginId }}</h5>
+              <span class="text-muted small">·</span
+              ><RouterLink to="/Profile/EditProfile"> <button class="btn btn-sm btn-outline-secondary">설정</button></RouterLink>
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
@@ -31,7 +31,7 @@
               <div class="col-lg-2 text-lg-end">
                 <button class="btn btn-primary">산책신청+</button>
               </div>
-              <div class="col-lg-2 ">
+              <div class="col-lg-2">
                 <button class="btn btn-primary">메세지 목록</button>
               </div>
             </div>
@@ -156,8 +156,7 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
-                  @select="onSelect" />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable @select="onSelect" />
               </div>
             </div>
 
@@ -173,29 +172,35 @@
       </div>
     </div>
   </div>
+  <div>
+    <h3>{{ store.state.user.userName }}의 펫 목록</h3>
+    <ul>
+      <li v-for="pet in pets" :key="pet.id">{{ pet.name }} - {{ pet.description }}</li>
+    </ul>
+  </div>
 </template>
 
 <script setup>
-import ReviewDisplayBox from '@/components/ReviewDisplayBox.vue'
-import { computed, reactive, ref, onMounted, watch } from 'vue'
-import { useStore } from 'vuex'
+import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
+import { computed, reactive, ref, onMounted, watch } from "vue";
+import { useStore } from "vuex";
 
-const store = useStore()
+const store = useStore();
 
 // 1) 로그인 유저 로드 (새로고침 대비)
 onMounted(() => {
   if (!store.getters.isLogin) {
     // localStorage에 있던 auth 복구 + axios 헤더 세팅
-    store.dispatch('loadAuthFromStorage')
+    store.dispatch("loadAuthFromStorage");
   }
-})
+});
 
 // 2) Vuex의 user에서 userId 계산
-const authUser = computed(() => store.state.user) // 루트 state.user
+const authUser = computed(() => store.state.user); // 루트 state.user
 const userId = computed(() => {
-  const id = authUser.value?.userId
-  return id ? Number(id) : null
-})
+  const id = authUser.value?.userId;
+  return id ? Number(id) : null;
+});
 
 // (선택) 다른 유저 프로필을 보는 페이지라면 라우터 param 우선
 // import { useRoute } from 'vue-router'
@@ -207,13 +212,13 @@ watch(
   userId,
   (id) => {
     if (id) {
-      store.dispatch('review/fetchReceived', id)
+      store.dispatch("review/fetchReceived", id);
     }
   },
   { immediate: true }
-)
+);
 
-const reviews = computed(() => store.getters['review/reviews'])
+const reviews = computed(() => store.getters["review/reviews"]);
 // const count   = computed(() => store.getters['review/count'])
 // const loading = computed(() => store.getters['review/loading'])
 // const error   = computed(() => store.getters['review/error'])
@@ -221,24 +226,13 @@ const reviews = computed(() => store.getters['review/reviews'])
 const tagsFromReviews = computed(() => {
   // 서버에서 넘어온 reviewTagId만 뽑아 중복 제거 후 문자열로 변환
   // 일단은 중복 제거 유지함
-  const ids = reviews.value
-    .map(r => r?.reviewTagId)
-    .filter(id => id !== null && id !== undefined);
+  const ids = reviews.value.map((r) => r?.reviewTagId).filter((id) => id !== null && id !== undefined);
 
-  return [...new Set(ids)].map(id => String(id));
+  return [...new Set(ids)].map((id) => String(id));
 });
 
-
-
 const profile = reactive({
-  id: "TWOTWO_MOM",
-  avatar: "https://picsum.photos/seed/dog1/200/200",
   bio: "반려견/반려묘와 함께하는 기록장입니다. 산책 메이트 구해요!",
-  stats: [
-    { label: "게시물", value: 128 },
-    { label: "팔로워", value: 912 },
-    { label: "팔로잉", value: 180 },
-  ],
 });
 
 const highlights = [
@@ -420,6 +414,30 @@ function handleEdit(pet) {
 function handleChat(pet) {
   console.log("채팅 신청:", pet);
 }
+
+import axios from "axios";
+
+// 프로필 이미지 Blob URL
+const profileImgUrl = ref(null);
+// 프로필 이미지 불러오기 (blob 방식)
+async function loadProfileImage() {
+  try {
+    if (store.state.user && store.state.user.profileImage) {
+      const res = await axios.get(`http://localhost:8080${store.state.user.profileImage}`, {
+        responseType: "blob",
+      });
+      profileImgUrl.value = URL.createObjectURL(res.data);
+    }
+  } catch (error) {
+    console.error("프로필 이미지 불러오기 실패:", error);
+  }
+}
+
+
+
+onMounted(() => {
+  loadProfileImage();
+});
 </script>
 
 <style scoped>
