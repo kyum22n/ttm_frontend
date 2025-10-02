@@ -166,50 +166,58 @@
 
 <script setup>
 import ReviewDisplayBox from '@/components/ReviewDisplayBox.vue'
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
-const userId = 1
 
+// 1) 로그인 유저 로드 (새로고침 대비)
 onMounted(() => {
-  store.dispatch('review/fetchReceived', userId)
+  if (!store.getters.isLogin) {
+    // localStorage에 있던 auth 복구 + axios 헤더 세팅
+    store.dispatch('loadAuthFromStorage')
+  }
 })
+
+// 2) Vuex의 user에서 userId 계산
+const authUser = computed(() => store.state.user) // 루트 state.user
+const userId = computed(() => {
+  const id = authUser.value?.userId
+  return id ? Number(id) : null
+})
+
+// (선택) 다른 유저 프로필을 보는 페이지라면 라우터 param 우선
+// import { useRoute } from 'vue-router'
+// const route = useRoute()
+// const effectiveUserId = computed(() => Number(route.params.userId) || userId.value)
+
+// 3) userId 준비되면 리뷰 로드
+watch(
+  userId,
+  (id) => {
+    if (id) {
+      store.dispatch('review/fetchReceived', id)
+    }
+  },
+  { immediate: true }
+)
 
 const reviews = computed(() => store.getters['review/reviews'])
-const count   = computed(() => store.getters['review/count'])
-const loading = computed(() => store.getters['review/loading'])
-const error   = computed(() => store.getters['review/error'])
+// const count   = computed(() => store.getters['review/count'])
+// const loading = computed(() => store.getters['review/loading'])
+// const error   = computed(() => store.getters['review/error'])
 
 const tagsFromReviews = computed(() => {
-  const byField = reviews.value.map(r => r.reviewTagName).filter(Boolean)
-  const byArray = reviews.value.flatMap(r => Array.isArray(r.tags) ? r.tags : [])
-  return [...new Set(
-    [...byField, ...byArray]
-      .map(s => String(s).trim())
-      .filter(Boolean)
-      .map(s => (s.startsWith('#') || s.startsWith('@')) ? s : `#${s}`)
-  )]
-})
+  // 서버에서 넘어온 reviewTagId만 뽑아 중복 제거 후 문자열로 변환
+  // 일단은 중복 제거 유지함
+  const ids = reviews.value
+    .map(r => r?.reviewTagId)
+    .filter(id => id !== null && id !== undefined);
 
-function onSelect(tag) {
-  console.log('tag clicked:', tag)
-}
+  return [...new Set(ids)].map(id => String(id));
+});
 
 
-//
-
-// const tags = [
-//   '강아지', '산책', '주말번개', '@Loki', '댕댕이', '고양이', '서울', '송파',
-//   '러프', '카페', '사진', '훈련'
-// ]
-// function onSelect(tag) {
-//   // 조회용이어도 클릭 시 검색/필터 연동 가능
-//   // router.push({ name: 'search', query: { tag } })
-//   console.log('select:', tag)
-// }
-
-//
 
 const profile = reactive({
   id: 'TWOTWO_MOM',
