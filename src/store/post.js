@@ -8,42 +8,41 @@ const post = {
     pageNo: 1,
     list: [],
     pager: null,
-    detail: null,   // {postId, postTitle, ...}
+    detail: null, // {postId, postTitle, ...}
     comments: [],
     tags: [],
-    error: null
+    likes: {}, // 좋아요 상태
   },
 
   getters: {
-    getPageNo: function(state) {
+    getPageNo(state) {
       return state.pageNo;
     },
-    getList: function(state) {
+    getList(state) {
       return state.list;
     },
-    getPager: function(state) {
+    getPager(state) {
       return state.pager;
     },
-    getDetail: function(state) {
+    getDetail(state) {
       return state.detail;
     },
-    getComments: function(state) {
+    getComments(state) {
       return state.comments;
     },
-    getTags: function(state) {
+    getTags(state) {
       return state.tags;
     },
-    getError: function(state) {
-      return state.error;
-    }
+    getLikes(state) {
+      return state.likes;
+    },
   },
 
   mutations: {
-    setPageNo: function(state, v) {
+    setPageNo(state, v) {
       state.pageNo = v;
     },
-    setList: function(state, payload) {
-      // payload가 없는 경우 대비
+    setList(state, payload) {
       if (!payload) {
         state.list = [];
         state.pager = null;
@@ -52,7 +51,7 @@ const post = {
         state.pager = payload.pager ? payload.pager : null;
       }
     },
-    setDetail: function(state, payload) {
+    setDetail(state, payload) {
       if (!payload) {
         state.detail = null;
         state.comments = [];
@@ -60,163 +59,147 @@ const post = {
       } else {
         state.detail = payload.post ? payload.post : null;
         state.comments = payload.comments ? payload.comments : [];
-        if (payload.tags && payload.tags.length > 0) {
-          state.tags = payload.tags;
-        }
+        state.tags =
+          payload.tags && payload.tags.length > 0 ? payload.tags : [];
       }
     },
-    setTags: function(state, tags) {
-      if (!tags) {
-        state.tags = [];
-      } else {
-        state.tags = tags;
+    setTags(state, tags) {
+      state.tags = tags || [];
+    },
+    setLikes(state, { postId, likes }) {
+      state.likes = likes;
+    },
+    updatePostLikes(state, { postId, likeCount }) {
+      // detail 업데이트
+      if (state.detail && state.detail.postId === postId) {
+        state.detail.postLikeCount = likeCount;
+      }
+
+      // 목록 업데이트
+      const target = state.loist.find((p) => p.postId === postId);
+      if (target) {
+        target.postLikeCount = likeCount;
       }
     },
-    setError: function(state, e) {
-      state.error = e;
-    }
   },
 
   actions: {
     // 목록
-    fetchList: function(context, pageNo) {
-      if (!pageNo) {
-        pageNo = 1;
-      }
+    async fetchList(context, pageNo = 1) {
       context.commit("setPageNo", pageNo);
-
-      return postApi.getPostList(pageNo)
-        .then(function(res) {
-          context.commit("setList", res.data);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+      const res = await postApi.getPostList(pageNo);
+      context.commit("setList", res.data);
     },
 
     // 상세
-    fetchDetail: function(context, postId) {
-      return postApi.postDetail(postId)
-        .then(function(res) {
-          context.commit("setDetail", res.data);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async fetchDetail(context, postId) {
+      const res = await postApi.postDetail(postId);
+      context.commit("setDetail", res.data);
     },
 
     // 작성
-    create: function(context, post) {
-      return postApi.postWrite(post)
-        .then(function(res) {
-          if (res.data && res.data.postId) {
-            //스토어 detail 갱신
-            context.dispatch("fetchDetail", res.data.postId);
-            // 방금 등록한 게시물 데이터 반환
-            return res.data;
-          }
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async create(context, post) {
+      const res = await postApi.postWrite(post);
+      if (res.data && res.data.postId) {
+        await context.dispatch("fetchDetail", res.data.postId);
+        return res.data;
+      }
     },
 
     // 수정
-    update: function(context, payload) {
-      return postApi.postUpdate(payload.formData, payload.imageMode)
-        .then(function(res) {
-          var id = null;
-          if (res.data && res.data.post && res.data.post.postId) {
-            id = res.data.post.postId;
-          } else {
-            id = payload.formData.get("postId");
-          }
-          if (id) {
-            return context.dispatch("fetchDetail", Number(id));
-          }
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async update(context, payload) {
+      const res = await postApi.postUpdate(payload.formData, payload.imageMode);
+      let id = null;
+      if (res.data && res.data.post && res.data.post.postId) {
+        id = res.data.post.postId;
+      } else {
+        id = payload.formData.get("postId");
+      }
+      if (id) {
+        await context.dispatch("fetchDetail", Number(id));
+      }
     },
 
     // 삭제
-    remove: function(context, postId) {
-      return postApi.postDelete(postId)
-        .then(function() {
-          return context.dispatch("fetchList", context.state.pageNo);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async remove(context, postId) {
+      await postApi.postDelete(postId);
+      await context.dispatch("fetchList", context.state.pageNo);
     },
 
     // 태그 전체 조회
-    fetchTags: function(context) {
-      return postApi.getTagList()
-        .then(function(res) {
-          if (res.data && res.data.tags) {
-            context.commit("setTags", res.data.tags);
-          }
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async fetchTags(context) {
+      const res = await postApi.getTagList();
+      if (res.data && res.data.tags) {
+        context.commit("setTags", res.data.tags);
+      }
     },
 
     // 태그 연결
-    addTags: function(context, payload) {
-      var promises = [];
-      for (var i = 0; i < payload.tagIds.length; i++) {
-        var tagId = payload.tagIds[i];
-        promises.push(postApi.addPostTag({ postId: payload.postId, tagId: tagId }));
-      }
+    addTags(context, payload) {
+      const promises = payload.tagIds.map((tagId) =>
+        postApi.addPostTag({ postId: payload.postId, tagId })
+      );
       return Promise.all(promises);
     },
 
     // 태그 삭제
-    deleteTags: function(context, payload) {
-      var promises = [];
-      for (var i = 0; i < payload.tagIds.length; i++) {
-        var tagId = payload.tagIds[i];
-        promises.push(postApi.deletePostTag({ postId: payload.postId, tagId: tagId }));
-      }
+    deleteTags(context, payload) {
+      const promises = payload.tagIds.map((tagId) =>
+        postApi.deletePostTag({ postId: payload.postId, tagId })
+      );
       return Promise.all(promises);
     },
 
     // 댓글 작성
-    writeComment: function(context, payload) {
-      return postApi.commentWrite(payload)
-        .then(function() {
-          return context.dispatch("fetchDetail", payload.cpostId);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async writeComment(context, payload) {
+      await postApi.commentWrite(payload);
+      await context.dispatch("fetchDetail", payload.cpostId);
     },
 
     // 댓글 수정
-    updateComment: function(context, payload) {
-      return postApi.commentUpdate(payload)
-        .then(function() {
-          return context.dispatch("fetchDetail", payload.cpostId);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
+    async updateComment(context, payload) {
+      await postApi.commentUpdate(payload);
+      await context.dispatch("fetchDetail", payload.cpostId);
     },
 
     // 댓글 삭제
-    deleteComment: function(context, payload) {
-      return postApi.commentDelete(payload.commentId)
-        .then(function() {
-          return context.dispatch("fetchDetail", payload.postId);
-        })
-        .catch(function(err) {
-          context.commit("setError", err);
-        });
-    }
-  }
+    async deleteComment(context, payload) {
+      await postApi.commentDelete(payload.commentId);
+      await context.dispatch("fetchDetail", payload.postId);
+    },
+
+    // 좋아요 등록
+    async likePost(context, { userId, postId }) {
+      const res = await postApi.postLike(userId, postId);
+      if (res.data.result === "success") {
+        let newCount = 0;
+        if ( context.state.detail && context.state.detail.postLikeCount != null ) {
+          newCount = context.state.detail.postLikeCount + 1;
+        } else {
+          newCount = 1;
+        }
+        context.commit("updatePostLikes", {postId, likeCount: newCount});
+      }
+    },
+   
+    // 좋아요 취소
+    async likePostCancel(context, { userId, postId }) {
+      const res = await postApi.postLikeCancel(userId, postId);
+      if (res.data.result === "success") {
+        let newCount = 0;
+        if ( context.state.detail && context.state.detail.postLikeCount != null ) {
+          newCount = context.state.detail.postLikeCount - 1;
+
+          if (newCount < 0) {
+            newCount = 0; 
+          }
+        } else {
+          newCount = 0;
+        }
+        context.commit("updatePostLikes", {postId, likeCount: newCount});
+      }
+    },
+  },
 };
 
 export default post;

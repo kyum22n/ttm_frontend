@@ -3,12 +3,7 @@
     <div class="row w-100">
       <!-- 왼쪽 -->
       <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
-        <img
-          src="@/assets/logo_white_bigsize.png"
-          alt="로고"
-          class="img-fluid"
-          style="max-width: 300px;"
-        />
+        <img src="@/assets/logo_white_bigsize.png" alt="로고" class="img-fluid" style="max-width: 300px;" />
         <div class="d-flex gap-0">
           <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
         </div>
@@ -75,6 +70,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+import axios from "axios";
 
 const router = useRouter();
 const store = useStore();
@@ -84,14 +80,14 @@ const user = ref({
   userPassword: "12345",
   userName: "hello",
   userEmail: "hello@hello.com",
-  userAddress: "hello",
+  userAddress: "Anyang",
   userBirthDate: "",
 });
 
 const confirm = ref("");
 const agree = ref(false);
 
-function goNext() {
+async function goNext() {
   if (!agree.value) {
     alert("개인정보 처리방침에 동의해야 합니다.");
     return;
@@ -100,9 +96,25 @@ function goNext() {
     alert("비밀번호가 일치하지 않습니다.");
     return;
   }
-  // Vuex에 저장 (펫 등록 단계에서 불러옴)
-  store.commit("setSignupUser", user.value);
-  router.push("/Register/Pet");
+
+  try {
+    // 아이디 + 이메일 중복 체크
+    const res = await axios.get("http://localhost:8080/user/check-duplicate", {
+      params: {
+        loginId: user.value.userLoginId,
+        email: user.value.userEmail
+      }
+    });
+
+    if (res.data.result === "success") {
+      // Vuex에 유저 정보 저장 후 펫 등록 페이지로 이동
+      store.commit("setSignupUser", user.value);
+      router.push("/Register/Pet");
+    }
+
+  } catch (err) {
+    alert(err.response?.data?.message || "중복 확인 중 오류가 발생했습니다.");
+  }
 }
 </script>
 
