@@ -175,7 +175,7 @@
   <div>
     <h3>{{ store.state.user.userName }}의 펫 목록</h3>
     <ul>
-      <li v-for="pet in pets" :key="pet.id">{{ pet.name }} - {{ pet.description }}</li>
+      <li v-for="pet in pets" :key="pet.id">{{ pet.petName }} - {{ pet.petDesc }}</li>
     </ul>
   </div>
 </template>

@@ -90,37 +90,33 @@ async function handleLogin() {
 <style scoped>
 /* ----------------- 부트스트랩 아닌 커스텀 스타일 ----------------- */
 
-/* 전체 화면 고정 */
+/* 전체 화면 고정 대신 반응형 */
 #fixed-screen {
-  width: 1920px;
-  height: 1080px;
-  position: relative;
+  width: 100vw; /* 브라우저 가로 꽉 채우기 */
+  height: 100vh; /* 브라우저 세로 꽉 채우기 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background-color: #fdfcf9;
+  position: relative;
+  overflow: hidden;
 }
 
 /* 로고 영역 */
 .logo-container {
-  position: absolute;
-  top: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 600px;
-  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem; /* 좌우 간격 */
+  margin-bottom: 2rem;
 }
 
-/* 강아지 이미지 위치 */
-.pet-left {
-  position: absolute;
-  left: -50px;
-  top: 10px;
-  width: 80px;
-}
-
+/* 강아지 이미지 크기 조절 */
+.pet-left,
 .pet-right {
-  position: absolute;
-  right: -50px;
-  top: 10px;
-  width: 80px;
+  width: 60px;
+  height: auto;
 }
 
 /* 로고 paw 아이콘 크기 */
@@ -130,11 +126,8 @@ async function handleLogin() {
 
 /* 로그인 박스 */
 .login-box {
-  position: absolute;
-  width: 350px;
-  top: 280px;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+  max-width: 350px;
   border-radius: 20px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
