@@ -1,4 +1,3 @@
-<!-- ProfileEdit.vue -->
 <template>
   <div class="container py-5">
     <div class="card border-3 rounded-4 shadow-sm profile-frame">
@@ -9,16 +8,26 @@
           <!-- 왼쪽: 아바타 -->
           <div class="col-12 col-md-4 d-flex flex-column align-items-center">
             <div class="avatar-wrap mb-3">
-              <img :src="avatarPreview" class="rounded-circle object-cover" width="220" height="220" alt="avatar" />
+              <img
+                v-if="profileImgUrl"
+                :src="profileImgUrl"
+                class="rounded-circle object-cover"
+                width="220"
+                height="220"
+                alt="프로필"
+              />
             </div>
-            <div class="d-grid gap-2 w-100" style="max-width:260px">
+            <div class="d-grid gap-2 w-100" style="max-width: 260px">
               <label class="btn btn-outline-secondary btn-sm rounded-pill">
                 사진 업로드
-                <input type="file" accept="image/*" class="d-none" @change="onPickAvatar" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onPickAvatar"
+                  ref="fileInput"
+                />
               </label>
-              <button v-if="form.avatarFile" class="btn btn-outline-danger btn-sm rounded-pill" @click="clearAvatar">
-                사진 제거
-              </button>
             </div>
           </div>
 
@@ -26,79 +35,164 @@
           <div class="col-12 col-md-8">
             <form @submit.prevent="submit">
               <div class="vstack gap-3">
-
+                <!-- 이름 -->
                 <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-person"></i></span>
-                  <input v-model.trim="form.name" type="text" class="form-control" placeholder="이름" required />
+                  <span class="input-group-text"
+                    ><i class="bi bi-person"></i
+                  ></span>
+                  <input
+                    v-model.trim="user.userName"
+                    type="text"
+                    class="form-control"
+                    placeholder="이름"
+                    required
+                  />
                 </div>
 
+                <!-- 생일 -->
                 <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                  <input v-model="form.birth" type="text" class="form-control" placeholder="2001.07.24" />
+                  <span class="input-group-text"
+                    ><i class="bi bi-calendar3"></i
+                  ></span>
+                  <input
+                    :value="user.userBirthDate"
+                    type="text"
+                    class="form-control"
+                    placeholder="2001.07.24"
+                    readonly
+                  />
                 </div>
 
+                <!-- 아이디 (readonly) -->
                 <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-badge-ad"></i></span>
-                  <input v-model.trim="form.username" type="text" class="form-control" placeholder="아이디" readonly />
+                  <span class="input-group-text"
+                    ><i class="bi bi-badge-ad"></i
+                  ></span>
+                  <input
+                    :value="readonlyUser.userLoginId"
+                    type="text"
+                    class="form-control"
+                    placeholder="아이디"
+                    readonly
+                  />
                 </div>
 
+                <!-- 이메일 (readonly) -->
                 <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                  <input v-model.trim="form.email" type="email" class="form-control" placeholder="email@example.com" />
+                  <span class="input-group-text"
+                    ><i class="bi bi-envelope"></i
+                  ></span>
+                  <input
+                    :value="readonlyUser.userEmail"
+                    type="email"
+                    class="form-control"
+                    placeholder="email@example.com"
+                    readonly
+                  />
                 </div>
 
+                <!-- 비밀번호 / 비밀번호 확인 -->
                 <div class="row g-3">
                   <div class="col-sm-6">
                     <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                      <input v-model="form.password" :type="showPw ? 'text' : 'password'" class="form-control" placeholder="비밀번호" />
-                      <button type="button" class="btn btn-outline-secondary" @click="showPw = !showPw">
-                        <i :class="showPw ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                      <span class="input-group-text"
+                        ><i class="bi bi-lock-fill"></i
+                      ></span>
+                      <input
+                        v-model="user.password"
+                        :type="showPw ? 'text' : 'password'"
+                        class="form-control"
+                        placeholder="비밀번호"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        @click="showPw = !showPw"
+                      >
+                        <i
+                          :class="showPw ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                        ></i>
                       </button>
                     </div>
                   </div>
                   <div class="col-sm-6">
                     <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                      <input v-model="form.password2" :type="showPw2 ? 'text' : 'password'" class="form-control" placeholder="비밀번호 확인" />
-                      <button type="button" class="btn btn-outline-secondary" @click="showPw2 = !showPw2">
-                        <i :class="showPw2 ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                      <span class="input-group-text"
+                        ><i class="bi bi-lock-fill"></i
+                      ></span>
+                      <input
+                        v-model="user.password2"
+                        :type="showPw2 ? 'text' : 'password'"
+                        class="form-control"
+                        placeholder="비밀번호 확인"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        @click="showPw2 = !showPw2"
+                      >
+                        <i
+                          :class="showPw2 ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                        ></i>
                       </button>
                     </div>
                   </div>
                 </div>
 
+                <!-- 주소 -->
                 <div class="row g-3">
                   <div class="col-sm-8">
                     <div class="input-group">
-                      <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                      <input v-model.trim="form.address" type="text" class="form-control" placeholder="서울시 송파구" />
+                      <span class="input-group-text"
+                        ><i class="bi bi-geo-alt"></i
+                      ></span>
+                      <input
+                        v-model.trim="user.userAddress"
+                        type="text"
+                        class="form-control"
+                        placeholder="서울시 송파구"
+                      />
                     </div>
                   </div>
                   <div class="col-sm-4 d-grid">
-                    <button type="button" class="btn btn-ivory" @click="$emit('search-address')">Search</button>
+                    <button
+                      type="button"
+                      class="btn btn-ivory"
+                      @click="$emit('search-address')"
+                    >
+                      Search
+                    </button>
                   </div>
                 </div>
 
+                <!-- 체크박스 (readonly) -->
                 <div class="form-check mt-2">
-                  <input class="form-check-input" type="checkbox" id="denyWalk" v-model="form.denyWalkRequest">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="denyWalk"
+                    :checked="readonlyUser.denyWalkRequest"
+                    disabled
+                  />
                   <label class="form-check-label" for="denyWalk">
                     산책 메이트 신청을 받고 싶지 않아요
                   </label>
                 </div>
 
+                <!-- 저장 버튼 -->
                 <div class="text-center mt-3">
-                  <button type="submit" class="btn btn-brown px-5 py-2 rounded-pill">
+                  <button
+                    type="submit"
+                    class="btn btn-brown px-5 py-2 rounded-pill"
+                  >
                     <span class="paw me-2">🐾</span> 변경사항 저장
                   </button>
                 </div>
-
               </div>
             </form>
           </div>
         </div>
 
-        <!-- 귀여운 구석 아이콘(선택) -->
         <div class="d-none d-md-block cute-pets">🐱 🐶</div>
       </div>
     </div>
@@ -106,121 +200,154 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue'
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { useStore } from "vuex";
 
-const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({
-      name: '김병현',
-      birth: '2001.07.24',
-      username: 'TWOTWO_MOM',
-      email: 'twotwomom@naver.com',
-      address: '서울시 송파구',
-      denyWalkRequest: false,
-      avatarUrl: 'https://picsum.photos/seed/dog1/600/600',
-    }),
-  },
-})
-const emit = defineEmits(['update:modelValue', 'save', 'search-address'])
+const store = useStore();
 
-const form = reactive({
-  name: props.modelValue.name,
-  birth: props.modelValue.birth,
-  username: props.modelValue.username,
-  email: props.modelValue.email,
-  password: '',
-  password2: '',
-  address: props.modelValue.address,
-  denyWalkRequest: props.modelValue.denyWalkRequest,
-  avatarUrl: props.modelValue.avatarUrl,
-  avatarFile: null,
-})
+const user = ref({
+  userId: null,
+  userLoginId: "",
+  userName: "",
+  userAddress: "",
+  userBirthDate: "",
+  userAvatarUrl: "",
+  password: "",
+  password2: "",
+});
 
-watch(form, () => emit('update:modelValue', { ...form }), { deep: true })
+const readonlyUser = ref({
+  userLoginId: "",
+  userEmail: "",
+  userAvatarUrl: "",
+  userBirthDate: "",
+  denyWalkRequest: false,
+});
 
-const showPw = ref(false)
-const showPw2 = ref(false)
+const profileImgUrl = ref(null);
+const pet = ref(null);
+const showPw = ref(false);
+const showPw2 = ref(false);
+const fileInput = ref(null);
 
-const placeholder = 'https://dummyimage.com/600x600/e9e9e9/aaaaaa&text=avatar'
-const avatarPreview = computed(() =>
-  form.avatarFile ? URL.createObjectURL(form.avatarFile) : (form.avatarUrl || placeholder)
-)
-
+// 프로필 이미지 미리보기
 function onPickAvatar(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  form.avatarFile = file
-  // DOM 접근 필요 시 안전하게 nextTick 사용
-  nextTick(() => {
-    const imgEl = document.querySelector('.avatar-wrap img')
-    if (imgEl && imgEl.parentNode) {
-      // 필요 시 여기서 DOM 조작 가능
-      // console.log('avatar img parentNode ready')
+  const file = e.target.files[0];
+  if (file) {
+    profileImgUrl.value = URL.createObjectURL(file);
+  }
+}
+
+// 유저 정보 + Pet 정보 불러오기
+onMounted(async () => {
+  const userId = store.state.user.userId;
+
+  // 1. 유저 정보
+  const resUser = await axios.get("/user/info", { params: { userId } });
+  const data = resUser.data.data;
+  readonlyUser.value = {
+    userLoginId: data.userLoginId,
+    userEmail: data.userEmail,
+    userAvatarUrl: data.userAvatarUrl,
+    userBirthDate: data.userBirthDate,
+    denyWalkRequest: data.denyWalkRequest,
+  };
+  user.value = {
+    ...user.value,
+    userId: data.userId,
+    userLoginId: data.userLoginId,
+    userName: data.userName || "",
+    userAddress: data.userAddress || "",
+    userBirthDate: data.userBirthDate || "",
+  };
+
+  // 2. Pet 정보 (첫 번째 pet)
+  try {
+    const resPet = await axios.get("/pet/find-allpetbyuser", {
+      params: { petUserId: userId },
+    });
+    if (resPet.data && resPet.data.length > 0) {
+      pet.value = resPet.data[0];
     }
-  })
-}
-
-function clearAvatar() {
-  form.avatarFile = null
-}
-
-function submit() {
-  if (form.password || form.password2) {
-    if (form.password.length < 8) return alert('비밀번호는 8자 이상으로 입력하세요.')
-    if (form.password !== form.password2) return alert('비밀번호 확인이 일치하지 않습니다.')
+  } catch (e) {
+    console.error("Pet 정보 로드 실패", e);
   }
 
-  const payload = {
-    name: form.name,
-    birth: form.birth,
-    username: form.username,
-    email: form.email,
-    password: form.password || undefined,
-    address: form.address,
-    denyWalkRequest: form.denyWalkRequest,
-    avatarFile: form.avatarFile,
+  // 3. 프로필 이미지
+  if (store.state.user.profileImage) {
+    const res = await axios.get(
+      `http://localhost:8080${store.state.user.profileImage}`,
+      { responseType: "blob" }
+    );
+    profileImgUrl.value = URL.createObjectURL(res.data);
   }
-  emit('save', payload)
-}
+});
 
+// 저장
+import petApi from "@/apis/petApi";
+import userApi from "@/apis/userApi";
+
+async function submit() {
+  try {
+    // 1️⃣ 유저 정보 업데이트
+    const userPayload = {
+      userId: user.value.userId,
+      userName: user.value.userName,
+      userAddress: user.value.userAddress,
+      password: user.value.password || undefined, // 비밀번호가 입력되면 포함
+    };
+
+    const resUser = await userApi.userUpdate(userPayload);
+
+    if (!resUser.data || resUser.data.result !== "success") {
+      alert("유저 정보 업데이트 실패");
+      return;
+    }
+
+    // 2️⃣ 펫 이미지 업데이트 (선택된 파일이 있을 때만)
+    if (pet.value && pet.value.petAttach) {
+      const formData = new FormData();
+      formData.append("petId", pet.value.petId);
+      formData.append("petUserId", user.value.userId);
+      formData.append("petAttach", pet.value.petAttach);
+
+      const resPet = await petApi.update(formData);
+
+      if (resPet.data && resPet.data.result === "success") {
+        // 서버에서 리턴한 URL로 UI 갱신
+        if (resPet.data.petAttachUrl) {
+          profileImgUrl.value = resPet.data.petAttachUrl;
+        }
+        // pet 객체 갱신
+        pet.value = { ...pet.value, ...resPet.data.pet };
+        // 업로드 완료 후 petAttach 초기화
+        pet.value.petAttach = null;
+      } else {
+        alert("펫 이미지 업데이트 실패");
+        return;
+      }
+    }
+
+    alert("프로필 및 펫 이미지 업데이트 완료!");
+    // 비밀번호 초기화
+    user.value.password = "";
+    user.value.password2 = "";
+  } catch (error) {
+    console.error("업데이트 실패", error);
+    alert("업데이트 중 오류가 발생했습니다.");
+  }
+}
 </script>
 
 <style scoped>
-/* 테마 */
-:root { --brown: #6b3f2a; --ivory:#f2e2c9; }
-.text-brown { color: var(--brown); }
-
-.profile-frame { border-color: var(--brown); }
-.object-cover { object-fit: cover; }
-
-.avatar-wrap {
-  border: 4px solid var(--brown);
-  border-radius: 50%;
-  padding: 4px;
+.profile-frame {
+  max-width: 960px;
+  margin: auto;
 }
-
-.btn-brown {
-  background: var(--brown);
-  color:#fff;
-  border: none;
-}
-.btn-brown:hover { filter: brightness(0.95); }
-
-.btn-ivory {
-  background: var(--ivory);
-  border: 1px solid #c7b6ac;
-}
-.btn-ivory:hover { filter: brightness(0.98); }
-
-.paw { font-size: 1.2rem; vertical-align: middle; }
-
-/* 배경 느낌 */
-.cute-pets {
-  position: absolute;
-  right: 28px;
-  bottom: 18px;
-  font-size: 1.8rem;
-  opacity: .8;
+.avatar-wrap img {
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
 }
 </style>
