@@ -19,18 +19,27 @@
       </div>
 
       <!-- 오른쪽: 알림 + 프로필 -->
-      <div v-if="$store.state.user.userId" class="d-flex align-items-center gap-3 justify-content-end">
+      <div v-if="isLogin" class="d-flex align-items-center gap-3 justify-content-end">
         <div class="position-relative">
-          <!-- 로그아웃 버튼 (닉네임 있을 때만 보이게) -->
-          <button v-if="store.state.user.userLoginId" class="btn btn-outline-light btn-sm me-3" @click="logout">로그아웃</button>
+          <!-- 로그아웃 버튼 -->
+          <button v-if="user.userLoginId" class="btn btn-outline-light btn-sm me-3" @click="logout">
+            로그아웃
+          </button>
+
+          <!-- 알림 -->
           <i class="bi bi-bell fs-4 text-white"></i>
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem">1</span>
+          <span
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            style="font-size: 0.6rem"
+          >
+            1
+          </span>
         </div>
 
         <!-- 닉네임 -->
-        <span class="fw-bold text-white">{{ store.state.user.userLoginId }}</span>
+        <span class="fw-bold text-white">{{ user.userLoginId }}</span>
 
-        <!-- 프로필 이미지 (첫 번째 펫) -->
+        <!-- 프로필 이미지 -->
         <img
           v-if="profileImgUrl"
           :src="profileImgUrl"
@@ -46,17 +55,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
 import axios from "axios";
-import { computed } from "vue";
 
 const store = useStore();
 const router = useRouter();
 const searchText = ref("");
+
+// Vuex getters 사용 새로 고침해도 유저 정보 보일수 있게
+const user = computed(() => store.getters.getUser);
+const isLogin = computed(() => store.getters.isLogin);
 
 // 프로필 이미지 Blob URL
 const profileImgUrl = ref(null);
@@ -83,11 +95,11 @@ function handleSelect(key) {
   if (map[key]) router.push(map[key]);
 }
 
-// 프로필 이미지 불러오기 (blob 방식)
+// 프로필 이미지 불러오기
 async function loadProfileImage() {
   try {
-    if (store.state.user && store.state.user.profileImage) {
-      const res = await axios.get(`http://localhost:8080${store.state.user.profileImage}`, {
+    if (user.value && user.value.profileImage) {
+      const res = await axios.get(`http://localhost:8080${user.value.profileImage}`, {
         responseType: "blob",
       });
       profileImgUrl.value = URL.createObjectURL(res.data);
@@ -98,26 +110,24 @@ async function loadProfileImage() {
 }
 
 onMounted(() => {
-  loadProfileImage();
+  if (isLogin.value) loadProfileImage();
 });
 
-function logout() {
-  // Vuex에 LOGOUT mutation/액션 만들어두셔야 합니다.
-  store.dispatch("removeAuth");
-  router.push("/"); // 로그인 페이지로 이동
-}
-
-import { watch } from "vue";
-
+// userId 변화를 감지해서 프로필 이미지 다시 로드
 watch(
-  () => store.state.user.userId,
+  () => user.value?.userId,
   (newVal) => {
     if (newVal) loadProfileImage();
   }
 );
 
+function logout() {
+  store.dispatch("removeAuth");
+  router.push("/auth/login");
+}
+
 const targetRoute = computed(() => {
-  return store.state.user.userId ? "/Post/MainFeed" : "/auth/login";
+  return isLogin.value ? "/Post/MainFeed" : "/auth/login";
 });
 </script>
 
