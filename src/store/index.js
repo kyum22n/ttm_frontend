@@ -31,9 +31,9 @@ const store = createStore({
     getJwt(state) {
       return state.jwt;
     },
-    // 로그인 상태 판단
+    // 로그인 상태 판단(jwt + userId 확인)
     isLogin(state) {
-      return !!state.jwt; // jwt 있으면 true
+      return !!state.jwt && !!state.user && !!state.user.userId; // jwt 있으면 true
     },
   },
 
@@ -79,7 +79,10 @@ const store = createStore({
       context.commit("setJwt", payload.jwt);
 
       // LocalStorage에 저장
-      localStorage.setItem("user", payload.user);
+      // 25.10.04 LocalStorage는 문자열로만 저장 하기때문에 서버에서 넘어온 JSON 객체는 JSON 문자열로 변환하여 저장해야 함
+      // 꺼내올 때는 JSON.parse()로 다시 JS 객체로 복원해서 사용해야 한다. -> loadAuthFromStorage() 참고
+      // JWT는 발급 되었을 때 이미 문자열 형ㅌ애로 넘어오기 떄문에 JSON으로 변환하지 않아도 됨
+      localStorage.setItem("user", JSON.stringify(payload.user)); //Json 문자열로 변환
       localStorage.setItem("jwt", payload.jwt);
 
       // Axios Authorization 헤더 추가
@@ -98,7 +101,7 @@ const store = createStore({
     },
 
     loadAuthFromStorage(context) {
-      const user = localStorage.getItem("user") || "";
+      const user = JSON.parse(localStorage.getItem("user") || "null");
       const jwt = localStorage.getItem("jwt") || "";
 
       context.commit("setUser", user);
