@@ -47,6 +47,11 @@ import axios from "axios";
     function postDetail(postId) {
         return axios.get("/post/detail", { params: { postId } });
     }
+    
+    /** 게시물 이미지 */
+    function getPostImage(postId) {
+        return `/post/image/${postId}`;
+    }
 
     /** 게시물 수정 (imageMode: append | replace, multipart/form-data) */
     function postUpdate(formData, imageMode = "append") {
@@ -170,6 +175,7 @@ export default {
     getUserPost,
     postWrite,
     postDetail,
+    getPostImage,
     postUpdate,
     postDelete,
     commentWrite,

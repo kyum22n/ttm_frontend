@@ -13,7 +13,7 @@ const routes = [
 		props: true, 
 	},
 	{
-		path: "/Post/PostEdit",
+		path: "/post/update/:id",
 		component: () => import(/*webpackChunkName: "PostRouting"*/ "@/views/Post/PostEdit"),
 	}
 ];

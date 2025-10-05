@@ -61,6 +61,8 @@ const post = {
         state.comments = payload.comments ? payload.comments : [];
         state.tags =
           payload.tags && payload.tags.length > 0 ? payload.tags : [];
+
+        state.detail.images = payload.images || [];
       }
     },
     setTags(state, tags) {
@@ -88,13 +90,28 @@ const post = {
     async fetchList(context, pageNo = 1) {
       context.commit("setPageNo", pageNo);
       const res = await postApi.getPostList(pageNo);
-      context.commit("setList", res.data);
+
+      const postsWithImages = res.data.posts.map((post) => ({
+        ...post,
+        thumbnailUrl: `http://localhost:8080/post/image/${post.postId}`,
+      }));
+
+      context.commit("setList", {
+        posts: postsWithImages,
+        pager: res.data.pager,
+      });
     },
 
     // 사용자 게시물 목록
     async fetchUserPostList(context, { userId }) {
       const res = await postApi.getUserPost(userId);
-      context.commit("setList", { posts: res.data.posts, pager: null });
+
+      const postsWithImages = res.data.posts.map((post) => ({
+        ...post,
+        thumbnailUrl: `http://localhost:8080/post/image/${post.postId}`,
+      }));
+
+      context.commit("setList", { posts: postsWithImages, pager: null });
     },
 
     // 상세
@@ -179,31 +196,42 @@ const post = {
       const res = await postApi.postLike(userId, postId);
       if (res.data.result === "success") {
         let newCount = 0;
-        if ( context.state.detail && context.state.detail.postLikeCount != null ) {
+        if (
+          context.state.detail &&
+          context.state.detail.postLikeCount != null
+        ) {
           newCount = context.state.detail.postLikeCount + 1;
         } else {
           newCount = 1;
         }
-        context.commit("updatePostLikes", {postId, likeCount: newCount});
+        context.commit("updatePostLikes", { postId, likeCount: newCount });
       }
     },
-   
+
     // 좋아요 취소
     async likePostCancel(context, { userId, postId }) {
       const res = await postApi.postLikeCancel(userId, postId);
       if (res.data.result === "success") {
         let newCount = 0;
-        if ( context.state.detail && context.state.detail.postLikeCount != null ) {
+        if (
+          context.state.detail &&
+          context.state.detail.postLikeCount != null
+        ) {
           newCount = context.state.detail.postLikeCount - 1;
 
           if (newCount < 0) {
-            newCount = 0; 
+            newCount = 0;
           }
         } else {
           newCount = 0;
         }
-        context.commit("updatePostLikes", {postId, likeCount: newCount});
+        context.commit("updatePostLikes", { postId, likeCount: newCount });
       }
+    },
+
+    // 그룹 산책 모집/신청 상태
+    async groupwalkMarkNow(context, { postId, code }) {
+      return await postApi.groupwalkMarkNow(postId, code);
     },
   },
 };
