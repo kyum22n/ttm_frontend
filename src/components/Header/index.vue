@@ -1,28 +1,52 @@
 <template>
   <nav class="navbar bg-brown px-3">
-    <div class="container-fluid d-grid align-items-center" style="grid-template-columns: 1fr auto 1fr">
+    <div
+      class="container-fluid d-grid align-items-center"
+      style="grid-template-columns: 1fr auto 1fr"
+    >
       <!-- 왼쪽: 검색창 -->
-      <form class="d-flex justify-content-start" role="search" style="max-width: 300px">
+      <form
+        class="d-flex justify-content-start"
+        role="search"
+        style="max-width: 300px"
+      >
         <div class="input-group">
           <span class="input-group-text bg-white">
             <i class="bi bi-search"></i>
           </span>
-          <input v-model="searchText" class="form-control" type="search" placeholder="해시태그 또는 아이디 검색" />
+          <input
+            v-model="searchText"
+            class="form-control"
+            type="search"
+            placeholder="해시태그 또는 아이디 검색"
+          />
         </div>
       </form>
 
       <!-- 가운데: 로고 -->
       <div class="text-center">
         <router-link :to="targetRoute">
-          <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
+          <img
+            :src="logoImg"
+            alt="로고"
+            class="img-fluid"
+            style="max-width: 120px"
+          />
         </router-link>
       </div>
 
       <!-- 오른쪽: 알림 + 프로필 -->
-      <div v-if="isLogin" class="d-flex align-items-center gap-3 justify-content-end">
+      <div
+        v-if="isLogin"
+        class="d-flex align-items-center gap-3 justify-content-end"
+      >
         <div class="position-relative">
           <!-- 로그아웃 버튼 -->
-          <button v-if="user.userLoginId" class="btn btn-outline-light btn-sm me-3" @click="logout">
+          <button
+            v-if="user.userLoginId"
+            class="btn btn-outline-light btn-sm me-3"
+            @click="logout"
+          >
             로그아웃
           </button>
 
@@ -48,7 +72,12 @@
           class="rounded-circle border border-light"
         />
 
-        <ProfileMenuDropdown label="내 메뉴" :items="items" align="bottom" @select="handleSelect" />
+        <ProfileMenuDropdown
+          label="내 메뉴"
+          :items="items"
+          align="bottom"
+          @select="handleSelect"
+        />
       </div>
     </div>
   </nav>
@@ -99,9 +128,11 @@ function handleSelect(key) {
 async function loadProfileImage() {
   try {
     if (user.value && user.value.profileImage) {
-      const res = await axios.get(`http://localhost:8080${user.value.profileImage}`, {
-        responseType: "blob",
-      });
+      const res = await axios.get(
+        `http://localhost:8080${user.value.profileImage}`,
+        { responseType: "blob" }
+      );
+      if (profileImgUrl.value) URL.revokeObjectURL(profileImgUrl.value);
       profileImgUrl.value = URL.createObjectURL(res.data);
     }
   } catch (error) {
@@ -115,8 +146,9 @@ onMounted(() => {
 
 // userId 변화를 감지해서 프로필 이미지 다시 로드
 watch(
-  () => user.value?.userId,
-  (newVal) => {
+  () => user.value?.profileImage,
+  (newVal, oldVal) => {
+    console.log("프로필 이미지 변경 감지:", oldVal, "→", newVal);
     if (newVal) loadProfileImage();
   }
 );

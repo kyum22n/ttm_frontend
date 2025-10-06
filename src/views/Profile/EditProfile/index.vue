@@ -235,6 +235,14 @@ const fileInput = ref(null);
 function onPickAvatar(e) {
   const file = e.target.files[0];
   if (file) {
+    pet.value = pet.value || {};
+    pet.value.petAttach = file;
+
+    // 이전 Blob URL 해제 (메모리 누수 방지)
+    if (profileImgUrl.value) {
+      URL.revokeObjectURL(profileImgUrl.value);
+    }
+
     profileImgUrl.value = URL.createObjectURL(file);
   }
 }
@@ -269,6 +277,8 @@ onMounted(async () => {
     });
     if (resPet.data && resPet.data.length > 0) {
       pet.value = resPet.data[0];
+    } else {
+      pet.value = {}; // ✅ 빈 객체라도 만들어두기
     }
   } catch (e) {
     console.error("Pet 정보 로드 실패", e);
@@ -295,47 +305,78 @@ async function submit() {
       userId: user.value.userId,
       userName: user.value.userName,
       userAddress: user.value.userAddress,
-      password: user.value.password || undefined, // 비밀번호가 입력되면 포함
+      userPassword: user.value.password || undefined,
     };
+    const userPromise = userApi.userUpdate(userPayload);
 
-    const resUser = await userApi.userUpdate(userPayload);
+    // 2️⃣ 펫 이미지 업데이트
+    const promises = [userPromise];
 
-    if (!resUser.data || resUser.data.result !== "success") {
+    if (pet.value && pet.value.petAttach) {
+      const formData = new FormData();
+      formData.append("petId", pet.value.petId);
+      formData.append("petUserId", store.state.user.userId);
+      formData.append("petName", pet.value.petName || "(이름없음)");
+      formData.append("petDesc", pet.value.petDesc || "");
+      formData.append("petBreed", pet.value.petBreed || "");
+      formData.append("petWeight", pet.value.petWeight || 0);
+      formData.append("petGender", pet.value.petGender || "M");
+      formData.append("petAttach", pet.value.petAttach);
+
+      const petPromise = axios.put("/pet/update", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      promises.push(petPromise);
+    }
+
+    const [resUser, resPet] = await Promise.all(promises);
+
+    // ✅ 유저 정보 업데이트 검사
+    if (!resUser?.data || resUser.data.result !== "success") {
       alert("유저 정보 업데이트 실패");
       return;
     }
 
-    // 2️⃣ 펫 이미지 업데이트 (선택된 파일이 있을 때만)
-    if (pet.value && pet.value.petAttach) {
-      const formData = new FormData();
-      formData.append("petId", pet.value.petId);
-      formData.append("petUserId", user.value.userId);
-      formData.append("petAttach", pet.value.petAttach);
-
-      const resPet = await petApi.update(formData);
-
-      if (resPet.data && resPet.data.result === "success") {
-        // 서버에서 리턴한 URL로 UI 갱신
-        if (resPet.data.petAttachUrl) {
-          profileImgUrl.value = resPet.data.petAttachUrl;
-        }
-        // pet 객체 갱신
-        pet.value = { ...pet.value, ...resPet.data.pet };
-        // 업로드 완료 후 petAttach 초기화
-        pet.value.petAttach = null;
-      } else {
-        alert("펫 이미지 업데이트 실패");
-        return;
-      }
+    // ✅ 펫 정보 결과 검사 (fail일 때만 실패로 간주)
+    if (resPet?.data?.result === "fail") {
+      alert("펫 이미지 업데이트 실패");
+      return;
     }
 
-    alert("프로필 및 펫 이미지 업데이트 완료!");
-    // 비밀번호 초기화
+    // ✅ 새 이미지 즉시 재요청 (캐시 방지)
+    // DB 업데이트 및 이미지 요청 이후
+    if (pet.value?.petId) {
+      const res = await axios.get(
+        `/pet/image/${pet.value.petId}?v=${Date.now()}`,
+        {
+          responseType: "blob",
+        }
+      );
+      if (profileImgUrl.value) URL.revokeObjectURL(profileImgUrl.value);
+      profileImgUrl.value = URL.createObjectURL(res.data);
+
+      // ✅ 새 프로필 이미지 경로 store에 강제 반영 (변경 감지 확실히)
+      store.commit("setUser", {
+        ...store.state.user,
+        profileImage: `/pet/image/${pet.value.petId}?v=${Date.now()}`, // timestamp 추가!
+      });
+    }
+
+    alert("프로필 및 펫 이미지가 성공적으로 수정되었습니다!");
     user.value.password = "";
     user.value.password2 = "";
   } catch (error) {
-    console.error("업데이트 실패", error);
-    alert("업데이트 중 오류가 발생했습니다.");
+    console.error("업데이트 실패:", error);
+    if (error.response) {
+      alert(
+        "서버 오류: " +
+          (error.response.data?.message || "업데이트 중 오류가 발생했습니다.")
+      );
+    } else if (error.request) {
+      alert("서버에 요청이 가지 않았습니다. (네트워크 문제)");
+    } else {
+      alert("요청 설정 중 오류가 발생했습니다: " + error.message);
+    }
   }
 }
 </script>
