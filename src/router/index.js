@@ -12,6 +12,12 @@ const routes = [
     component: () => import(/* webpackChunkName: "home" */ "@/views/HomeView.vue"),
   },
 
+  {
+  path: '/Message/Detail',
+  name: 'MessageDetail',
+  component: () => import('@/views/Message/MessageDetail/index.vue'),
+  },
+
   ...AuthRouting,
   ...RegisterRouting,
   ...PostRouting,
