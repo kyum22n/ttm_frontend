@@ -229,6 +229,11 @@ const post = {
       }
     },
 
+    // 그룹 산책 모집글 신청 / 승인 / 거절 등
+    async groupwalkStatus(context, { status, participate }) {
+      return await postApi.groupwalkStatus(status, participate);
+    },
+
     // 그룹 산책 모집/신청 상태
     async groupwalkMarkNow(context, { postId, code }) {
       return await postApi.groupwalkMarkNow(postId, code);

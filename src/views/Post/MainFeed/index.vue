@@ -23,9 +23,10 @@
 
     <!-- 강아지 프로필 리스트 -->
     <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
-      <div v-for="(dog, i) in dogs" :key="i" class="text-center">
-        <img :src="dog.img" class="rounded-circle border border-4 border-primary mb-2" width="100" height="100"
-          alt="강아지 프로필" />
+      <div v-for="(dog, i) in dogs" :key="i" class="text-center" role="button" @click="goToOwnerProfile(dog.userId)">
+        <img :src="dog.img" @error="e => e.target.src = '/default_dog.png'"
+          class="rounded-circle border border-4 border-primary mb-2" width="100" height="100" alt="강아지 프로필" />
+
         <div class="fw-semibold small">{{ dog.name }}</div>
       </div>
     </div>
@@ -122,21 +123,38 @@
 </template>
 
 <script setup>
-import { computed, ref, reactive, onMounted } from "vue";
+import { computed, ref, reactive, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import logoBrown from "@/assets/logo_brown.png";
 import heroImage from "@/assets/heroImage_main.jpg";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 
 const store = useStore();
 
-/* 강아지 프로필 썸네일 */
-const dogs = ref([
-  { name: "TwoTwo", img: "https://place-puppy.com/100x100" },
-  { name: "Husky", img: "https://place-puppy.com/101x100" },
-  { name: "Pomeranian", img: "https://place-puppy.com/102x100" },
-  { name: "Retriever", img: "https://place-puppy.com/103x100" },
-]);
+/* 강아지 프로필 목록 (랜덤 불러오기) */
+const dogs = ref([]);
+async function fetchRandomDogs() {
+  try {
+    const res = await axios.get("/api/pet/random-list?limit=7");
+    dogs.value = res.data.pets.map(pet => ({
+      petId: pet.petId,
+      name: pet.petName,
+      img: `/api/pet/image/${pet.petId}`,
+      userId: pet.petUserId,
+    }));
+  } catch (e) {
+    console.error("🐶 펫 목록 불러오기 실패:", e);
+  }
+}
+
+/* 클릭 시 반려인 프로필로 이동 */
+function goToOwnerProfile(userId) {
+  router.push(`/profile/${userId}`);
+}
+
 
 /* 탭 */
 const tabs = [
@@ -150,12 +168,34 @@ const filters = reactive({
   q: "",
 });
 
-/* 게시물 목록 불러오기 */
-onMounted(() => {
-  store.dispatch("post/fetchList", 1);
+/* 게시물 목록 */
+const posts = ref([]);
+
+onMounted(async () => {
+  await store.dispatch("post/fetchList", 1);
+  posts.value = store.getters["post/getList"];
+  fetchRandomDogs();
 });
 
-const posts = computed(() => store.getters["post/getList"]);
+/* 탭 변경 시 목록 분기 */
+watch(activeTab, async (newTab) => {
+  if (newTab === "recruit") {
+    try {
+      const res = await axios.get("/post/groupwalk/recruitment-list");
+      posts.value = (res.data.posts || []).map(p => ({
+      ...p,
+      thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
+    }));
+    } catch (e) {
+      console.error("🚫 모집글 불러오기 실패:", e);
+      posts.value = [];
+    }
+  } else {
+    await store.dispatch("post/fetchList", 1);
+    posts.value = store.getters["post/getList"];
+  }
+});
+
 
 /* 탭/검색 필터링 */
 const filteredPosts = computed(() => {
