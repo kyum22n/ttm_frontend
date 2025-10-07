@@ -5,20 +5,21 @@
       <div class="card-body">
         <div class="row align-items-center g-3">
           <div class="col-auto">
-						<!-- profileImgUrl이 존재하면 표시 -->
-            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88" height="88" />
+            <!-- profileImgUrl이 존재하면 표시 -->
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
+              height="88" />
           </div>
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <h5 class="mb-0">ID: {{ store.state.user.userLoginId }}</h5>
-              <span class="text-muted small">·</span
-              ><RouterLink to="/Profile/EditProfile"> <button class="btn btn-sm btn-outline-secondary">설정</button></RouterLink>
+              <span class="text-muted small">·</span>
+              <RouterLink to="/Profile/EditProfile"> <button class="btn btn-sm btn-outline-secondary">설정</button>
+              </RouterLink>
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
               <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
-                <span class="me-1">{{ s.label }}</span
-                ><strong class="text-dark">{{ s.value }}</strong>
+                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
@@ -34,6 +35,12 @@
               <div class="col-lg-2">
                 <button class="btn btn-primary">메세지 목록</button>
               </div>
+
+              <div>
+                <!-- 프로필 내용들 ... -->
+                <ChatRequestButton />
+              </div>
+
             </div>
           </div>
         </div>
@@ -55,14 +62,8 @@
     </div>
 
     <!-- 모달 컴포넌트 -->
-    <PetProfileModal
-      :pet="selectedPet"
-      :show="showModal"
-      :currentUserId="currentUserId"
-      @update:show="showModal = $event"
-      @edit="handleEdit"
-      @chat="handleChat"
-    />
+    <PetProfileModal :pet="selectedPet" :show="showModal" :currentUserId="currentUserId"
+      @update:show="showModal = $event" @edit="handleEdit" @chat="handleChat" />
 
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
@@ -156,7 +157,8 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable @select="onSelect" />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
+                  @select="onSelect" />
               </div>
             </div>
 
@@ -184,6 +186,9 @@
 import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
+
+// 채팅 신청 버튼
+import ChatRequestButton from '@/components/Chat/ChatRequestButton.vue'
 
 const store = useStore();
 

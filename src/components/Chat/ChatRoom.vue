@@ -1,8 +1,14 @@
 <template>
   <div class="chat-container">
-    <h2 class="title">메세지 <span class="small" v-if="connected">· 연결됨</span></h2>
+    <h2 class="title">
+      메세지
+      <span class="small" v-if="connected && allowed">· 연결됨</span>
+      <span class="small" v-else-if="!checking && roomStatus==='P'">· 승인 대기</span>
+      <span class="small" v-else-if="!checking && roomStatus!=='P'">· 입장 불가</span>
+    </h2>
 
-    <div class="chat-box" ref="listRef" @scroll="onScroll">
+    <!-- 승인(A)일 때만 채팅 박스 렌더 -->
+    <div v-if="allowed" class="chat-box" ref="listRef" @scroll="onScroll">
       <button v-show="canLoadMore" class="load-more" :disabled="loadingHistory" @click="loadHistory(false)">
         ▲ 이전 대화 더 보기
       </button>
@@ -37,7 +43,20 @@
       </template>
     </div>
 
-    <div class="input-box">
+    <!-- 승인 대기 -->
+    <div v-else-if="!checking && roomStatus === 'P'" class="pending-box">
+      <p class="pending-title">승인 대기 중</p>
+      <p class="pending-desc">상대가 채팅 요청을 승인하면 이용할 수 있어요.</p>
+    </div>
+
+    <!-- 입장 불가 -->
+    <div v-else-if="!checking && roomStatus !== 'P'" class="pending-box">
+      <p class="pending-title">입장할 수 없습니다</p>
+      <p class="pending-desc">방이 없거나 권한이 없습니다.</p>
+    </div>
+
+    <!-- 입력 박스: 승인(A)일 때만 -->
+    <div v-if="allowed" class="input-box">
       <input
         type="text"
         v-model="newMessage"
@@ -68,9 +87,14 @@ const canLoadMore = ref(true);
 const loadingHistory = ref(false);
 const oldestMessageId = ref(null);
 
+const checking = ref(true);   // 승인 상태 확인 중
+const allowed  = ref(false);  // 승인됨(A)일 때만 true
+const roomStatus = ref(null); // 'A' | 'P' | 'B' | 'D' | 'X'
+
+// STOMP 인스턴스
 let stomp = null;
 
-// 유저 펫 정보로 바꿀거
+// 임시 프로필 이미지
 const ME_IMG = "https://placekitten.com/100/100";
 const OTHER_IMG = "https://placedog.net/100/100?id=1";
 
@@ -101,18 +125,56 @@ function scrollToBottom() {
 
 async function getJSON(url) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json();
-}
-async function putJSON(url, body) {
-  await fetch(url, {
-    method: "PUT",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(body),
-  });
+  let body = null;
+  try { body = await res.json(); } catch { body = null; }
+  if (!res.ok) {
+    // 에러 객체에 상태/바디를 실어 올림
+    const err = new Error(`HTTP ${res.status}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
 }
 
-async function loadHistory(initial=false){
+// 승인 상태 조회 (info만 신뢰)
+async function checkApproved() {
+  try {
+    const info = await getJSON(`${props.baseUrl}/chat/rooms/${props.roomId}/info?userId=${props.myUserId}`);
+    const st = info?.room?.chatroomStatus ?? null;
+    roomStatus.value = st;
+    allowed.value = (st === 'A');
+  } catch (e) {
+    allowed.value = false;
+    // 기본은 입장 불가
+    roomStatus.value = 'X';
+    // 서버 코드 기준으로 세분화
+    const code = e?.body?.code;
+    if (code === 'NOT_APPROVED') {
+      roomStatus.value = 'P';
+    } else if (code === 'NOT_MEMBER') {
+      roomStatus.value = 'X';
+    } else if (e?.status === 404) {
+      roomStatus.value = 'X';
+    }
+  } finally {
+    checking.value = false;
+  }
+}
+
+async function putJSON(url, body) {
+  try {
+    await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    // no-op: best-effort
+  }
+}
+
+async function loadHistory(initial = false) {
   if (loadingHistory.value) return;
   loadingHistory.value = true;
   try {
@@ -145,14 +207,14 @@ async function loadHistory(initial=false){
       if (el) el.scrollTop = el.scrollHeight - prevHeight;
     }
   } catch (e) {
-    console.error("히스토리 실패", e);
-    alert("히스토리 로드 실패");
+    // 사용자 알림은 과도하게 띄우지 않음
+    console.warn("히스토리 로드 실패", e);
   } finally {
     loadingHistory.value = false;
   }
 }
 
-function applyReadUpdate(upToId, readerId){
+function applyReadUpdate(upToId, readerId) {
   messages.value = messages.value.map(m => {
     if (m.senderId !== readerId && m.messageId <= upToId) {
       return { ...m, isRead: "Y" };
@@ -161,58 +223,71 @@ function applyReadUpdate(upToId, readerId){
   });
 }
 
-function markReadUpTo(id){
+function markReadUpTo(id) {
   if (!id) return;
   const payload = { roomId: props.roomId, userId: props.myUserId, upToMessageId: id };
   // WS
   if (stomp && connected.value) {
-    stomp.publish({ destination: "/app/chat.read", body: JSON.stringify(payload) });
+    try {
+      stomp.publish({ destination: "/app/chat.read", body: JSON.stringify(payload) });
+    } catch (e) {
+      // no-op
+    }
   }
   // REST 백업
-  putJSON(`${props.baseUrl}/chat/rooms/${props.roomId}/read`, payload).catch(() => { /* ignore */ });
+  putJSON(`${props.baseUrl}/chat/rooms/${props.roomId}/read`, payload);
   // UI 즉시 반영(낙관적)
   applyReadUpdate(id, props.myUserId);
 }
 
-function onScroll(){
+function onScroll() {
   const el = listRef.value;
   if (!el) return;
   const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
-  if (atBottom && messages.value.length){
+  if (atBottom && messages.value.length) {
     const lastId = messages.value[messages.value.length - 1].messageId;
     markReadUpTo(lastId);
   }
 }
 
-function sendMessage(){
+function sendMessage() {
   const text = newMessage.value.trim();
   if (!text) return;
+  if (!allowed.value) {
+    alert("상대 승인 전이라 메시지를 보낼 수 없습니다.");
+    return;
+  }
   if (!stomp || !connected.value) {
-    alert("연결되지 않았습니다."); return;
+    alert("연결되지 않았습니다.");
+    return;
   }
   // 전송 직전, 내가 본 마지막까지 읽음 처리
-  if (messages.value.length){
+  if (messages.value.length) {
     const lastId = messages.value[messages.value.length - 1].messageId;
     markReadUpTo(lastId);
   }
   const payload = { roomId: props.roomId, senderId: props.myUserId, message: text };
-  stomp.publish({ destination: "/app/chat.send", body: JSON.stringify(payload) });
+  try {
+    stomp.publish({ destination: "/app/chat.send", body: JSON.stringify(payload) });
+  } catch (e) {
+    alert("메시지 전송 실패");
+  }
   newMessage.value = "";
 }
 
-function connect(){
-  const wsUrl = `${props.baseUrl.replace(/\/+$/,'')}/ws`;
+function connect() {
+  const wsUrl = `${props.baseUrl.replace(/\/+$/, '')}/ws`;
   stomp = new Client({
     webSocketFactory: () => new SockJS(wsUrl),
     reconnectDelay: 3000,
-    debug: () => {}, // 로그 끄기
+    debug: () => { /* no-op */ },
   });
+
   stomp.onConnect = () => {
     connected.value = true;
-    // 구독
     const topic = `/topic/chat.${props.roomId}`;
     stomp.subscribe(topic, async (frame) => {
-      try{
+      try {
         const data = JSON.parse(frame.body);
         if (data.type === "NEW_MESSAGE") {
           const vm = toViewMessage(data.message);
@@ -230,22 +305,39 @@ function connect(){
             applyReadUpdate(Number(data.upToMessageId), Number(data.readerId));
           }
         }
-      }catch(e){ /* ignore */ }
+      } catch (e) {
+        // no-op: ignore malformed frame
+      }
     });
     // 초기 히스토리
     loadHistory(true);
   };
-  stomp.onStompError = (f) => { console.error("STOMP error", f); };
-  stomp.onWebSocketError = (e) => { console.error("WS error", e); };
-  stomp.activate();
+
+  stomp.onStompError = () => { /* no-op */ };
+  stomp.onWebSocketError = () => { /* no-op */ };
+
+  try {
+    stomp.activate();
+  } catch (e) {
+    // no-op: activation failed
+  }
 }
 
-function disconnect(){
-  try{ if (stomp) stomp.deactivate(); }catch(e){ /* ignore */ }
+function disconnect() {
+  try {
+    if (stomp) stomp.deactivate();
+  } catch (e) {
+    // no-op: socket already closed
+  }
   stomp = null;
 }
 
-onMounted(connect);
+onMounted(async () => {
+  await checkApproved();
+  if (allowed.value) {
+    connect();
+  }
+});
 onBeforeUnmount(disconnect);
 </script>
 
@@ -266,4 +358,7 @@ onBeforeUnmount(disconnect);
 .input-box { display:flex;gap:8px }
 .input-box input { flex:1;padding:10px;border:2px solid #ccc;border-radius:8px;outline:none }
 .input-box button { padding:10px 16px;border:none;border-radius:8px;background:#6b4a2b;color:#fff;font-size:.95rem;cursor:pointer }
+.pending-box { text-align:center;border:1px dashed #ccc;border-radius:8px;padding:24px;background:#fff }
+.pending-title { font-weight:700;margin-bottom:6px }
+.pending-desc { color:#666 }
 </style>

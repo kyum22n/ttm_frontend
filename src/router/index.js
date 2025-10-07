@@ -18,6 +18,12 @@ const routes = [
   component: () => import('@/views/Message/MessageDetail/index.vue'),
   },
 
+  {
+  path: '/Message/Pending',
+  name: 'MessagePending',
+  component: () => import('@/views/Message/Pending.vue'),
+},
+
   ...AuthRouting,
   ...RegisterRouting,
   ...PostRouting,
