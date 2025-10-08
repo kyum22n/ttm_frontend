@@ -6,21 +6,33 @@
         <div class="row align-items-center g-3">
           <div class="col-auto">
             <!-- profileImgUrl이 존재하면 표시 -->
-            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
-              height="88" />
+            <img
+              v-if="profileImgUrl"
+              :src="profileImgUrl"
+              alt="프로필"
+              class="rounded-circle object-cover"
+              width="88"
+              height="88"
+            />
           </div>
 
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
               <h5 class="mb-0">ID: {{ store.state.user.userLoginId }}</h5>
               <span class="text-muted small">·</span>
-              <RouterLink to="/Profile/EditProfile"> <button class="btn btn-sm btn-outline-secondary">설정</button>
+              <RouterLink to="/Profile/EditProfile">
+                <button class="btn btn-sm btn-outline-secondary">설정</button>
               </RouterLink>
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
-              <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
-                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
+              <li
+                class="list-inline-item"
+                v-for="(s, i) in profile.stats"
+                :key="i"
+              >
+                <span class="me-1">{{ s.label }}</span
+                ><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
@@ -41,7 +53,6 @@
                 <!-- 프로필 내용들 ... -->
                 <ChatRequestButton />
               </div>
-
             </div>
           </div>
         </div>
@@ -50,24 +61,40 @@
 
     <!-- 하이라이트 펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button class="btn btn-outline-secondary btn-sm">Add Pets</button>
+      <button class="btn btn-outline-secondary btn-sm" @click="goToPetRegister">
+        Add Pets
+      </button>
+
+      <!-- 유저의 모든 펫 썸네일 렌더링 -->
       <div
-        v-for="h in highlights2"
-        :key="h.id"
+        v-for="pet in petList"
+        :key="pet.petId"
         class="text-center"
-        @click="openPetModal(h)"
+        @click="openPetModal(pet)"
         style="cursor: pointer"
       >
         <div class="story-ring mx-auto mb-1">
-          <img :src="h.img" alt="" class="rounded-circle object-cover" />
+          <img
+            :src="getPetImageUrl(pet)"
+            alt="pet thumbnail"
+            class="rounded-circle object-cover"
+            width="64"
+            height="64"
+          />
         </div>
-        <div class="small text-muted">{{ h.name }}</div>
+        <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 모달 컴포넌트 -->
-    <PetProfileModal :pet="selectedPet" :show="showModal" :currentUserId="currentUserId"
-      @update:show="showModal = $event" @edit="handleEdit" @chat="handleChat" />
+    <PetProfileModal
+      :pet="selectedPet"
+      :show="showModal"
+      :currentUserId="currentUserId"
+      @update:show="showModal = $event"
+      @edit="handleEdit"
+      @chat="handleChat"
+    />
 
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
@@ -209,8 +236,15 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
-                  @select="onSelect" />
+                <ReviewDisplayBox
+                  title="해시태그"
+                  :tags="tagsFromReviews"
+                  :max-visible="10"
+                  prefix="#"
+                  pill
+                  clickable
+                  @select="onSelect"
+                />
               </div>
             </div>
 
@@ -232,16 +266,17 @@
 import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import PetProfileModal from "@/components/PetProfileModal";
 import postApi from "@/apis/postApi";
 
 // 채팅 신청 버튼
-import ChatRequestButton from '@/components/Chat/ChatRequestButton.vue'
+import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 const profileImgUrl = ref(null);
 const profile = reactive({ bio: "로딩 중입니다..." });
 
@@ -266,22 +301,29 @@ async function loadPetProfile() {
     const resPets = await axios.get("/pet/find-allpetbyuser", {
       params: { petUserId: userId },
     });
-    const pets = resPets.data;
 
-    if (pets.length > 0) {
-      const firstPet = pets[0];
-      profile.bio = firstPet.petDesc || "아직 반려견 소개가 없습니다.";
-      if (firstPet.petId) {
-        const resImg = await axios.get(`/pet/image/${firstPet.petId}`, {
-          responseType: "blob",
-        });
-        profileImgUrl.value = URL.createObjectURL(resImg.data);
-      }
-    } else {
+    const pets = resPets.data || [];
+
+    if (pets.length === 0) {
       profile.bio = "등록된 반려견이 없습니다.";
+      profileImgUrl.value = "https://via.placeholder.com/100?text=No+Image";
+      return;
     }
+
+    // ✅ createdAt 기준으로 정렬 (오래된 순)
+    pets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    // ✅ 메인 펫 = 등록일이 가장 오래된 펫
+    const mainPet = pets[0];
+
+    profile.bio = mainPet.petDesc || "아직 반려견 소개가 없습니다.";
+
+    // ✅ 이미지를 blob으로 변환하지 말고 URL 직접 연결
+    profileImgUrl.value = `/pet/image/${mainPet.petId}`;
   } catch (e) {
     console.error("펫 프로필 불러오기 실패:", e);
+    profile.bio = "프로필 정보를 불러오지 못했습니다.";
+    profileImgUrl.value = "https://via.placeholder.com/100?text=No+Image";
   }
 }
 
@@ -341,6 +383,7 @@ const totalPages = computed(() =>
 onMounted(async () => {
   if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
   await loadPetProfile();
+  await loadAllPets(); // ✅ 펫 리스트 로드 추가
   await loadUserPosts(); // ✅ 게시물도 로드
 });
 
@@ -377,10 +420,7 @@ const highlights2 = [
 const selectedPet = ref(null);
 const showModal = ref(false);
 const currentUserId = 1;
-function openPetModal(pet) {
-  selectedPet.value = pet;
-  showModal.value = true;
-}
+
 function handleEdit(pet) {
   console.log("편집:", pet);
 }
@@ -395,6 +435,44 @@ function onSelect(tag) {
   filters.q = tag.replace("#", "");
   applyFilters();
 }
+
+// 펫 목록 상태
+const petList = ref([]);
+
+// 유저의 모든 펫 목록 로드
+async function loadAllPets() {
+  try {
+    const userId = routeUserId.value || store.state.user.userId;
+    const res = await axios.get("/pet/find-allpetbyuser", {
+      params: { petUserId: userId },
+    });
+    petList.value = res.data || [];
+  } catch (err) {
+    console.error("펫 목록 로드 실패:", err);
+    petList.value = [];
+  }
+}
+
+// 펫 이미지 URL 반환 함수
+function getPetImageUrl(pet) {
+  // DB에 이미지가 등록된 경우 /pet/image/{petId} 로 접근
+  if (pet && pet.petId) {
+    return `/pet/image/${pet.petId}`;
+  }
+  // 기본 이미지 fallback
+  return "https://via.placeholder.com/80?text=No+Image";
+}
+
+// 펫 등록 페이지 이동
+function goToPetRegister() {
+  router.push("/Pet/RegisterPet");
+}
+
+// 기존 openPetModal 재사용
+function openPetModal(pet) {
+  selectedPet.value = pet;
+  showModal.value = true;
+}
 </script>
 
 <style scoped>
@@ -402,16 +480,22 @@ function onSelect(tag) {
   object-fit: cover;
 }
 .story-ring {
-  width: 64px;
-  height: 64px;
-  padding: 3px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
+  border: 3px solid transparent;
   background: linear-gradient(45deg, #ff6ea8, #f7b2d9, #fcd5e8);
-  display: grid;
-  place-items: center;
+  background-origin: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* ✅ 혹시 모서리 벗어나는거 방지 */
 }
+
 .story-ring img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 </style>

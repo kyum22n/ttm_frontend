@@ -1,410 +1,394 @@
 <template>
-  <div class="container py-4">
-    <!-- 프로필 헤더 -->
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-body">
-        <div class="row align-items-center g-3">
-          <div class="col-auto">
-            <img
-              v-if="profileImgUrl"
-              :src="profileImgUrl"
-              alt="프로필"
-              class="rounded-circle object-cover"
-              width="88"
-              height="88"
-            />
-            <img
-              v-else
-              src="/default-avatar.png"
-              alt="기본 이미지"
-              class="rounded-circle object-cover"
-              width="88"
-              height="88"
-            />
-          </div>
+  <div class="container py-5">
+    <div class="card border-3 rounded-4 shadow-sm profile-frame">
+      <div class="card-body p-4 p-md-5">
+        <h4 class="fw-bold text-brown mb-4">My Profile</h4>
 
-          <div class="col">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">ID: {{ store.state.user.userLoginId }}</h5>
-              <span class="text-muted small">·</span>
-
-              <RouterLink v-if="isMine" to="/Profile/EditProfile">
-                <button class="btn btn-sm btn-outline-secondary">설정</button>
-              </RouterLink>
-              <button v-else class="btn btn-sm btn-primary">팔로우</button>
-            </div>
-
-            <!-- 소개글 (pet_desc) -->
-            <div class="mt-2">
-              <div class="p-3 bg-light rounded">
-                <p class="mb-0 small">{{ profile.bio }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 하이라이트 펫 썸네일 -->
-    <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button class="btn btn-outline-secondary btn-sm">Add Pets</button>
-      <div
-        v-for="h in highlights2"
-        :key="h.id"
-        class="text-center"
-        @click="openPetModal(h)"
-        style="cursor: pointer"
-      >
-        <div class="story-ring mx-auto mb-1">
-          <img :src="h.img" alt="" class="rounded-circle object-cover" />
-        </div>
-        <div class="small text-muted">{{ h.name }}</div>
-      </div>
-    </div>
-
-    <PetProfileModal
-      :pet="selectedPet"
-      :show="showModal"
-      :currentUserId="currentUserId"
-      @update:show="showModal = $event"
-      @edit="handleEdit"
-      @chat="handleChat"
-    />
-
-    <!-- 콘텐츠 + 사이드바 -->
-    <div class="row g-4">
-      <div class="col-lg-8">
-        <!-- 필터 탭 -->
-        <ul class="nav nav-pills mb-3">
-          <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button
-              class="nav-link"
-              :class="{ active: activeTab === t.key }"
-              @click="activeTab = t.key"
-            >
-              {{ t.label }}
-            </button>
-          </li>
-        </ul>
-
-        <!-- 카드 그리드 -->
-        <div class="row g-3">
-          <div v-for="post in filteredPosts" :key="post.id" class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-              <div class="ratio ratio-4x3">
-                <img
-                  :src="
-                    post.img || 'https://picsum.photos/seed/default/600/400'
-                  "
-                  class="card-img-top object-cover"
-                  alt="게시물 이미지"
-                />
-              </div>
-              <div class="card-body">
-                <div class="small text-muted mb-1">{{ post.subtitle }}</div>
-                <h6 class="card-title mb-1">{{ post.title }}</h6>
-                <p class="card-text text-muted small mb-0">{{ post.desc }}</p>
-              </div>
-              <div
-                class="card-footer bg-white d-flex justify-content-between align-items-center"
-              >
-                <span class="small text-muted">{{ post.time }}</span>
-                <button class="btn btn-sm btn-outline-secondary">
-                  ♥ {{ post.likes }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 페이지네이션 -->
-        <nav class="mt-4">
-          <ul class="pagination pagination-sm">
-            <li class="page-item" :class="{ disabled: page === 1 }">
-              <button class="page-link" @click="page--" :disabled="page === 1">
-                Prev
-              </button>
-            </li>
-            <li
-              class="page-item"
-              v-for="n in totalPages"
-              :key="n"
-              :class="{ active: page === n }"
-            >
-              <button class="page-link" @click="page = n">{{ n }}</button>
-            </li>
-            <li class="page-item" :class="{ disabled: page === totalPages }">
-              <button
-                class="page-link"
-                @click="page++"
-                :disabled="page === totalPages"
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      <!-- 사이드바 -->
-      <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-3">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <strong>필터</strong>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @click="resetFilters"
-              >
-                초기화
-              </button>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small">검색</label>
-              <input
-                v-model="filters.q"
-                type="search"
-                class="form-control form-control-sm"
-                placeholder="키워드..."
+        <div class="row g-5 align-items-start">
+          <!-- 왼쪽: 아바타 -->
+          <div class="col-12 col-md-4 d-flex flex-column align-items-center">
+            <div class="avatar-wrap mb-3">
+              <img
+                v-if="profileImgUrl"
+                :src="profileImgUrl"
+                class="rounded-circle object-cover"
+                width="220"
+                height="220"
+                alt="프로필"
               />
             </div>
+            <div class="d-grid gap-2 w-100" style="max-width: 260px">
+              <label class="btn btn-outline-secondary btn-sm rounded-pill">
+                사진 업로드
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onPickAvatar"
+                  ref="fileInput"
+                />
+              </label>
+            </div>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label small">종류</label>
-              <div class="d-flex flex-wrap gap-2">
-                <div v-for="c in categories" :key="c" class="form-check">
+          <!-- 오른쪽: 폼 -->
+          <div class="col-12 col-md-8">
+            <form @submit.prevent="submit">
+              <div class="vstack gap-3">
+                <!-- 이름 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-person"></i
+                  ></span>
+                  <input
+                    v-model.trim="user.userName"
+                    type="text"
+                    class="form-control"
+                    placeholder="이름"
+                    required
+                  />
+                </div>
+
+                <!-- 생일 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-calendar3"></i
+                  ></span>
+                  <input
+                    :value="user.userBirthDate"
+                    type="text"
+                    class="form-control"
+                    placeholder="2001.07.24"
+                    readonly
+                  />
+                </div>
+
+                <!-- 아이디 (readonly) -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-badge-ad"></i
+                  ></span>
+                  <input
+                    :value="readonlyUser.userLoginId"
+                    type="text"
+                    class="form-control"
+                    placeholder="아이디"
+                    readonly
+                  />
+                </div>
+
+                <!-- 이메일 (readonly) -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-envelope"></i
+                  ></span>
+                  <input
+                    :value="readonlyUser.userEmail"
+                    type="email"
+                    class="form-control"
+                    placeholder="email@example.com"
+                    readonly
+                  />
+                </div>
+
+                <!-- 비밀번호 / 비밀번호 확인 -->
+                <div class="row g-3">
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="bi bi-lock-fill"></i
+                      ></span>
+                      <input
+                        v-model="user.password"
+                        :type="showPw ? 'text' : 'password'"
+                        class="form-control"
+                        placeholder="비밀번호"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        @click="showPw = !showPw"
+                      >
+                        <i
+                          :class="showPw ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                        ></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="bi bi-lock-fill"></i
+                      ></span>
+                      <input
+                        v-model="user.password2"
+                        :type="showPw2 ? 'text' : 'password'"
+                        class="form-control"
+                        placeholder="비밀번호 확인"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        @click="showPw2 = !showPw2"
+                      >
+                        <i
+                          :class="showPw2 ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                        ></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 주소 -->
+                <div class="row g-3">
+                  <div class="col-sm-8">
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="bi bi-geo-alt"></i
+                      ></span>
+                      <input
+                        v-model.trim="user.userAddress"
+                        type="text"
+                        class="form-control"
+                        placeholder="서울시 송파구"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-sm-4 d-grid">
+                    <button
+                      type="button"
+                      class="btn btn-ivory"
+                      @click="$emit('search-address')"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 체크박스 (readonly) -->
+                <div class="form-check mt-2">
                   <input
                     class="form-check-input"
                     type="checkbox"
-                    :id="`cat-${c}`"
-                    :value="c"
-                    v-model="filters.cats"
+                    id="denyWalk"
+                    :checked="readonlyUser.denyWalkRequest"
+                    disabled
                   />
-                  <label class="form-check-label small" :for="`cat-${c}`">{{
-                    c
-                  }}</label>
+                  <label class="form-check-label" for="denyWalk">
+                    산책 메이트 신청을 받고 싶지 않아요
+                  </label>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="text-center mt-3">
+                  <button
+                    type="submit"
+                    class="btn btn-brown px-5 py-2 rounded-pill"
+                  >
+                    <span class="paw me-2">🐾</span> 변경사항 저장
+                  </button>
                 </div>
               </div>
-            </div>
-
-            <div class="mb-2">
-              <label class="form-label small">정렬</label>
-              <select v-model="filters.sort" class="form-select form-select-sm">
-                <option value="latest">최신순</option>
-                <option value="likes">좋아요순</option>
-              </select>
-            </div>
-
-            <button
-              class="btn btn-dark w-100 btn-sm mt-2"
-              @click="applyFilters"
-            >
-              적용
-            </button>
+            </form>
           </div>
         </div>
 
-        <!-- 해시태그 박스 -->
-        <div class="card border-0 shadow-sm">
-          <div class="card-body">
-            <ReviewDisplayBox
-              title="해시태그"
-              :tags="tagsFromReviews"
-              :max-visible="10"
-              prefix="#"
-              pill
-              clickable
-              @select="onSelect"
-            />
-          </div>
-        </div>
+        <div class="d-none d-md-block cute-pets">🐱 🐶</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
-import { computed, reactive, ref, onMounted, watch } from "vue";
-import { useStore } from "vuex";
-import { useRoute } from "vue-router";
+import { ref, onMounted } from "vue";
 import axios from "axios";
-import PetProfileModal from "@/components/PetProfileModal";
-import postApi from "@/apis/postApi";
+import { useStore } from "vuex";
 
 const store = useStore();
-const route = useRoute();
+
+const user = ref({
+  userId: null,
+  userLoginId: "",
+  userName: "",
+  userAddress: "",
+  userBirthDate: "",
+  userAvatarUrl: "",
+  password: "",
+  password2: "",
+});
+
+const readonlyUser = ref({
+  userLoginId: "",
+  userEmail: "",
+  userAvatarUrl: "",
+  userBirthDate: "",
+  denyWalkRequest: false,
+});
+
 const profileImgUrl = ref(null);
-const profile = reactive({ bio: "로딩 중입니다..." });
+const pet = ref(null);
+const showPw = ref(false);
+const showPw2 = ref(false);
+const fileInput = ref(null);
 
-// ✅ 유저 ID
-const routeUserId = ref(null);
-watch(
-  () => route.params.userId,
-  (newVal) => {
-    if (newVal) {
-      routeUserId.value = Number(newVal);
-      loadPetProfile();
+// 프로필 이미지 미리보기
+function onPickAvatar(e) {
+  const file = e.target.files[0];
+  if (file) {
+    pet.value = pet.value || {};
+    pet.value.petAttach = file;
+
+    // 이전 Blob URL 해제 (메모리 누수 방지)
+    if (profileImgUrl.value) {
+      URL.revokeObjectURL(profileImgUrl.value);
     }
-  },
-  { immediate: true }
-);
-const isMine = computed(() => routeUserId.value === store.state.user.userId);
 
-// ✅ 펫 이미지 + pet_desc 로드
-async function loadPetProfile() {
+    profileImgUrl.value = URL.createObjectURL(file);
+  }
+}
+
+// 유저 정보 + Pet 정보 불러오기
+onMounted(async () => {
+  const userId = store.state.user.userId;
+
+  // 1. 유저 정보
+  const resUser = await axios.get("/user/info", { params: { userId } });
+  const data = resUser.data.data;
+  readonlyUser.value = {
+    userLoginId: data.userLoginId,
+    userEmail: data.userEmail,
+    userAvatarUrl: data.userAvatarUrl,
+    userBirthDate: data.userBirthDate,
+    denyWalkRequest: data.denyWalkRequest,
+  };
+  user.value = {
+    ...user.value,
+    userId: data.userId,
+    userLoginId: data.userLoginId,
+    userName: data.userName || "",
+    userAddress: data.userAddress || "",
+    userBirthDate: data.userBirthDate || "",
+  };
+
+  // 2. Pet 정보 (첫 번째 pet)
   try {
-    const userId = routeUserId.value || store.state.user.userId;
-    const resPets = await axios.get("/pet/find-allpetbyuser", {
+    const resPet = await axios.get("/pet/find-allpetbyuser", {
       params: { petUserId: userId },
     });
-    const pets = resPets.data;
-
-    if (pets.length > 0) {
-      const firstPet = pets[0];
-      profile.bio = firstPet.petDesc || "아직 반려견 소개가 없습니다.";
-      if (firstPet.petId) {
-        const resImg = await axios.get(`/pet/image/${firstPet.petId}`, {
-          responseType: "blob",
-        });
-        profileImgUrl.value = URL.createObjectURL(resImg.data);
-      }
+    if (resPet.data && resPet.data.length > 0) {
+      pet.value = resPet.data[0];
     } else {
-      profile.bio = "등록된 반려견이 없습니다.";
+      pet.value = {}; // ✅ 빈 객체라도 만들어두기
     }
   } catch (e) {
-    console.error("펫 프로필 불러오기 실패:", e);
+    console.error("Pet 정보 로드 실패", e);
   }
-}
 
-// ✅ 게시물 로드
-const posts = ref([]); // DB에서 불러올 게시물 저장
-
-// 게시물 목록 불러오기
-// ✅ 게시물 목록 불러오기 (postApi 이용)
-async function loadUserPosts() {
-  try {
-    const userId = routeUserId.value || store.state.user.userId;
-    const res = await postApi.getUserPost(userId);
-
-    if (res.data && res.data.posts) {
-      posts.value = res.data.posts.map((p) => ({
-        id: p.postId,
-        title: p.postTitle,
-        desc: p.postContent,
-        subtitle: `좋아요 ${p.postLikeCount || 0}개`,
-        img: postApi.getPostImage(p.postId),
-        likes: p.postLikeCount || 0,
-        time: new Date(p.createdAt).toLocaleString(),
-        type: p.isRequest === "Y" ? "group" : "feed",
-        cats: [],
-      }));
-    } else {
-      posts.value = [];
-    }
-  } catch (e) {
-    console.error("게시물 불러오기 실패:", e);
-  }
-}
-
-// ✅ 필터 탭 & 정렬 적용
-const activeTab = ref("all");
-const filters = reactive({ q: "", cats: [], sort: "latest" });
-const page = ref(1);
-const pageSize = 6;
-
-const filteredPosts = computed(() => {
-  let list = posts.value.filter((p) =>
-    activeTab.value === "all" ? true : p.type === activeTab.value
-  );
-  if (filters.q)
-    list = list.filter((p) =>
-      (p.title + p.subtitle + p.desc).includes(filters.q)
+  // 3. 프로필 이미지
+  if (store.state.user.profileImage) {
+    const res = await axios.get(
+      `http://localhost:8080${store.state.user.profileImage}`,
+      { responseType: "blob" }
     );
-  if (filters.sort === "likes")
-    list = [...list].sort((a, b) => b.likes - a.likes);
-  const start = (page.value - 1) * pageSize;
-  return list.slice(start, start + pageSize);
-});
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(posts.value.length / pageSize))
-);
-
-onMounted(async () => {
-  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
-  await loadPetProfile();
-  await loadUserPosts(); // ✅ 게시물도 로드
+    profileImgUrl.value = URL.createObjectURL(res.data);
+  }
 });
 
-// ✅ 필터 및 게시물 로직
-const tabs = [
-  { key: "all", label: "전체" },
-  { key: "story", label: "스토리" },
-  { key: "group", label: "그룹산책" },
-  { key: "feed", label: "피드" },
-];
+// 저장
+import petApi from "@/apis/petApi";
+import userApi from "@/apis/userApi";
 
-const categories = ["강아지", "고양이", "일상", "산책", "모임"];
+async function submit() {
+  try {
+    // 1️⃣ 유저 정보 업데이트
+    const userPayload = {
+      userId: user.value.userId,
+      userName: user.value.userName,
+      userAddress: user.value.userAddress,
+      userPassword: user.value.password || undefined,
+    };
+    const userPromise = userApi.userUpdate(userPayload);
 
-function resetFilters() {
-  filters.q = "";
-  filters.cats = [];
-  filters.sort = "latest";
-}
-function applyFilters() {
-  page.value = 1;
-}
+    // 2️⃣ 펫 이미지 업데이트
+    const promises = [userPromise];
 
-// ✅ 리뷰 해시태그
-const reviews = computed(() => store.getters["review/reviews"] || []);
-const tagsFromReviews = computed(() => {
-  const ids = reviews.value.map((r) => r?.reviewTagId).filter(Boolean);
-  return [...new Set(ids)].map((id) => String(id));
-});
+    if (pet.value && pet.value.petAttach) {
+      const formData = new FormData();
+      formData.append("petId", pet.value.petId);
+      formData.append("petUserId", store.state.user.userId);
+      formData.append("petName", pet.value.petName || "(이름없음)");
+      formData.append("petDesc", pet.value.petDesc || "");
+      formData.append("petBreed", pet.value.petBreed || "");
+      formData.append("petWeight", pet.value.petWeight || 0);
+      formData.append("petGender", pet.value.petGender || "M");
+      formData.append("petAttach", pet.value.petAttach);
 
-// ✅ 펫 모달
-const highlights2 = [
-  { id: 1, name: "뽀삐", img: "https://via.placeholder.com/80" },
-];
-const selectedPet = ref(null);
-const showModal = ref(false);
-const currentUserId = 1;
-function openPetModal(pet) {
-  selectedPet.value = pet;
-  showModal.value = true;
-}
-function handleEdit(pet) {
-  console.log("편집:", pet);
-}
-function handleChat(pet) {
-  console.log("채팅 신청:", pet);
-}
+      const petPromise = axios.put("/pet/update", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      promises.push(petPromise);
+    }
 
-// ReviewDisplayBox에서 해시태그 클릭 시 동작
-function onSelect(tag) {
-  console.log("선택된 해시태그:", tag);
-  // 예시: 검색 필터에 반영
-  filters.q = tag.replace("#", "");
-  applyFilters();
+    const [resUser, resPet] = await Promise.all(promises);
+
+    // ✅ 유저 정보 업데이트 검사
+    if (!resUser?.data || resUser.data.result !== "success") {
+      alert("유저 정보 업데이트 실패");
+      return;
+    }
+
+    // ✅ 펫 정보 결과 검사 (fail일 때만 실패로 간주)
+    if (resPet?.data?.result === "fail") {
+      alert("펫 이미지 업데이트 실패");
+      return;
+    }
+
+    // ✅ 새 이미지 즉시 재요청 (캐시 방지)
+    // DB 업데이트 및 이미지 요청 이후
+    if (pet.value?.petId) {
+      const res = await axios.get(
+        `/pet/image/${pet.value.petId}?v=${Date.now()}`,
+        {
+          responseType: "blob",
+        }
+      );
+      if (profileImgUrl.value) URL.revokeObjectURL(profileImgUrl.value);
+      profileImgUrl.value = URL.createObjectURL(res.data);
+
+      // ✅ 새 프로필 이미지 경로 store에 강제 반영 (변경 감지 확실히)
+      store.commit("setUser", {
+        ...store.state.user,
+        profileImage: `/pet/image/${pet.value.petId}?v=${Date.now()}`, // timestamp 추가!
+      });
+    }
+
+    alert("프로필 및 펫 이미지가 성공적으로 수정되었습니다!");
+    user.value.password = "";
+    user.value.password2 = "";
+  } catch (error) {
+    console.error("업데이트 실패:", error);
+    if (error.response) {
+      alert(
+        "서버 오류: " +
+          (error.response.data?.message || "업데이트 중 오류가 발생했습니다.")
+      );
+    } else if (error.request) {
+      alert("서버에 요청이 가지 않았습니다. (네트워크 문제)");
+    } else {
+      alert("요청 설정 중 오류가 발생했습니다: " + error.message);
+    }
+  }
 }
 </script>
 
 <style scoped>
-.object-cover {
+.profile-frame {
+  max-width: 960px;
+  margin: auto;
+}
+.avatar-wrap img {
+  width: 220px;
+  height: 220px;
   object-fit: cover;
-}
-.story-ring {
-  width: 64px;
-  height: 64px;
-  padding: 3px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #ff6ea8, #f7b2d9, #fcd5e8);
-  display: grid;
-  place-items: center;
-}
-.story-ring img {
-  width: 100%;
-  height: 100%;
 }
 </style>
