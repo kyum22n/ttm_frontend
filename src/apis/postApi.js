@@ -134,6 +134,13 @@ function postLikeCancel(userId, postId) {
     });
 }
 
+/** 게시물 좋아요 상태 확인 */
+function getPostLikeStatus(userId, postId) {
+  return axios.get("/like/post-like/status", {
+    params: { userId, postId },
+  });
+}
+
 /** =========================
  *  Group Walk
  *  ========================= */
@@ -191,5 +198,6 @@ export default {
     groupwalkStatus,
     groupwalkPendingParticipants,
     groupwalkApprovedParticipants,
-    groupwalkMarkNow
+    groupwalkMarkNow,
+    getPostLikeStatus
 };
