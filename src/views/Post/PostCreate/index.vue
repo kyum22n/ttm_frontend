@@ -111,7 +111,8 @@ const router = useRouter();
 const title = ref("");
 const content = ref("");
 const isRequest = ref(false);
-const userId = 1; // TODO: 로그인 값 연동
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const userId = user.userId || null;
 
 // 태그
 const availableTags = [

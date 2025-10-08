@@ -136,14 +136,15 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-
+import axios from "axios";
 import postApi from "@/apis/postApi";
 
 const store = useStore();
 const route = useRoute();
 const router = useRouter();
 
-const userId = Number(localStorage.getItem("userId")) || 1; // 로그인 사용자
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const userId = user.userId || null; // 로그인 사용자 userID 받아오기
 const post = computed(() => store.state.post.detail);
 const comments = computed(() => store.state.post.comments);
 const tags = computed(() => store.state.post.tags);
@@ -167,20 +168,78 @@ function formatDate(iso) {
 
 // 좋아요
 async function toggleLike() {
-  if (!post.value || !post.value.postId) {
-    console.log("게시물 ID 없음, 좋아요 불가");
-    return;
-  }
-  if (!liked.value) {
-    await store.dispatch("post/likePost", { userId, postId: post.value.postId });
-  } else {
-    await store.dispatch("post/likePostCancel", {
-      userId,
-      postId: post.value.postId,
+  console.log("좋아요 요청:", userId, post.value?.postId);
+  if (!post.value?.postId) return;
+
+  try {
+    // 서버로 토글 요청 보내기
+    const res = await axios.post("/like/post-like", null, {
+      params: { userId, postId: post.value.postId },
     });
+
+    // 서버에서 liked: true/false 내려줌
+    if (typeof res.data.liked === "boolean") {
+      liked.value = res.data.liked;
+
+      // 좋아요 개수 동기화
+      if (liked.value) {
+        post.value.postLikeCount = (post.value.postLikeCount || 0) + 1;
+      } else {
+        post.value.postLikeCount = Math.max((post.value.postLikeCount || 1) - 1, 0);
+      }
+    } else {
+      console.warn("서버 응답 liked 값이 없음:", res.data);
+    }
+  } catch (err) {
+    // 백엔드 전역 예외 처리기에서 내려주는 message 사용
+    const msg = err.response?.data?.message;
+
+    if (msg.includes("자신의 게시글")) {
+      alert("자신의 게시글에는 좋아요를 누를 수 없습니다.");
+    } else {
+      console.error("좋아요 요청 오류:", msg);
+    }
   }
-  liked.value = !liked.value;
 }
+
+onMounted(async () => {
+
+  const id = Number(route.params.id);
+  if (!id) return;
+
+  // 1️. 게시글 상세 불러오기
+  await store.dispatch("post/fetchDetail", id);
+  const currentPost = post.value;
+  if (!currentPost) return;
+
+  // 2️. 작성자 정보
+  authorName.value = `작성자 #${currentPost.postUserId}`;
+
+  // 3️. 작성자 게시물 목록
+  await store.dispatch("post/fetchUserPostList", {
+    userId: currentPost.postUserId,
+  });
+  authorPosts.value = store.state.post.list || [];
+
+  // 4️. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = storedUser.userId;
+  if (userId && currentPost.postId) {
+    try {
+      const isLiked = await store.dispatch("post/fetchPostLikeStatus", {
+        userId,
+        postId: currentPost.postId,
+      });
+      liked.value = isLiked;
+      console.log("초기 좋아요 상태:", isLiked);
+    } catch (err) {
+      console.error("좋아요 상태 확인 실패:", err.response?.data || err);
+    }
+  }
+});
+
+
+
 
 // 댓글 작성
 async function addComment() {
