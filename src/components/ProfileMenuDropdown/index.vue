@@ -1,6 +1,11 @@
 <!-- components/ProfileMenuDropdown.vue (라우터/keep-alive 대응 포함) -->
 <template>
-  <div ref="root" class="dropdown" :class="{ dropstart: align === 'start', dropend: align === 'end' }" @pointerdown.stop>
+  <div
+    ref="root"
+    class="dropdown"
+    :class="{ dropstart: align === 'start', dropend: align === 'end' }"
+    @pointerdown.stop
+  >
     <slot name="toggle">
       <button
         class="btn btn-outline-secondary rounded-pill px-3"
@@ -22,7 +27,12 @@
     >
       <li v-for="(it, idx) in items" :key="idx">
         <hr v-if="it.divider" class="dropdown-divider m-0" />
-        <button v-else class="dropdown-item d-flex align-items-center gap-2 py-3" type="button" @click.prevent="onSelect(it)">
+        <button
+          v-else
+          class="dropdown-item d-flex align-items-center gap-2 py-3"
+          type="button"
+          @click.prevent="onSelect(it)"
+        >
           <span v-if="it.icon && isImg(it.icon)" class="icon-wrap">
             <img :src="it.icon" alt="" />
           </span>
@@ -35,8 +45,24 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, onActivated, onDeactivated } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  onActivated,
+  onDeactivated,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+import { useStore } from "vuex";
+const store = useStore();
+
+function onSelect(it) {
+  emit("select", it.key ?? it.text, it);
+  if (!props.forceOpen) close();
+}
 
 const props = defineProps({
   label: { type: String, default: "메뉴" },
@@ -56,11 +82,6 @@ const isOpen = computed(() => props.forceOpen || open.value);
 
 function isImg(icon) {
   return typeof icon === "string" && /^(https?:|data:|\.\/|\/)/.test(icon);
-}
-
-function onSelect(it) {
-  emit("select", it.key ?? it.text, it);
-  if (!props.forceOpen) close();
 }
 
 /* 토글/열기 닫기 */

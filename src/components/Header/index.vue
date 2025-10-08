@@ -103,24 +103,36 @@ const isLogin = computed(() => store.getters.isLogin);
 const profileImgUrl = ref(null);
 
 const items = [
-  { key: "profile", text: "내 프로필", icon: "🧑‍💻" },
-  { key: "mypage", text: "마이페이지", icon: "📒" },
+  { key: "profile", text: "마이페이지", icon: "🧑‍💻" },
+  { key: "mypage", text: "내 프로필", icon: "📒" },
   { key: "mate", text: "내 산책 메이트", icon: "🐕" },
-  { key: "likes", text: "좋아요 목록", icon: "🤍" },
+  { key: "likes", text: "OtherProfile", icon: "🤍" },
   { key: "viewed", text: "조회한 게시물", icon: "🕒" },
   { divider: true },
   { key: "settings", text: "설정", icon: "⚙️" },
 ];
 
 function handleSelect(key) {
+  const userId = user.value?.userId;
+
+  // 메뉴별 라우팅
+  if (key === "profile") {
+    if (userId) {
+      router.push(`/Profile/MyProfile/${userId}`);
+    } else {
+      alert("로그인 정보가 없습니다. 다시 로그인 해주세요.");
+    }
+    return;
+  }
+
   const map = {
-    profile: "/Profile/MyProfile",
     mypage: "/Profile/EditProfile",
     mate: "/Profile/MyProfile",
-    likes: "/likes",
+    likes: "/Profile/OtherProfile",
     viewed: "/history",
     settings: "/settings",
   };
+
   if (map[key]) router.push(map[key]);
 }
 
