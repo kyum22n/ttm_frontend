@@ -73,11 +73,14 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
+// ✅ [추가] 부모가 계산해서 내려줄 내/상대 아바타 URL
 const props = defineProps({
   baseUrl: { type: String, default: "http://localhost:8080" },
   roomId: { type: Number, required: true },
   myUserId: { type: Number, required: true },
-});
+  myAvatarUrl: { type: String, default: "" },     // ← 추가
+  otherAvatarUrl: { type: String, default: "" },  // ← 추가
+})
 
 const messages = ref([]);
 const newMessage = ref("");
@@ -94,17 +97,21 @@ const roomStatus = ref(null); // 'A' | 'P' | 'B' | 'D' | 'X'
 // STOMP 인스턴스
 let stomp = null;
 
-// 임시 프로필 이미지
-const ME_IMG = "https://placekitten.com/100/100";
-const OTHER_IMG = "https://placedog.net/100/100?id=1";
+// ✅ [추가] 이미지가 없을 때 사용할 폴백
+const FALLBACK_ME    = "https://placehold.co/100x100?text=ME"
+const FALLBACK_OTHER = "https://placehold.co/100x100?text=USER"
+
+
 
 function fmtTime(iso) {
   if (!iso) return "";
   try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
 }
 
+
+// ⬇️ [수정] 기존 placekitten/placedog 하드코딩 제거하고 props의 URL 사용
 function toViewMessage(m) {
-  const mine = m.senderId === props.myUserId;
+  const mine = m.senderId === props.myUserId
   return {
     messageId: m.messageId,
     senderId: m.senderId,
@@ -113,9 +120,12 @@ function toViewMessage(m) {
     sender: mine ? "me" : "other",
     name: mine ? "나" : `상대(${m.senderId})`,
     text: m.message,
-    img: mine ? ME_IMG : OTHER_IMG,
-  };
+    // ✅ 내 메시지면 myAvatarUrl, 상대면 otherAvatarUrl 사용 (+ 폴백)
+    img: mine ? (props.myAvatarUrl || FALLBACK_ME)
+              : (props.otherAvatarUrl || FALLBACK_OTHER),
+  }
 }
+
 
 function scrollToBottom() {
   const el = listRef.value;

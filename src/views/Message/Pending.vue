@@ -18,7 +18,7 @@
 import { ref, computed, onMounted } from 'vue'
 
 const BASE = (import.meta?.env?.VITE_API_BASE) || process.env.VUE_APP_API_BASE || 'http://localhost:8080'
-const me = 2 // 테스트 고정
+const me = 83 // 테스트 고정
 
 const roomId = Number(new URLSearchParams(location.search).get('roomId') || 0)
 const loading = ref(false)
