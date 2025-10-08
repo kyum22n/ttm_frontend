@@ -12,6 +12,18 @@ const routes = [
     component: () => import(/* webpackChunkName: "home" */ "@/views/HomeView.vue"),
   },
 
+  {
+  path: '/Message/Detail',
+  name: 'MessageDetail',
+  component: () => import('@/views/Message/MessageDetail/index.vue'),
+  },
+
+  {
+  path: '/Message/Pending',
+  name: 'MessagePending',
+  component: () => import('@/views/Message/Pending.vue'),
+},
+
   ...AuthRouting,
   ...RegisterRouting,
   ...PostRouting,

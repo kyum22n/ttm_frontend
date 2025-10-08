@@ -1,8 +1,7 @@
-<!-- src/views/PostEdit.vue (예시) -->
 <template>
   <div class="container my-5" v-if="loaded">
     <div class="row">
-      <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
+      <!-- ===== 왼쪽: 대표 이미지 미리보기 (신규 첨부 중 첫 장) ===== -->
       <div class="col-md-4">
         <div class="card mb-3 shadow-sm">
           <img v-if="previewImage" :src="previewImage" class="card-img-top" alt="대표 미리보기" />
@@ -18,7 +17,6 @@
           <div class="card-body">
             <h5 class="card-title">게시글 수정</h5>
 
-            <!-- 제목 (백엔드가 postTitle 받으므로 포함 권장) -->
             <input
               v-model="title"
               type="text"
@@ -33,7 +31,6 @@
               placeholder="내용을 입력하세요"
             ></textarea>
 
-            <!-- 산책 모집글 여부 -->
             <div class="form-check mb-3">
               <input id="isRequest" class="form-check-input" type="checkbox" v-model="isRequest" />
               <label class="form-check-label" for="isRequest">산책 모집글</label>
@@ -45,8 +42,8 @@
                 v-for="(tag, idx) in selectedTags"
                 :key="idx"
                 class="badge bg-primary me-2"
+                role="button"
                 @click="removeTag(tag)"
-                style="cursor:pointer"
               >
                 {{ tag }} ✕
               </span>
@@ -119,17 +116,42 @@
         </div>
       </div>
 
-      <!-- ===== 오른쪽: 첨부 이미지 영역 (신규 첨부 미리보기) ===== -->
+      <!-- ===== 오른쪽: 기존/신규 첨부 이미지 ===== -->
       <div class="col-md-3">
-        <h6 class="fw-bold mb-3">첨부 이미지</h6>
+        <h6 class="fw-bold mb-2">기존 이미지</h6>
+
+        <!-- 기존 이미지 리스트: 유지/삭제 토글 -->
+        <div class="mb-3">
+          <div
+            v-for="img in existingImages"
+            :key="img.id"
+            class="card mb-2"
+          >
+            <img :src="absoluteUrl(img.url)" class="card-img-top img-fluid" :alt="`기존 이미지 ${img.id}`" />
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <span class="text-muted small">ID: {{ img.id }}</span>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" :id="`keep-${img.id}`" v-model="img.keep">
+                <label class="form-check-label" :for="`keep-${img.id}`">
+                  {{ img.keep ? '유지' : '삭제' }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="!existingImages.length" class="text-muted small">
+            기존 이미지가 없습니다.
+          </div>
+        </div>
+
+        <hr>
+
+        <h6 class="fw-bold mb-2">신규 첨부 이미지</h6>
 
         <!-- 파일 업로드 버튼 -->
         <div class="mb-3 text-center">
-          <label
-            class="d-inline-flex align-items-center justify-content-center bg-dark text-white rounded p-3"
-            style="cursor:pointer; width:80px; height:80px;"
-          >
-            <i class="bi bi-folder-plus fs-3"></i>
+          <label class="btn btn-dark">
+            <i class="bi bi-folder-plus"></i> 이미지 추가
             <input
               type="file"
               class="d-none"
@@ -138,39 +160,34 @@
               @change="onFileChange"
             />
           </label>
-          <div class="small text-muted mt-2">이미지 추가 (최대 10장)</div>
-          <div class="small text-muted">※ 기존 이미지는 서버에 남아있으며, <b>replace</b> 선택 + 새 이미지 업로드 시 교체됩니다.</div>
+          <div class="small text-muted mt-2">최대 10장까지 추가할 수 있습니다.</div>
+          <div class="small text-muted">※ 기존 이미지를 삭제하려면, <b>유지</b> 스위치를 끄세요. 저장 시 자동으로 교체 모드로 업로드됩니다.</div>
         </div>
 
-        <!-- 썸네일 리스트(신규 업로드만 표시) -->
+        <!-- 신규 썸네일 리스트 -->
         <div class="d-flex flex-column gap-2">
           <div
             v-for="(img, idx) in previewImages"
             :key="idx"
-            class="position-relative"
+            class="card"
           >
             <img
               :src="img"
-              class="img-thumbnail w-100"
-              style="max-height:120px; object-fit:cover; cursor:pointer;"
+              class="card-img-top img-fluid"
+              :alt="`신규 이미지 ${idx + 1}`"
+              role="button"
               @click="setAsMain(idx)"
-              :alt="`첨부 이미지 ${idx + 1}`"
             />
-            <!-- 좌측 하단: 대표 지정 -->
-            <span
-              class="badge bg-success position-absolute bottom-0 start-0 m-1"
-              v-if="previewImage === img"
-            >
-              대표
-            </span>
-            <!-- 삭제 버튼 -->
-            <button
-              type="button"
-              class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-              @click="removeImage(idx)"
-            >
-              ✕
-            </button>
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <span class="badge bg-success" v-if="previewImage === img">대표</span>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                @click="removeImage(idx)"
+              >
+                삭제
+              </button>
+            </div>
           </div>
 
           <div v-if="!previewImages.length" class="text-muted small">
@@ -213,14 +230,28 @@ const showMore = ref(false);
 const topTags = computed(() => allTags.value.slice(0, 5));
 const moreTags = computed(() => allTags.value.slice(5));
 
-// 신규 업로드 파일/미리보기
-const files = ref([]);          // File[]
-const previewImages = ref([]);  // base64[]
-const previewImage = ref(null); // 대표(첫 이미지)
+// 기존/신규 이미지
+const existingImages = ref([]);  // [{ id, url, keep: true }]
+const files = ref([]);           // 신규 File[]
+const previewImages = ref([]);   // 신규 base64[]
+const previewImage = ref(null);  // 신규 대표(첫 이미지)
 const imageMode = ref("append"); // 'append' | 'replace'
 
 // 기존 상세
 const detail = computed(() => store.state.post.detail);
+
+// util: 절대 URL 만들기 (미리보기/재업로드용)
+function absoluteUrl(url) {
+  return url.startsWith("http") ? url : `http://localhost:8080${url}`;
+}
+function parseImageId(url) {
+  try {
+    const u = new URL(absoluteUrl(url));
+    return Number(u.searchParams.get("postImageId"));
+  } catch {
+    return null;
+  }
+}
 
 // 초기 로딩
 onMounted(async () => {
@@ -234,19 +265,23 @@ onMounted(async () => {
   const tagRes = await postApi.getTagList();
   allTags.value = (tagRes.data && tagRes.data.tags) ? tagRes.data.tags : [];
 
-  // 3) 폼에 기존 값 채우기
+  // 3) 폼 채우기 + 기존 이미지 세팅
   if (detail.value) {
     title.value = detail.value.postTitle || "";
     content.value = detail.value.postContent || "";
     isRequest.value = (String(detail.value.isRequest || "N").toUpperCase() === "Y");
 
-    // 현재 게시물의 태그 → 이름 배열로 변환
     const currentTags = (store.state.post.tags || []).map(t => t.tagName);
     selectedTags.value = currentTags;
+
+    const urls = (detail.value.images || []);
+    existingImages.value = urls.map(u => ({
+      id: parseImageId(u),
+      url: u,
+      keep: true
+    }));
   }
 
-  // (참고) 기존 이미지는 서버에서 내려주는 이미지 URL/엔드포인트가 없으므로
-  // 신규로 추가한 이미지들만 미리보기로 표시합니다.
   loaded.value = true;
 });
 
@@ -264,7 +299,7 @@ function toggleMore() {
   showMore.value = !showMore.value;
 }
 
-// 파일 추가
+// 파일 추가 (신규)
 function onFileChange(e) {
   const picked = Array.from(e.target.files || []);
   if (!picked.length) return;
@@ -283,7 +318,7 @@ function onFileChange(e) {
   e.target.value = "";
 }
 
-// 썸네일 삭제/대표 지정
+// 신규 썸네일 삭제/대표 지정
 function removeImage(idx) {
   const removed = previewImages.value.splice(idx, 1)[0];
   files.value.splice(idx, 1);
@@ -292,7 +327,14 @@ function removeImage(idx) {
   }
 }
 function setAsMain(idx) {
-  previewImage.value = previewImages.value[idx] || null;
+  // 신규 파일 업로드 순서를 바꾸기 위해 files도 재정렬
+  if (idx < 0 || idx >= files.value.length) return;
+  const pickedFile = files.value.splice(idx, 1)[0];
+  files.value.unshift(pickedFile);
+
+  const pickedPreview = previewImages.value.splice(idx, 1)[0];
+  previewImages.value.unshift(pickedPreview);
+  previewImage.value = pickedPreview;
 }
 
 // 저장
@@ -301,34 +343,62 @@ async function updatePost() {
 
   submitting.value = true;
   try {
-    // 1) 글/이미지 업데이트 (multipart)
     const fd = new FormData();
     fd.append("postId", String(detail.value.postId));
     if (title.value) fd.append("postTitle", title.value);
     if (content.value) fd.append("postContent", content.value);
     fd.append("isRequest", isRequest.value ? "Y" : "N");
 
-    // 새로 추가한 이미지
-    for (const f of files.value) {
+    // 삭제가 하나라도 있으면 강제로 replace 모드 사용 (삭제 반영)
+    const hasDeletion = existingImages.value.some(img => img.keep === false);
+    let modeToUse = imageMode.value;
+    if (hasDeletion) modeToUse = "replace";
+
+    // 업로드할 파일 목록 구성
+    const filesToUpload = [];
+
+    if (modeToUse === "replace") {
+      // 1) 유지할 기존 이미지를 blob으로 다시 첨부
+      for (const img of existingImages.value) {
+        if (!img.keep) continue;
+        const url = absoluteUrl(img.url);
+        try {
+          const res = await fetch(url, { credentials: "include" });
+          const blob = await res.blob();
+          // 파일명은 임의로 구성
+          const name = `old-${img.id || "img"}`;
+          const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+          filesToUpload.push(file);
+        } catch (err) {
+          // 개별 실패는 건너뜀 (최소한 저장이 막히지 않도록)
+          console.error("기존 이미지 재첨부 실패:", url, err);
+        }
+      }
+      // 2) 신규 파일 이어붙이기
+      filesToUpload.push(...files.value);
+    } else {
+      // append: 신규 파일만
+      filesToUpload.push(...files.value);
+    }
+
+    // FormData에 순서대로 추가 (대표를 맨 앞에 두고 싶으면 위에서 files 재정렬됨)
+    for (const f of filesToUpload) {
       fd.append("postAttaches", f);
     }
 
+    // 게시물/이미지 업데이트
     await store.dispatch("post/update", {
       formData: fd,
-      imageMode: imageMode.value, // 'append' or 'replace'
+      imageMode: modeToUse, // 'append' or 'replace'
     });
 
-    // 2) 태그 변경(추가/삭제)
-    // 기존 태그 이름 집합
+    // 태그 변경(추가/삭제)
     const oldNames = new Set((store.state.post.tags || []).map(t => t.tagName));
-    // 새 태그 이름 집합
     const newNames = new Set(selectedTags.value);
-
     const toAddNames = [...newNames].filter(n => !oldNames.has(n));
     const toDelNames = [...oldNames].filter(n => !newNames.has(n));
 
     if (toAddNames.length || toDelNames.length) {
-      // 이름→id 매핑
       const nameToId = new Map(allTags.value.map(t => [t.tagName, t.tagId]));
       const addIds = toAddNames.map(n => nameToId.get(n)).filter(Boolean);
       const delIds = toDelNames.map(n => nameToId.get(n)).filter(Boolean);
@@ -339,15 +409,14 @@ async function updatePost() {
       if (delIds.length) {
         await store.dispatch("post/deleteTags", { postId: detail.value.postId, tagIds: delIds });
       }
-      // 상세 리프레시
       await store.dispatch("post/fetchDetail", detail.value.postId);
     }
 
-    // 3) 상세로 이동
+    // 상세로 이동
     router.push(`/post/${detail.value.postId}`);
   } catch (e) {
-    console.error(e);
-    alert("수정 중 오류가 발생했습니다.");
+    console.error("업데이트 실패:", e);
+    // alert 금지: 버튼 텍스트/상태로만 피드백
   } finally {
     submitting.value = false;
   }

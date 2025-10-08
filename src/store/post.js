@@ -12,6 +12,7 @@ const post = {
     comments: [],
     tags: [],
     likes: {}, // 좋아요 상태
+    userId: ""
   },
 
   getters: {
@@ -227,6 +228,17 @@ const post = {
         }
         context.commit("updatePostLikes", { postId, likeCount: newCount });
       }
+    },
+
+    // 좋아요 상태 불러오기
+    async fetchPostLikeStatus(context, { userId, postId }) {
+      const res = await postApi.getPostLikeStatus(userId, postId);
+      return res.data.isLiked; // true / false
+    },
+
+    // 그룹 산책 모집글 신청 / 승인 / 거절 등
+    async groupwalkStatus(context, { status, participate }) {
+      return await postApi.groupwalkStatus(status, participate);
     },
 
     // 그룹 산책 모집/신청 상태

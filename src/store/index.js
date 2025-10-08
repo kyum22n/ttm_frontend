@@ -39,6 +39,18 @@ const store = createStore({
     setJwt(state, payload) {
       state.jwt = payload;
     },
+    setSignupUser(state, payload) { // 회원가입 임시 저장용
+      state.signupUser = payload;
+    },
+    clearUser(state) {
+      state.user = null;
+    },
+    clearSignupUser(state) {
+      state.signupUser = null;
+    },
+    setLoginId(state, loginId) {
+      state.user.userLoginId = loginId;
+    },
     clearAuth(state) {
       state.jwt = "";
       state.user = {

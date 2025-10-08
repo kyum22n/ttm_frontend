@@ -3,40 +3,17 @@
     <div class="row g-4">
       <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
       <div class="col-md-5">
-        <div
-          v-if="post.images && post.images.length"
-          id="postCarousel"
-          class="carousel slide shadow"
-          data-bs-ride="carousel"
-        >
+        <div v-if="post.images && post.images.length" id="postCarousel" class="carousel slide shadow"
+          data-bs-ride="carousel">
           <div class="carousel-inner">
-            <div
-              v-for="(img, i) in post.images"
-              :key="i"
-              class="carousel-item"
-              :class="{ active: i === 0 }"
-            >
-              <img
-                :src="`http://localhost:8080${img}`"
-                class="d-block w-100 rounded"
-                alt="게시물 이미지"
-              />
+            <div v-for="(img, i) in post.images" :key="i" class="carousel-item" :class="{ active: i === 0 }">
+              <img :src="`http://localhost:8080${img}`" class="d-block w-100 rounded" alt="게시물 이미지" />
             </div>
           </div>
-          <button
-            class="carousel-control-prev"
-            type="button"
-            data-bs-target="#postCarousel"
-            data-bs-slide="prev"
-          >
+          <button class="carousel-control-prev" type="button" data-bs-target="#postCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
           </button>
-          <button
-            class="carousel-control-next"
-            type="button"
-            data-bs-target="#postCarousel"
-            data-bs-slide="next"
-          >
+          <button class="carousel-control-next" type="button" data-bs-target="#postCarousel" data-bs-slide="next">
             <span class="carousel-control-next-icon"></span>
           </button>
         </div>
@@ -52,12 +29,7 @@
           <div class="card-body">
             <!-- 작성자 프로필 -->
             <div class="d-flex align-items-center mb-3">
-              <img
-                :src="authorProfileImg"
-                class="rounded-circle me-2"
-                width="40"
-                height="40"
-              />
+              <img :src="authorProfileImg" class="rounded-circle me-2" width="40" height="40" />
               <div>
                 <strong>{{ authorName }}</strong>
                 <div class="text-muted small">{{ formatDate(post.createdAt) }}</div>
@@ -69,58 +41,44 @@
 
             <!-- 태그 -->
             <div class="mb-3">
-              <span
-                v-for="(tag, i) in tags"
-                :key="i"
-                class="badge bg-primary me-1"
-              >
+              <span v-for="(tag, i) in tags" :key="i" class="badge bg-primary me-1">
                 {{ tag.tagName }}
               </span>
             </div>
 
             <!-- 좋아요 -->
             <div class="d-flex align-items-center mb-3">
-              <button
-                class="btn btn-outline-danger btn-sm me-2"
-                @click="toggleLike"
-              >
+              <button class="btn btn-outline-danger btn-sm me-2" @click="toggleLike">
                 <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
               </button>
               <span>{{ post.postLikeCount }} Likes</span>
             </div>
 
-            <!-- 수정 버튼 (작성자 본인) -->
-            <div v-if="isAuthor" class="text-end mt-3">
-              <router-link
-                :to="`/post/update/${post.postId}`"
-                class="btn btn-outline-secondary btn-sm"
-              >
+            <!-- 수정 버튼 (작성자 && 일반글만) -->
+            <div v-if="isAuthor && !isRecruitment" class="text-end mt-3">
+              <router-link :to="`/post/update/${post.postId}`" class="btn btn-outline-secondary btn-sm">
                 ✏️ 수정하기
               </router-link>
             </div>
 
             <!-- 산책 모집글 버튼 -->
             <div class="mt-3 text-end">
-              <button
-                v-if="isRecruitment && !isAuthor"
-                class="btn btn-success btn-sm"
-                :disabled="isApplying"
-                @click="applyGroupWalk"
-              >
+              <!-- 신청자 -->
+              <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying"
+                @click="applyGroupWalk">
                 <i class="bi bi-person-plus"></i>
                 {{ isApplying ? "신청 완료" : "신청하기" }}
               </button>
 
-              <button
-                v-if="isRecruitment && isAuthor"
-                class="btn btn-warning btn-sm"
-                :disabled="isClosing"
-                @click="closeRecruitment"
-              >
+              <!-- 모집자 -->
+              <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing"
+                @click="closeRecruitment">
                 <i class="bi bi-flag-fill"></i>
                 {{ isClosing ? "마감됨" : "모집 마감하기" }}
               </button>
             </div>
+
+
           </div>
         </div>
 
@@ -128,29 +86,15 @@
         <div class="card shadow-sm">
           <div class="card-body">
             <div class="input-group mb-3">
-              <input
-                v-model="newComment"
-                type="text"
-                class="form-control"
-                placeholder="댓글을 작성해주세요"
-              />
+              <input v-model="newComment" type="text" class="form-control" placeholder="댓글을 작성해주세요" />
               <button class="btn btn-outline-secondary" @click="addComment">
                 작성
               </button>
             </div>
 
             <ul class="list-group list-group-flush">
-              <li
-                v-for="(c, i) in comments"
-                :key="i"
-                class="list-group-item d-flex align-items-start"
-              >
-                <img
-                  src="https://placekitten.com/32/32"
-                  class="rounded-circle me-2"
-                  width="32"
-                  height="32"
-                />
+              <li v-for="(c, i) in comments" :key="i" class="list-group-item d-flex align-items-start">
+                <img src="https://placekitten.com/32/32" class="rounded-circle me-2" width="32" height="32" />
                 <div>
                   <strong>{{ c.cwriter }}</strong>:
                   {{ c.commentContent }}
@@ -165,34 +109,18 @@
       <div class="col-md-2">
         <div class="card shadow-sm text-center">
           <div class="card-body">
-            <img
-              :src="authorProfileImg"
-              class="rounded-circle mb-2"
-              width="60"
-              height="60"
-            />
+            <img :src="authorProfileImg" class="rounded-circle mb-2" width="60" height="60" />
             <h6 class="card-title">{{ authorName }}</h6>
 
-            <router-link
-              :to="`/Profile/OtherProfile/${post.postUserId}`"
-              class="btn btn-outline-dark btn-sm mb-3"
-            >
+            <router-link :to="`/Profile/OtherProfile/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">
               프로필 놀러가기
             </router-link>
 
             <!-- 작성자 게시물 썸네일 -->
             <div v-if="authorPosts.length">
-              <div
-                v-for="p in authorPosts.slice(0, 3)"
-                :key="p.postId"
-                class="mb-2"
-              >
-                <img
-                  :src="p.thumbnailUrl"
-                  class="rounded shadow-sm w-100"
-                  role="button"
-                  @click="$router.push(`/Post/PostDetail/${p.postId}`)"
-                />
+              <div v-for="p in authorPosts.slice(0, 3)" :key="p.postId" class="mb-2">
+                <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button"
+                  @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
               </div>
             </div>
             <div v-else class="text-muted small">게시물이 없습니다</div>
@@ -207,12 +135,16 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
+import axios from "axios";
 import postApi from "@/apis/postApi";
 
 const store = useStore();
 const route = useRoute();
+const router = useRouter();
 
-const userId = Number(localStorage.getItem("userId")) || 1; // 로그인 사용자
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const userId = user.userId || null; // 로그인 사용자 userID 받아오기
 const post = computed(() => store.state.post.detail);
 const comments = computed(() => store.state.post.comments);
 const tags = computed(() => store.state.post.tags);
@@ -236,17 +168,78 @@ function formatDate(iso) {
 
 // 좋아요
 async function toggleLike() {
-  if (!post.value) return;
-  if (!liked.value) {
-    await store.dispatch("post/likePost", { userId, postId: post.value.postId });
-  } else {
-    await store.dispatch("post/likePostCancel", {
-      userId,
-      postId: post.value.postId,
+  console.log("좋아요 요청:", userId, post.value?.postId);
+  if (!post.value?.postId) return;
+
+  try {
+    // 서버로 토글 요청 보내기
+    const res = await axios.post("/like/post-like", null, {
+      params: { userId, postId: post.value.postId },
     });
+
+    // 서버에서 liked: true/false 내려줌
+    if (typeof res.data.liked === "boolean") {
+      liked.value = res.data.liked;
+
+      // 좋아요 개수 동기화
+      if (liked.value) {
+        post.value.postLikeCount = (post.value.postLikeCount || 0) + 1;
+      } else {
+        post.value.postLikeCount = Math.max((post.value.postLikeCount || 1) - 1, 0);
+      }
+    } else {
+      console.warn("서버 응답 liked 값이 없음:", res.data);
+    }
+  } catch (err) {
+    // 백엔드 전역 예외 처리기에서 내려주는 message 사용
+    const msg = err.response?.data?.message;
+
+    if (msg.includes("자신의 게시글")) {
+      alert("자신의 게시글에는 좋아요를 누를 수 없습니다.");
+    } else {
+      console.error("좋아요 요청 오류:", msg);
+    }
   }
-  liked.value = !liked.value;
 }
+
+onMounted(async () => {
+
+  const id = Number(route.params.id);
+  if (!id) return;
+
+  // 1️. 게시글 상세 불러오기
+  await store.dispatch("post/fetchDetail", id);
+  const currentPost = post.value;
+  if (!currentPost) return;
+
+  // 2️. 작성자 정보
+  authorName.value = `작성자 #${currentPost.postUserId}`;
+
+  // 3️. 작성자 게시물 목록
+  await store.dispatch("post/fetchUserPostList", {
+    userId: currentPost.postUserId,
+  });
+  authorPosts.value = store.state.post.list || [];
+
+  // 4️. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = storedUser.userId;
+  if (userId && currentPost.postId) {
+    try {
+      const isLiked = await store.dispatch("post/fetchPostLikeStatus", {
+        userId,
+        postId: currentPost.postId,
+      });
+      liked.value = isLiked;
+      console.log("초기 좋아요 상태:", isLiked);
+    } catch (err) {
+      console.error("좋아요 상태 확인 실패:", err.response?.data || err);
+    }
+  }
+});
+
+
+
 
 // 댓글 작성
 async function addComment() {
@@ -262,14 +255,22 @@ async function addComment() {
 
 // 모집글 신청
 async function applyGroupWalk() {
+  if (!userId) {
+    alert("로그인이 필요한 서비스입니다.");
+    router.push("/login");
+    return;
+  }
+
   const participate = {
     postId: post.value.postId,
     userId,
   };
+
   await store.dispatch("post/groupwalkStatus", {
-    status: "APPLY",
-    participate,
+    status: "P", // APPLY → P
+    participate: { postId: post.value.postId, userId },
   });
+
   isApplying.value = true;
 }
 

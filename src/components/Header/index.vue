@@ -81,6 +81,8 @@
       </div>
     </div>
   </nav>
+  <!-- ✅ 추가: 채팅 목록 모달 -->
+  <ChatListModal v-model="showChatList" />
 </template>
 
 <script setup>
@@ -90,6 +92,9 @@ import { useRouter } from "vue-router";
 import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
 import axios from "axios";
+
+import ChatListModal from "@/components/Chat/ChatListModal.vue"; // ✅ 추가
+const showChatList = ref(false); // ✅ 추가: 모달 open 상태
 
 const store = useStore();
 const router = useRouter();
@@ -106,10 +111,10 @@ const items = [
   { key: "profile", text: "마이페이지", icon: "🧑‍💻" },
   { key: "mypage", text: "내 프로필", icon: "📒" },
   { key: "mate", text: "내 산책 메이트", icon: "🐕" },
-  { key: "likes", text: "OtherProfile", icon: "🤍" },
+  { key: "likes", text: "좋아요 목록(인데 임시로 채팅목록)", icon: "🤍" },
   { key: "viewed", text: "조회한 게시물", icon: "🕒" },
   { divider: true },
-  { key: "settings", text: "설정", icon: "⚙️" },
+  { key: "settings", text: "OtherProfile", icon: "⚙️" },
 ];
 
 function handleSelect(key) {
@@ -125,12 +130,18 @@ function handleSelect(key) {
     return;
   }
 
+  if (key === "likes") {
+    // ✅ 수정: likes 클릭 시 모달 열기
+    showChatList.value = true;
+    return;
+  }
+
   const map = {
     mypage: "/Profile/EditProfile",
     mate: "/Profile/MyProfile",
-    likes: "/Profile/OtherProfile",
+    // likes: "/likes",
     viewed: "/history",
-    settings: "/settings",
+    settings: "/Profile/OtherProfile",
   };
 
   if (map[key]) router.push(map[key]);
