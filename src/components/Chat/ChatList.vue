@@ -35,10 +35,9 @@
 
           <div class="room-texts">
             <div class="room-title">
-              <!-- 원하는 표기: 펫이름 - (#유저아이디숫자) -->
               <span class="partner">
                 {{ r.partnerPetName || 'USER' }}
-                
+                <span> - </span>
                 <small class="pid">(#{{ r.partnerId }})</small>
               </span>
 
@@ -49,6 +48,28 @@
 
             <div class="room-sub">
               최근: {{ r.lastPreview || '-' }}
+            </div>
+
+            <!-- P(대기)이고, 내가 요청자가 아닐 때 승인/거절 버튼 노출 -->
+            <div
+              v-if="r.chatroomStatus === 'P' && r.requestedBy !== myUserId"
+              class="action-row"
+              @click.stop
+            >
+              <button
+                class="btn-approve"
+                :disabled="acting.has(r.chatroomId)"
+                @click="approve(r)"
+              >
+                {{ acting.has(r.chatroomId) ? '승인 중…' : '승인' }}
+              </button>
+              <button
+                class="btn-reject"
+                :disabled="acting.has(r.chatroomId)"
+                @click="reject(r)"
+              >
+                {{ acting.has(r.chatroomId) ? '거절 중…' : '거절' }}
+              </button>
             </div>
           </div>
         </div>
@@ -81,9 +102,12 @@ const loading   = ref(false)
 const errorMsg  = ref('')
 const rooms     = ref([])
 
-/** 캐시 */
-const avatarCache   = new Map()  // userId -> string (absolute URL)
-const petNameCache  = new Map()  // userId -> string (petName)
+// 승인/거절 진행중 표시용
+const acting = ref(new Set())
+
+// 캐시
+const avatarCache   = new Map()
+const petNameCache  = new Map()
 
 const FALLBACK_AVATAR = 'https://placehold.co/80x80?text=USER'
 
@@ -101,7 +125,6 @@ async function getJSON(url) {
   return text ? JSON.parse(text) : null
 }
 
-/** 상대 메타(아바타/펫이름)만 조회 */
 async function fetchPartnerMeta(userId) {
   const cachedAvatar  = avatarCache.get(userId)
   const cachedPetName = petNameCache.get(userId)
@@ -115,19 +138,15 @@ async function fetchPartnerMeta(userId) {
   let avatar = ''
   let petName = ''
   try {
-    // /pet/{userId}/first-pet -> { petId, petName, imageUrl } 또는 204
     const fp = await getJSON(`${BASE_URL}/pet/${userId}/first-pet`)
     petName = fp?.petName || ''
     if (fp?.imageUrl) {
       avatar = `${BASE_URL}${fp.imageUrl.startsWith('/') ? '' : '/'}${fp.imageUrl}`
     }
-  } catch {
-    // no-op: 없으면 빈 값 유지
-  }
+  } catch { /* no-op */ }
 
   avatarCache.set(userId, avatar)
   petNameCache.set(userId, petName)
-
   return { avatar, petName }
 }
 
@@ -177,6 +196,53 @@ function goRoom(roomId) {
   router.push({ path: '/message/detail', query: { roomId } })
 }
 
+// 승인/거절 액션들
+async function approve(r) {
+  if (acting.value.has(r.chatroomId)) return
+  acting.value.add(r.chatroomId)
+  try {
+    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/approve?by=${myUserId.value}`, {
+      method: 'PUT'
+    })
+    if (!res.ok) {
+      const t = await res.text()
+      console.error('approve fail:', res.status, t)
+      alert('승인에 실패했습니다.')
+      return
+    }
+    // 성공 시 상태 업데이트
+    r.chatroomStatus = 'A'
+  } catch (e) {
+    console.error(e)
+    alert('승인 도중 오류가 발생했습니다.')
+  } finally {
+    acting.value.delete(r.chatroomId)
+  }
+}
+
+async function reject(r) {
+  if (acting.value.has(r.chatroomId)) return
+  acting.value.add(r.chatroomId)
+  try {
+    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/reject?by=${myUserId.value}`, {
+      method: 'PUT'
+    })
+    if (!res.ok) {
+      const t = await res.text()
+      console.error('reject fail:', res.status, t)
+      alert('거절에 실패했습니다.')
+      return
+    }
+    // 성공 시 상태 업데이트(닫힘)
+    r.chatroomStatus = 'D'
+  } catch (e) {
+    console.error(e)
+    alert('거절 도중 오류가 발생했습니다.')
+  } finally {
+    acting.value.delete(r.chatroomId)
+  }
+}
+
 onMounted(async () => {
   try {
     await fetchRooms()
@@ -211,19 +277,20 @@ onMounted(async () => {
 .room-item:hover { border-color: #ccc; background: #fafafa; }
 
 .room-left { display: flex; align-items: center; gap: 10px; }
-.avatar {
-  width: 44px; height: 44px; border-radius: 50%;
-  object-fit: cover; border: 2px solid #eee;
-}
+.avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
 
 .room-texts { display: flex; flex-direction: column; }
 .room-title { font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .partner { display: inline-flex; align-items: baseline; gap: 6px; }
-.pid { color: #888; font-weight: 500; } /* 유저 아이디 숫자 회색 */
+.pid { color: #888; font-weight: 500; }
 .status { font-size: .8rem; border-radius: 6px; padding: 2px 6px; border: 1px solid #ddd; }
 .status.ok   { background: #ecfff0; border-color: #b6efc5; }
 .status.pend { background: #fff8e6; border-color: #ffe2a9; }
 .room-sub { color: #666; font-size: .9rem; margin-top: 2px; }
+
+.action-row { display: flex; gap: 8px; margin-top: 8px; }
+.btn-approve { padding: 4px 8px; border: 1px solid #2ecc71; background: #ecfff6; border-radius: 6px; cursor: pointer; }
+.btn-reject  { padding: 4px 8px; border: 1px solid #e74c3c; background: #fff0f0; border-radius: 6px; cursor: pointer; }
 
 .room-right { margin-left: 10px; }
 .badge { background: #e74c3c; color: #fff; border-radius: 999px; padding: 4px 8px; font-size: .8rem; }
