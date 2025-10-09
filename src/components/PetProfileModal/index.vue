@@ -98,4 +98,5 @@ function requestChat() {
   emit("chat", props.pet);
   closeModal();
 }
+
 </script>
