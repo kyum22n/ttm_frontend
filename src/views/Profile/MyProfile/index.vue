@@ -18,7 +18,10 @@
 
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">ID: {{ store.state.user.userLoginId }}</h5>
+              <h5 class="mb-0">
+                ID: {{ profileUser?.userLoginId || "불러오는 중..." }}
+              </h5>
+
               <span class="text-muted small">·</span>
               <RouterLink to="/Profile/EditProfile">
                 <button class="btn btn-sm btn-outline-secondary">설정</button>
@@ -328,6 +331,8 @@ import postApi from "@/apis/postApi";
 // 채팅 신청 버튼
 import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
 
+const profileUser = ref(null); // URL 기준 유저 정보 저장
+
 const store = useStore();
 const route = useRoute();
 const router = useRouter();
@@ -347,6 +352,43 @@ watch(
   { immediate: true }
 );
 const isMine = computed(() => routeUserId.value === store.state.user.userId);
+
+async function loadProfileUser() {
+  try {
+    const userId = Number(route.params.userId) || store.state.user.userId;
+    if (!userId) return;
+
+    // 백엔드에서 @RequestParam 으로 받기 때문에 쿼리 파라미터 방식으로 요청해야 함
+    const res = await axios.get("/user/info", { params: { userId } });
+
+    // ✅ 실제 유저 객체는 res.data.data 안에 있음
+    profileUser.value = res.data.data || {};
+
+    console.log("✅ 불러온 유저 정보:", profileUser.value);
+  } catch (e) {
+    console.error("유저 정보 불러오기 실패:", e);
+  }
+}
+
+onMounted(async () => {
+  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
+
+  await loadProfileUser(); // ✅ 유저 정보도 불러오기
+  await loadPetProfile();
+  await loadAllPets();
+  await loadUserPosts();
+  await loadMyPosts();
+});
+
+watch(
+  () => route.params.userId,
+  async (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      await loadProfileUser(); // ✅ 라우트 변경 시 다시 로드
+      await loadMyPosts();
+    }
+  }
+);
 
 // ✅ 펫 이미지 + pet_desc 로드
 async function loadPetProfile() {
