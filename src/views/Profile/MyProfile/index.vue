@@ -111,8 +111,62 @@
             </button>
           </li>
         </ul>
+        <section class="mt-5">
+          <h5 class="fw-bold mb-3">내 게시물</h5>
 
-        <!-- 카드 그리드 -->
+          <div v-if="loadingMyPosts" class="text-center text-muted py-5">
+            불러오는 중...
+          </div>
+
+          <div
+            v-else-if="myPosts.length === 0"
+            class="text-center text-muted py-5"
+          >
+            아직 작성한 게시물이 없습니다.
+          </div>
+
+          <div v-else class="row g-3">
+            <div
+              v-for="post in myPosts"
+              :key="post.postId"
+              class="col-md-6 col-lg-4"
+            >
+              <div class="card h-100 border-0 shadow-sm">
+                <div class="ratio ratio-4x3">
+                  <img
+                    :src="post.thumbnailUrl || '/default_post.png'"
+                    class="card-img-top object-cover"
+                    alt="게시물 이미지"
+                  />
+                </div>
+                <div class="card-body">
+                  <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
+                  <p class="card-text text-muted small">
+                    {{ post.postContent }}
+                  </p>
+                </div>
+                <div
+                  class="card-footer bg-white d-flex justify-content-between align-items-center"
+                >
+                  <small class="text-muted">{{
+                    formatDate(post.createdAt)
+                  }}</small>
+                  <span class="text-muted small"
+                    >♥ {{ post.postLikeCount }}</span
+                  >
+                </div>
+
+                <!-- 상세 페이지로 이동 -->
+                <router-link
+                  :to="`/post/${post.postId}`"
+                  class="stretched-link"
+                ></router-link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 카드 그리드
         <div class="row g-3">
           <div v-for="post in filteredPosts" :key="post.id" class="col-md-6">
             <div class="card h-100 shadow-sm border-0">
@@ -140,7 +194,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <!-- 페이지네이션 -->
         <nav class="mt-4">
@@ -385,6 +439,7 @@ onMounted(async () => {
   await loadPetProfile();
   await loadAllPets(); // ✅ 펫 리스트 로드 추가
   await loadUserPosts(); // ✅ 게시물도 로드
+  await loadMyPosts();
 });
 
 // ✅ 필터 및 게시물 로직
@@ -472,6 +527,57 @@ function goToPetRegister() {
 function openPetModal(pet) {
   selectedPet.value = pet;
   showModal.value = true;
+}
+
+/* -------------------------
+   📰 내 게시물 불러오기
+------------------------- */
+const myPosts = ref([]);
+const loadingMyPosts = ref(true);
+
+async function loadMyPosts() {
+  try {
+    // ✅ 로그인 유저가 아니라 route param 기준으로 로드
+    const userId = Number(route.params.userId) || store.state.user.userId;
+    if (!userId) return;
+
+    const res = await postApi.getUserPost(userId);
+    if (res.data && res.data.posts) {
+      myPosts.value = res.data.posts.map((p) => ({
+        ...p,
+        thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
+      }));
+    } else {
+      myPosts.value = [];
+    }
+  } catch (e) {
+    console.error("🚫 내 게시물 불러오기 실패:", e);
+  } finally {
+    loadingMyPosts.value = false;
+  }
+}
+
+watch(
+  () => route.params.userId,
+  async (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      await loadMyPosts(); // ✅ 라우트 변경 시 재로드
+    }
+  }
+);
+
+onMounted(async () => {
+  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
+  await loadPetProfile();
+  await loadAllPets();
+  await loadUserPosts();
+  await loadMyPosts(); // ✅ route param 기반으로 로드됨
+});
+
+/* 날짜 포맷 (기존 함수 없으면) */
+function formatDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("ko-KR");
 }
 </script>
 

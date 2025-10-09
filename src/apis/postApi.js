@@ -120,16 +120,9 @@ function deletePostTag({ postId, tagId }) {
 /** =========================
  *  Likes
  *  ========================= */
-/** 좋아요 등록 */
+/** 좋아요 등록/취소 */
 function postLike(userId, postId) {
     return axios.post("/like/post-like", null, {
-        params: {userId, postId}
-    });
-}
-
-/** 좋아요 취소 */
-function postLikeCancel(userId, postId) {
-    return axios.delete("/like/post-like/cancel", {
         params: {userId, postId}
     });
 }
@@ -192,7 +185,6 @@ export default {
     addPostTag,
     deletePostTag,
     postLike,
-    postLikeCancel,
     groupwalkRecruitmentList,
     groupwalkEndedList,
     groupwalkStatus,

@@ -47,15 +47,21 @@ function petFind(petId) {
   return axios.get("/pet/find", { params: { petId } });
 }
 
-// 좋아요 등록
+/** 좋아요 등록/취소 */
 function petLike(userId, petId) {
-  return axios.post("/like/pet-like", { params: { userId, petId } });
+    return axios.post("/like/pet-like", null, {
+        params: {userId, petId}
+    });
 }
 
-// 좋아요 취소
-function petLikeCancel(userId, petId) {
-  return axios.delete("/like/pet-like/cancel", { params: { userId, petId } });
+// 특정 펫 좋아요 상태 확인
+function getPetLikeStatus(userId, petId) {
+  return axios.get("/like/pet-like/status", {
+    params: { userId, petId },
+  });
 }
+
+
 
 // 첫번째 펫 참조 조회
 async function firstPetOfUser(userId) {
@@ -81,9 +87,9 @@ const petApi = {
   findAllByUser,
   petFind,
   petLike,
-  petLikeCancel,
   firstPetOfUser,
-  avatarUrlByUser
+  avatarUrlByUser,
+  getPetLikeStatus
 };
 
 export default petApi;
