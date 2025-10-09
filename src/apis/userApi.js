@@ -43,7 +43,7 @@ function userInfo(userId, jwt) {
     params: { userId },
     headers: {
       // JWT 토큰을 Authorization 헤더에 담아 인증
-      "Authorization": "Bearer" +jwt
+      "Authorization": "Bearer " +jwt
     }
   });
 }
@@ -54,9 +54,17 @@ function userUpdate(user) {
   return axios.put("/user/update", user);
 }
 
+// 로그인 아이디로 유저 검색
+function searchUserByLoginId(userLoginId) {
+  return axios.get("/user/search/by-login-id", {
+    params: { userLoginId },
+  });
+}
+
 const userApi = {
   userJoin,
   userInfo,
   userUpdate,
+  searchUserByLoginId
 };
 export default userApi;

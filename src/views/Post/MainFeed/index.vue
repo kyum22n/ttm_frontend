@@ -105,18 +105,44 @@
 
       </div>
 
-      <!-- 오른쪽 필터 -->
+      <!-- 사이드바 -->
       <div class="col-lg-4">
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm mb-3">
           <div class="card-body">
-            <button class="btn w-100 btn-outline-dark mb-3" @click="$router.push({ path: '/post/create' })">
-              <i class="bi bi-pencil"></i> 글쓰기
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <strong>필터</strong>
+              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">
+                초기화
+              </button>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small">태그</label>
+              <div class="d-flex flex-wrap gap-2">
+                <div v-for="t in tags" :key="t.tagId" class="form-check">
+                  <input class="form-check-input" type="checkbox" :id="`tag-${t.tagId}`" :value="t.tagName"
+                    v-model="filters.cats" @change="applyFilters" />
+                  <label class="form-check-label small" :for="`tag-${t.tagId}`">
+                    {{ t.tagName }}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small">정렬</label>
+              <select v-model="filters.sort" class="form-select form-select-sm">
+                <option value="latest">최신순</option>
+                <option value="likes">좋아요순</option>
+              </select>
+            </div>
+
+            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">
+              적용
             </button>
-            <input type="text" v-model="filters.q" class="form-control mb-2" placeholder="검색어 입력" />
-            <button class="btn btn-dark w-100 mt-3" @click="applyFilters">적용</button>
-            <button class="btn btn-outline-secondary w-100 mt-2" @click="resetFilters">초기화</button>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -131,10 +157,11 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-
 const store = useStore();
 
-/* 강아지 프로필 목록 (랜덤 불러오기) */
+/* ========================
+  강아지 프로필 목록 (랜덤 불러오기)
+======================== */
 const dogs = ref([]);
 async function fetchRandomDogs() {
   try {
@@ -155,25 +182,30 @@ function goToOwnerProfile(userId) {
   router.push(`/profile/${userId}`);
 }
 
-
-/* 탭 */
+/* ========================
+  게시물 분류 탭 
+======================== */
 const tabs = [
   { key: "all", label: "전체" },
   { key: "recruit", label: "산책 모집글" }, // isRequest === 'Y'
 ];
 const activeTab = ref("all");
 
-/* 필터 상태 */
-const filters = reactive({
-  q: "",
-});
-
 /* 게시물 목록 */
 const posts = ref([]);
+/* 태그 목록 */
+const tags = ref([]);
 
 onMounted(async () => {
+  // 게시물 목록(기본)
   await store.dispatch("post/fetchList", 1);
   posts.value = store.getters["post/getList"];
+
+  // 태그 필터 적용한 게시물 목록
+  await store.dispatch("post/fetchTags");
+  tags.value = store.getters["post/getTags"];
+
+  // 강아지 프로필 랜덤 목록
   fetchRandomDogs();
 });
 
@@ -183,9 +215,9 @@ watch(activeTab, async (newTab) => {
     try {
       const res = await axios.get("/post/groupwalk/recruitment-list");
       posts.value = (res.data.posts || []).map(p => ({
-      ...p,
-      thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
-    }));
+        ...p,
+        thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
+      }));
     } catch (e) {
       console.error("🚫 모집글 불러오기 실패:", e);
       posts.value = [];
@@ -196,23 +228,9 @@ watch(activeTab, async (newTab) => {
   }
 });
 
-
-/* 탭/검색 필터링 */
-const filteredPosts = computed(() => {
-  return posts.value.filter((p) => {
-    // console.log(posts.value.map(p => p.isRequest));
-
-    const isReq = (p.isRequest || "").trim();
-    const matchTab =
-      activeTab.value === "all" || (activeTab.value === "recruit" && isReq === "Y");
-    const matchQ =
-      filters.q === "" ||
-      (p.postTitle && p.postTitle.includes(filters.q)) ||
-      (p.postContent && p.postContent.includes(filters.q));
-    return matchTab && matchQ;
-  });
-});
-
+/* ========================
+  페이지네이션
+  ======================== */
 // 페이징
 const pager = computed(() => store.getters["post/getPager"]);
 
@@ -223,13 +241,79 @@ function changePage(pageNo) {
   store.dispatch("post/fetchList", pageNo);
 }
 
+/* ========================
+  사이드바 필터
+======================== */
+/* 필터 상태 */
+const filters = reactive({
+  q: "",
+  cats: [], //선택된 카테고리
+  sort: "latest", //최신순
+});
 
-function applyFilters() {
-  console.log("적용:", filters);
-}
 function resetFilters() {
   filters.q = "";
+  filters.cats = [];
+  filters.sort = "latest";
+  store.dispatch("post/fetchList", 1).then(() => {
+    posts.value = store.getters["post/getList"];
+  });
 }
+
+async function applyFilters() {
+  try {
+    if (filters.cats.length === 0) {
+      // 태그 선택 없으면 전체 게시물 다시 불러오기
+      await store.dispatch("post/fetchList", 1);
+      posts.value = store.getters["post/getList"];
+    } else {
+      // 선택된 태그들 중 마지막 태그로 필터링
+      const selectedTag = filters.cats[filters.cats.length - 1];
+      await store.dispatch("post/fetchListByTag", selectedTag);
+      posts.value = store.getters["post/getList"];
+    }
+  } catch (e) {
+    console.error("태그별 게시물 불러오기 실패:", e);
+  }
+}
+
+
+const filteredPosts = computed(() => {
+  let list = posts.value.filter((p) => {
+    const isReq = (p.isRequest || "").trim();
+    const matchTab =
+      activeTab.value === "all" ||
+      (activeTab.value === "recruit" && isReq === "Y");
+
+    const matchQ =
+      filters.q === "" ||
+      (p.postTitle && p.postTitle.includes(filters.q)) ||
+      (p.postContent && p.postContent.includes(filters.q));
+
+    // 카테고리 필터 (선택된 cats 중 하나라도 포함되면 통과)
+    const matchCat =
+      filters.cats.length === 0 ||
+      filters.cats.some((cat) => (p.postCategory || "").includes(cat));
+
+    return matchTab && matchQ && matchCat;
+  });
+
+  // 정렬
+  if (filters.sort === "likes") {
+    list.sort((a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0));
+  } else if (filters.sort === "latest") {
+    list.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  return list;
+});
+
+
+/* ========================
+날짜 포맷
+======================== */
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("ko-KR");

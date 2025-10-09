@@ -174,6 +174,16 @@ const post = {
       return Promise.all(promises);
     },
 
+    // 태그 이름으로 게시물 목록 조회
+    async fetchListByTag(context, tagName) {
+      const res = await postApi.getPostListByTag(tagName);
+      const postsWithImages = res.data.posts.map((post) => ({
+        ...post,
+        thumbnailUrl: `http://localhost:8080/post/image/${post.postId}`,
+      }));
+      context.commit("setList", { posts: postsWithImages, pager: null });
+    },
+
     // 댓글 작성
     async writeComment(context, payload) {
       await postApi.commentWrite(payload);

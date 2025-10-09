@@ -3,6 +3,7 @@ import { createStore } from "vuex";
 import axiosConfig from "@/apis/axiosConfig";
 import post from "./post";
 import review from "./review";
+import userApi from "@/apis/userApi";
 import pet from "./pet";
 
 const store = createStore({
@@ -18,6 +19,7 @@ const store = createStore({
     },
     signupUser: null,
     jwt: "",
+    searchResults: [],
   },
   getters: {
     // 현재 로그인 사용자 정보 반환
@@ -31,6 +33,9 @@ const store = createStore({
     // 로그인 상태 판단(jwt + userId 확인)
     isLogin(state) {
       return !!state.jwt && !!state.user && !!state.user.userId; // jwt 있으면 true
+    },
+    getSearchResult(state) {
+      return state.searchResults;
     },
   },
   mutations: {
@@ -63,6 +68,9 @@ const store = createStore({
         userBirthDate: "",
         profileImage: "",
       };
+    },
+    setSearchResults(state, results) {
+      state.searchResults = results || [];
     },
   },
   actions: {
@@ -107,6 +115,19 @@ const store = createStore({
         context.commit("clearAuth");
       }
     },
+
+    async searchUserByLoginId({ commit }, query) {
+      try {
+        const res = await userApi.searchUserByLoginId(query);
+        if(res.data.result === "success") {
+          commit("setSearchResults", [res.data.user]);
+        } else {
+          commit("setSearchResults", []);
+        }
+      } catch (e) {
+        commit("setSearchResults", []);
+      }
+    }
   },
   modules: { post, review, pet },
 });

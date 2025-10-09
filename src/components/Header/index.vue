@@ -1,61 +1,51 @@
 <template>
   <nav class="navbar bg-brown px-3">
-    <div
-      class="container-fluid d-grid align-items-center"
-      style="grid-template-columns: 1fr auto 1fr"
-    >
+    <div class="container-fluid d-grid align-items-center" style="grid-template-columns: 1fr auto 1fr">
       <!-- 왼쪽: 검색창 -->
-      <form
-        class="d-flex justify-content-start"
-        role="search"
-        style="max-width: 300px"
-      >
-        <div class="input-group">
-          <span class="input-group-text bg-white">
-            <i class="bi bi-search"></i>
-          </span>
-          <input
-            v-model="searchText"
-            class="form-control"
-            type="search"
-            placeholder="해시태그 또는 아이디 검색"
-          />
-        </div>
-      </form>
+      <div class="position-relative" style="max-width: 300px;">
+        <form class="d-flex justify-content-start" role="search" @submit.prevent>
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input v-model="searchText" class="form-control" type="search" placeholder="해시태그 또는 아이디 검색"
+              @input="onSearchInput" />
+          </div>
+        </form>
+
+        <!-- 자동완성 목록 -->
+        <ul v-if="suggestions.length > 0" class="list-group position-absolute w-100 mt-1" style="z-index: 1000;">
+          <li v-for="user in suggestions" :key="user.userId"
+            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+            @click="goToUserProfile(user.userId)">
+            <div>
+              <strong>@{{ user.userLoginId }}</strong>
+              <small class="text-muted ms-2">{{ user.userName }}</small>
+            </div>
+            <i class="bi bi-person-circle text-secondary"></i>
+          </li>
+        </ul>
+      </div>
 
       <!-- 가운데: 로고 -->
       <div class="text-center">
         <router-link :to="targetRoute">
-          <img
-            :src="logoImg"
-            alt="로고"
-            class="img-fluid"
-            style="max-width: 120px"
-          />
+          <img :src="logoImg" alt="로고" class="img-fluid" style="max-width: 120px" />
         </router-link>
       </div>
 
       <!-- 오른쪽: 알림 + 프로필 -->
-      <div
-        v-if="isLogin"
-        class="d-flex align-items-center gap-3 justify-content-end"
-      >
+      <div v-if="isLogin" class="d-flex align-items-center gap-3 justify-content-end">
         <div class="position-relative">
           <!-- 로그아웃 버튼 -->
-          <button
-            v-if="user.userLoginId"
-            class="btn btn-outline-light btn-sm me-3"
-            @click="logout"
-          >
+          <button v-if="user.userLoginId" class="btn btn-outline-light btn-sm me-3" @click="logout">
             로그아웃
           </button>
 
           <!-- 알림 -->
           <i class="bi bi-bell fs-4 text-white"></i>
-          <span
-            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style="font-size: 0.6rem"
-          >
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+            style="font-size: 0.6rem">
             1
           </span>
         </div>
@@ -64,20 +54,10 @@
         <span class="fw-bold text-white">{{ user.userLoginId }}</span>
 
         <!-- 프로필 이미지 -->
-        <img
-          v-if="profileImgUrl"
-          :src="profileImgUrl"
-          alt="프로필"
-          style="width: 35px; height: 35px; object-fit: cover"
-          class="rounded-circle border border-light"
-        />
+        <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" style="width: 35px; height: 35px; object-fit: cover"
+          class="rounded-circle border border-light" />
 
-        <ProfileMenuDropdown
-          label="내 메뉴"
-          :items="items"
-          align="bottom"
-          @select="handleSelect"
-        />
+        <ProfileMenuDropdown label="내 메뉴" :items="items" align="bottom" @select="handleSelect" />
       </div>
     </div>
   </nav>
@@ -99,6 +79,28 @@ const showChatList = ref(false); // ✅ 추가: 모달 open 상태
 const store = useStore();
 const router = useRouter();
 const searchText = ref("");
+const suggestions = computed(() => store.getters.getSearchResult);
+
+// 검색 기능(유저)
+let searchTimeout = null;
+
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  if (!searchText.value.trim()) {
+    store.commit("setSearchResults", []);
+    return;
+  }
+  searchTimeout = setTimeout(() => {
+    store.dispatch("searchUserByLoginId", searchText.value.trim());
+  }, 300);
+}
+
+// 검색 결과 클릭 시 유저 프로필 이동
+function goToUserProfile(userId) {
+  store.commit("setSearchResults", []);
+  searchText.value = "";
+  router.push(`/Profile/OtherProfile/${userId}`);
+}
 
 // Vuex getters 사용 새로 고침해도 유저 정보 보일수 있게
 const user = computed(() => store.getters.getUser);

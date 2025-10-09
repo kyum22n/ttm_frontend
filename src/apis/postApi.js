@@ -117,6 +117,11 @@ function deletePostTag({ postId, tagId }) {
     });
 }
 
+/** 태그 이름으로 게시물 목록 조회 */
+function getPostListByTag(tagName) {
+    return axios.get("/post/list/by-tag", { params: { tagName} } );
+}
+
 /** =========================
  *  Likes
  *  ========================= */
@@ -184,6 +189,7 @@ export default {
     getTagList,
     addPostTag,
     deletePostTag,
+    getPostListByTag,
     postLike,
     groupwalkRecruitmentList,
     groupwalkEndedList,

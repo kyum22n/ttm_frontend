@@ -138,6 +138,7 @@ import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import postApi from "@/apis/postApi";
+import userApi from "@/apis/userApi";
 
 const store = useStore();
 const route = useRoute();
@@ -199,8 +200,19 @@ onMounted(async () => {
   const currentPost = post.value;
   if (!currentPost) return;
 
-  // 2️. 작성자 정보
-  authorName.value = `작성자 #${currentPost.postUserId}`;
+  // 2. 작성자 정보 불러오기 (userId 기반)
+  try {
+    const jwt = localStorage.getItem("jwt");
+    const res = await userApi.userInfo(currentPost.postUserId, jwt);
+    const userData = res.data.user || res.data;
+
+    authorName.value = userData.userLoginId || `User#${currentPost.postUserId}`;
+    authorProfileImg.value = userData.profileImage
+      ? `http://localhost:8080${userData.profileImage}`
+      : "https://placekitten.com/60/60";
+  } catch (e) {
+    console.error("작성자 정보 불러오기 실패:", e);
+  }
 
   // 3️. 작성자 게시물 목록
   await store.dispatch("post/fetchUserPostList", {
@@ -270,16 +282,4 @@ async function closeRecruitment() {
   isClosing.value = true;
 }
 
-// 초기 로딩
-onMounted(async () => {
-  const id = route.params.id;
-  if (id) {
-    await store.dispatch("post/fetchDetail", id);
-    authorName.value = `작성자 #${post.value.postUserId}`;
-    await store.dispatch("post/fetchUserPostList", {
-      userId: post.value.postUserId,
-    });
-    authorPosts.value = store.state.post.list || [];
-  }
-});
 </script>
