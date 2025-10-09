@@ -3,6 +3,7 @@ import { createStore } from "vuex";
 import axiosConfig from "@/apis/axiosConfig";
 import post from "./post";
 import review from "./review";
+import pet from "./pet";
 
 const store = createStore({
   state: {
@@ -107,7 +108,7 @@ const store = createStore({
       }
     },
   },
-  modules: { post, review },
+  modules: { post, review, pet },
 });
 
 export default store;
