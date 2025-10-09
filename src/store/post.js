@@ -12,7 +12,7 @@ const post = {
     comments: [],
     tags: [],
     likes: {}, // 좋아요 상태
-    userId: ""
+    userId: "",
   },
 
   getters: {
@@ -79,7 +79,7 @@ const post = {
       }
 
       // 목록 업데이트
-      const target = state.loist.find((p) => p.postId === postId);
+      const target = state.list.find((p) => p.postId === postId);
       if (target) {
         target.postLikeCount = likeCount;
       }
@@ -192,41 +192,36 @@ const post = {
       await context.dispatch("fetchDetail", payload.postId);
     },
 
-    // 좋아요 등록
-    async likePost(context, { userId, postId }) {
-      const res = await postApi.postLike(userId, postId);
-      if (res.data.result === "success") {
-        let newCount = 0;
-        if (
-          context.state.detail &&
-          context.state.detail.postLikeCount != null
-        ) {
-          newCount = context.state.detail.postLikeCount + 1;
-        } else {
-          newCount = 1;
-        }
-        context.commit("updatePostLikes", { postId, likeCount: newCount });
-      }
-    },
+    /**  좋아요 등록/취소 */
+    async toggleLike(context, { userId, postId }) {
+      try {
+        const res = await postApi.postLike(userId, postId);
+        if (res.data.result === "success") {
+          const liked = res.data.liked;
+          let newCount = 0;
 
-    // 좋아요 취소
-    async likePostCancel(context, { userId, postId }) {
-      const res = await postApi.postLikeCancel(userId, postId);
-      if (res.data.result === "success") {
-        let newCount = 0;
-        if (
-          context.state.detail &&
-          context.state.detail.postLikeCount != null
-        ) {
-          newCount = context.state.detail.postLikeCount - 1;
-
-          if (newCount < 0) {
-            newCount = 0;
+          if (context.state.detail && context.state.detail.postId === postId) {
+            newCount = context.state.detail.postLikeCount ?? 0;
+          } else {
+            const target = context.state.list.find((p) => p.postId === postId);
+            newCount = target?.postLikeCount ?? 0;
           }
-        } else {
-          newCount = 0;
+
+          newCount += liked ? 1 : -1;
+          if (newCount < 0) newCount = 0;
+
+          context.commit("updatePostLikes", { postId, likeCount: newCount });
+
+          return res; // Vue에서 res.data.liked 사용 가능
         }
-        context.commit("updatePostLikes", { postId, likeCount: newCount });
+      } catch (err) {
+        // store에서 유효성 검사 및 예외 처리 
+        const msg = err.response?.data?.message || "";
+        if (msg.includes("자신의 게시글")) {
+          alert("자신의 게시글에는 좋아요를 누를 수 없습니다.");
+        } else {
+          console.error("게시글 좋아요 토글 실패:", err);
+        }
       }
     },
 

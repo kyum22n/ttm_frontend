@@ -172,33 +172,20 @@ async function toggleLike() {
   if (!post.value?.postId) return;
 
   try {
-    // 서버로 토글 요청 보내기
-    const res = await axios.post("/like/post-like", null, {
-      params: { userId, postId: post.value.postId },
+    // store에서 처리 (유효성 검사까지 포함)
+    const res = await store.dispatch("post/toggleLike", {
+      userId,
+      postId: post.value.postId,
     });
 
-    // 서버에서 liked: true/false 내려줌
-    if (typeof res.data.liked === "boolean") {
+    if (res && typeof res.data.liked === "boolean") {
       liked.value = res.data.liked;
-
-      // 좋아요 개수 동기화
-      if (liked.value) {
-        post.value.postLikeCount = (post.value.postLikeCount || 0) + 1;
-      } else {
-        post.value.postLikeCount = Math.max((post.value.postLikeCount || 1) - 1, 0);
-      }
+      // store가 이미 count 업데이트 처리함
     } else {
-      console.warn("서버 응답 liked 값이 없음:", res.data);
+      console.warn("서버 응답 liked 값이 없음:", res?.data);
     }
   } catch (err) {
-    // 백엔드 전역 예외 처리기에서 내려주는 message 사용
-    const msg = err.response?.data?.message;
-
-    if (msg.includes("자신의 게시글")) {
-      alert("자신의 게시글에는 좋아요를 누를 수 없습니다.");
-    } else {
-      console.error("좋아요 요청 오류:", msg);
-    }
+    console.error("좋아요 요청 오류:", err);
   }
 }
 
