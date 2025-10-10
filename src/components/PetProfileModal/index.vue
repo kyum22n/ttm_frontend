@@ -104,6 +104,9 @@
 import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
 import { useStore } from "vuex";
 import * as bootstrap from "bootstrap";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const props = defineProps({
   pet: { type: Object, default: null },
@@ -201,6 +204,10 @@ async function toggleLike() {
 function editPet() {
   emit("edit", props.pet);
   closeModal();
+}
+
+function goToEditPet(pet) {
+  router.push(`/EditPet/${pet.petId}`);
 }
 
 function requestChat() {

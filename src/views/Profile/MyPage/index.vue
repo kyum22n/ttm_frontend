@@ -94,12 +94,10 @@
 
     <!-- 모달 컴포넌트 -->
     <PetProfileModal
+      v-model:show="showPetModal"
       :pet="selectedPet"
-      :show="showModal"
-      :currentUserId="currentUserId"
-      @update:show="showModal = $event"
-      @edit="handleEdit"
-      @chat="handleChat"
+      :currentUserId="store.state.user.userId"
+      @edit="goToEditPet"
     />
 
     <!-- 콘텐츠 + 사이드바 -->
@@ -510,10 +508,11 @@ function goToPetRegister() {
   router.push("/Pet/RegisterPet");
 }
 
-// 기존 openPetModal 재사용
+const showPetModal = ref(false);
+
 function openPetModal(pet) {
   selectedPet.value = pet;
-  showModal.value = true;
+  showPetModal.value = true;
 }
 
 /* -------------------------
