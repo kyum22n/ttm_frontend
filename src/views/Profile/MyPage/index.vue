@@ -7,21 +7,12 @@
         <div class="row align-items-center g-3">
           <div class="col-auto">
             <!-- profileImgUrl이 존재하면 표시 -->
-            <img
-              v-if="profileImgUrl"
-              :src="profileImgUrl"
-              alt="프로필"
-              class="rounded-circle object-cover"
-              width="88"
-              height="88"
-            />
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88" height="88" />
           </div>
 
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">
-                ID: {{ profileUser?.userLoginId || "불러오는 중..." }}
-              </h5>
+              <h5 class="mb-0">ID: {{ profileUser?.userLoginId || "불러오는 중..." }}</h5>
 
               <span class="text-muted small">·</span>
               <RouterLink to="/Profile/EditProfile">
@@ -30,11 +21,7 @@
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
-              <li
-                class="list-inline-item"
-                v-for="(s, i) in profile.stats"
-                :key="i"
-              >
+              <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
                 <span class="me-1">{{ s.label }}</span
                 ><strong class="text-dark">{{ s.value }}</strong>
               </li>
@@ -65,41 +52,19 @@
 
     <!-- 하이라이트 펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button
-        class="btn btn-outline-secondary btn-sm"
-        @click="router.push('/Register/AddPet')"
-      >
-        Add Pets
-      </button>
+      <button class="btn btn-outline-secondary btn-sm" @click="router.push('/Register/AddPet')">Add Pets</button>
 
       <!-- 유저의 모든 펫 썸네일 렌더링 -->
-      <div
-        v-for="pet in petList"
-        :key="pet.petId"
-        class="text-center"
-        @click="openPetModal(pet)"
-        style="cursor: pointer"
-      >
+      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)" style="cursor: pointer">
         <div class="story-ring mx-auto mb-1">
-          <img
-            :src="getPetImageUrl(pet)"
-            alt="pet thumbnail"
-            class="rounded-circle object-cover"
-            width="64"
-            height="64"
-          />
+          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64" height="64" />
         </div>
         <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 모달 컴포넌트 -->
-    <PetProfileModal
-      v-model:show="showPetModal"
-      :pet="selectedPet"
-      :currentUserId="store.state.user.userId"
-      @edit="goToEditPet"
-    />
+    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId" @edit="goToEditPet" />
 
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
@@ -107,11 +72,7 @@
         <!-- 필터 탭 -->
         <ul class="nav nav-pills mb-3">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button
-              class="nav-link"
-              :class="{ active: activeTab === t.key }"
-              @click="activeTab = t.key"
-            >
+            <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
               {{ t.label }}
             </button>
           </li>
@@ -119,30 +80,15 @@
         <section class="mt-5">
           <h5 class="fw-bold mb-3">내 게시물</h5>
 
-          <div v-if="loadingMyPosts" class="text-center text-muted py-5">
-            불러오는 중...
-          </div>
+          <div v-if="loadingMyPosts" class="text-center text-muted py-5">불러오는 중...</div>
 
-          <div
-            v-else-if="myPosts.length === 0"
-            class="text-center text-muted py-5"
-          >
-            아직 작성한 게시물이 없습니다.
-          </div>
+          <div v-else-if="myPosts.length === 0" class="text-center text-muted py-5">아직 작성한 게시물이 없습니다.</div>
 
           <div v-else class="row g-3">
-            <div
-              v-for="post in myPosts"
-              :key="post.postId"
-              class="col-md-6 col-lg-4"
-            >
+            <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
               <div class="card h-100 border-0 shadow-sm">
                 <div class="ratio ratio-4x3">
-                  <img
-                    :src="post.thumbnailUrl || '/default_post.png'"
-                    class="card-img-top object-cover"
-                    alt="게시물 이미지"
-                  />
+                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover" alt="게시물 이미지" />
                 </div>
                 <div class="card-body">
                   <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
@@ -150,22 +96,13 @@
                     {{ post.postContent }}
                   </p>
                 </div>
-                <div
-                  class="card-footer bg-white d-flex justify-content-between align-items-center"
-                >
-                  <small class="text-muted">{{
-                    formatDate(post.createdAt)
-                  }}</small>
-                  <span class="text-muted small"
-                    >♥ {{ post.postLikeCount }}</span
-                  >
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                  <small class="text-muted">{{ formatDate(post.createdAt) }}</small>
+                  <span class="text-muted small">♥ {{ post.postLikeCount }}</span>
                 </div>
 
                 <!-- 상세 페이지로 이동 -->
-                <router-link
-                  :to="`/post/${post.postId}`"
-                  class="stretched-link"
-                ></router-link>
+                <router-link :to="`/post/${post.postId}`" class="stretched-link"></router-link>
               </div>
             </div>
           </div>
@@ -175,26 +112,13 @@
         <nav class="mt-4">
           <ul class="pagination pagination-sm">
             <li class="page-item" :class="{ disabled: page === 1 }">
-              <button class="page-link" @click="page--" :disabled="page === 1">
-                Prev
-              </button>
+              <button class="page-link" @click="page--" :disabled="page === 1">Prev</button>
             </li>
-            <li
-              class="page-item"
-              v-for="n in totalPages"
-              :key="n"
-              :class="{ active: page === n }"
-            >
+            <li class="page-item" v-for="n in totalPages" :key="n" :class="{ active: page === n }">
               <button class="page-link" @click="page = n">{{ n }}</button>
             </li>
             <li class="page-item" :class="{ disabled: page === totalPages }">
-              <button
-                class="page-link"
-                @click="page++"
-                :disabled="page === totalPages"
-              >
-                Next
-              </button>
+              <button class="page-link" @click="page++" :disabled="page === totalPages">Next</button>
             </li>
           </ul>
         </nav>
@@ -206,38 +130,20 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <strong>필터</strong>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @click="resetFilters"
-              >
-                초기화
-              </button>
+              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">초기화</button>
             </div>
 
             <div class="mb-3">
               <label class="form-label small">검색</label>
-              <input
-                v-model="filters.q"
-                type="search"
-                class="form-control form-control-sm"
-                placeholder="키워드..."
-              />
+              <input v-model="filters.q" type="search" class="form-control form-control-sm" placeholder="키워드..." />
             </div>
 
             <div class="mb-3">
               <label class="form-label small">종류</label>
               <div class="d-flex flex-wrap gap-2">
                 <div v-for="c in categories" :key="c" class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="`cat-${c}`"
-                    :value="c"
-                    v-model="filters.cats"
-                  />
-                  <label class="form-check-label small" :for="`cat-${c}`">{{
-                    c
-                  }}</label>
+                  <input class="form-check-input" type="checkbox" :id="`cat-${c}`" :value="c" v-model="filters.cats" />
+                  <label class="form-check-label small" :for="`cat-${c}`">{{ c }}</label>
                 </div>
               </div>
             </div>
@@ -250,12 +156,7 @@
               </select>
             </div>
 
-            <button
-              class="btn btn-dark w-100 btn-sm mt-2"
-              @click="applyFilters"
-            >
-              적용
-            </button>
+            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">적용</button>
           </div>
         </div>
 
@@ -265,15 +166,7 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox
-                  title="해시태그"
-                  :tags="tagsFromReviews"
-                  :max-visible="10"
-                  prefix="#"
-                  pill
-                  clickable
-                  @select="onSelect"
-                />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable @select="onSelect" />
               </div>
             </div>
 
@@ -292,7 +185,7 @@
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
+import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
@@ -412,21 +305,13 @@ const page = ref(1);
 const pageSize = 6;
 
 const filteredPosts = computed(() => {
-  let list = posts.value.filter((p) =>
-    activeTab.value === "all" ? true : p.type === activeTab.value
-  );
-  if (filters.q)
-    list = list.filter((p) =>
-      (p.title + p.subtitle + p.desc).includes(filters.q)
-    );
-  if (filters.sort === "likes")
-    list = [...list].sort((a, b) => b.likes - a.likes);
+  let list = posts.value.filter((p) => (activeTab.value === "all" ? true : p.type === activeTab.value));
+  if (filters.q) list = list.filter((p) => (p.title + p.subtitle + p.desc).includes(filters.q));
+  if (filters.sort === "likes") list = [...list].sort((a, b) => b.likes - a.likes);
   const start = (page.value - 1) * pageSize;
   return list.slice(start, start + pageSize);
 });
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(posts.value.length / pageSize))
-);
+const totalPages = computed(() => Math.max(1, Math.ceil(posts.value.length / pageSize)));
 
 // ✅ 필터 및 게시물 로직
 const tabs = [
@@ -455,9 +340,7 @@ const tagsFromReviews = computed(() => {
 });
 
 // ✅ 펫 모달
-const highlights2 = [
-  { id: 1, name: "뽀삐", img: "https://via.placeholder.com/80" },
-];
+const highlights2 = [{ id: 1, name: "뽀삐", img: "https://via.placeholder.com/80" }];
 const showModal = ref(false);
 const currentUserId = 1;
 
@@ -533,10 +416,7 @@ async function openPetModal(pet) {
 
   // 4️⃣ 모달 표시
   showPetModal.value = true;
-
-
 }
-
 
 /* -------------------------
    📰 내 게시물 불러오기
@@ -577,13 +457,7 @@ onMounted(async () => {
 
   const userId = Number(route.params.userId) || store.state.user.userId;
 
-  await Promise.all([
-    loadProfileUser(userId),
-    loadPetProfile(userId),
-    loadAllPets(userId),
-    loadUserPosts(userId),
-    loadMyPosts(userId),
-  ]);
+  await Promise.all([loadProfileUser(userId), loadPetProfile(userId), loadAllPets(userId), loadUserPosts(userId), loadMyPosts(userId)]);
 });
 
 watch(
@@ -597,9 +471,15 @@ watch(
 );
 
 // 게시물 좋아요 합계
-const totalLikes = computed(() => { // reduce: 모든 요소를 하나의 값으로 합치는 함수
+const totalLikes = computed(() => {
+  // reduce: 모든 요소를 하나의 값으로 합치는 함수
   return myPosts.value.reduce((sum, post) => sum + (post.postLikeCount || 0), 0);
 });
+
+function goToEditPet(pet) {
+  console.log("편집할 펫:", pet);
+  router.push(`/Register/EditPet/${pet.petId}`);
+}
 </script>
 
 <style scoped>
