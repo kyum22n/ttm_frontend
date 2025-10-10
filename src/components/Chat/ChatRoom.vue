@@ -1,3 +1,4 @@
+<!-- src/components/Chat/ChatRoom.vue -->
 <template>
   <div class="chat-container">
     <h2 class="title">
@@ -7,14 +8,17 @@
       <span class="small" v-else-if="!checking && roomStatus!=='P'">· 입장 불가</span>
     </h2>
 
-    <!-- 승인(A)일 때만 채팅 박스 렌더 -->
     <div v-if="allowed" class="chat-box" ref="listRef" @scroll="onScroll">
-      <button v-show="canLoadMore" class="load-more" :disabled="loadingHistory" @click="loadHistory(false)">
+      <button
+        v-show="canLoadMore"
+        class="load-more"
+        :disabled="loadingHistory"
+        @click="loadHistory(false)"
+      >
         ▲ 이전 대화 더 보기
       </button>
 
       <template v-for="(msg, i) in messages" :key="msg.messageId ?? i">
-        <!-- 상대 -->
         <div v-if="msg.sender === 'other'" class="chat-row left">
           <img v-if="msg.img" :src="msg.img" alt="profile" class="avatar" />
           <div class="bubble-box">
@@ -27,7 +31,7 @@
             </div>
           </div>
         </div>
-        <!-- 나 -->
+
         <div v-else class="chat-row right">
           <div class="bubble-box">
             <div class="name">{{ msg.name }}</div>
@@ -43,19 +47,16 @@
       </template>
     </div>
 
-    <!-- 승인 대기 -->
     <div v-else-if="!checking && roomStatus === 'P'" class="pending-box">
       <p class="pending-title">승인 대기 중</p>
       <p class="pending-desc">상대가 채팅 요청을 승인하면 이용할 수 있어요.</p>
     </div>
 
-    <!-- 입장 불가 -->
     <div v-else-if="!checking && roomStatus !== 'P'" class="pending-box">
       <p class="pending-title">입장할 수 없습니다</p>
       <p class="pending-desc">방이 없거나 권한이 없습니다.</p>
     </div>
 
-    <!-- 입력 박스: 승인(A)일 때만 -->
     <div v-if="allowed" class="input-box">
       <input
         type="text"
@@ -72,14 +73,14 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import apiRequest from "@/apis/apiRequest"; // [CHANGED] JWT 자동 첨부 유틸
 
-// ✅ [추가] 부모가 계산해서 내려줄 내/상대 아바타 URL
 const props = defineProps({
   baseUrl: { type: String, default: "http://localhost:8080" },
   roomId: { type: Number, required: true },
   myUserId: { type: Number, required: true },
-  myAvatarUrl: { type: String, default: "" },     // ← 추가
-  otherAvatarUrl: { type: String, default: "" },  // ← 추가
+  myAvatarUrl: { type: String, default: "" },     // [INFO] 부모에서 주입
+  otherAvatarUrl: { type: String, default: "" },  // [INFO] 부모에서 주입
 })
 
 const messages = ref([]);
@@ -90,26 +91,20 @@ const canLoadMore = ref(true);
 const loadingHistory = ref(false);
 const oldestMessageId = ref(null);
 
-const checking = ref(true);   // 승인 상태 확인 중
-const allowed  = ref(false);  // 승인됨(A)일 때만 true
-const roomStatus = ref(null); // 'A' | 'P' | 'B' | 'D' | 'X'
+const checking = ref(true);
+const allowed  = ref(false);
+const roomStatus = ref(null);
 
-// STOMP 인스턴스
 let stomp = null;
 
-// ✅ [추가] 이미지가 없을 때 사용할 폴백
 const FALLBACK_ME    = "https://placehold.co/100x100?text=ME"
 const FALLBACK_OTHER = "https://placehold.co/100x100?text=USER"
-
-
 
 function fmtTime(iso) {
   if (!iso) return "";
   try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
 }
 
-
-// ⬇️ [수정] 기존 placekitten/placedog 하드코딩 제거하고 props의 URL 사용
 function toViewMessage(m) {
   const mine = m.senderId === props.myUserId
   return {
@@ -120,12 +115,10 @@ function toViewMessage(m) {
     sender: mine ? "me" : "other",
     name: mine ? "나" : `상대(${m.senderId})`,
     text: m.message,
-    // ✅ 내 메시지면 myAvatarUrl, 상대면 otherAvatarUrl 사용 (+ 폴백)
     img: mine ? (props.myAvatarUrl || FALLBACK_ME)
               : (props.otherAvatarUrl || FALLBACK_OTHER),
   }
 }
-
 
 function scrollToBottom() {
   const el = listRef.value;
@@ -133,38 +126,28 @@ function scrollToBottom() {
   el.scrollTop = el.scrollHeight;
 }
 
-async function getJSON(url) {
-  const res = await fetch(url);
-  let body = null;
-  try { body = await res.json(); } catch { body = null; }
-  if (!res.ok) {
-    // 에러 객체에 상태/바디를 실어 올림
-    const err = new Error(`HTTP ${res.status}`);
-    err.status = res.status;
-    err.body = body;
-    throw err;
-  }
-  return body;
-}
-
-// 승인 상태 조회 (info만 신뢰)
+// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 첨부)
 async function checkApproved() {
   try {
-    const info = await getJSON(`${props.baseUrl}/chat/rooms/${props.roomId}/info?userId=${props.myUserId}`);
+    const res = await apiRequest(
+      "get",
+      `${props.baseUrl}/chat/rooms/${props.roomId}/info`,
+      null,
+      { userId: props.myUserId }
+    );
+    const info = res?.data;
     const st = info?.room?.chatroomStatus ?? null;
     roomStatus.value = st;
     allowed.value = (st === 'A');
   } catch (e) {
     allowed.value = false;
-    // 기본은 입장 불가
     roomStatus.value = 'X';
-    // 서버 코드 기준으로 세분화
-    const code = e?.body?.code;
+    const code = e?.response?.data?.code;
     if (code === 'NOT_APPROVED') {
       roomStatus.value = 'P';
     } else if (code === 'NOT_MEMBER') {
       roomStatus.value = 'X';
-    } else if (e?.status === 404) {
+    } else if (e?.response?.status === 404) {
       roomStatus.value = 'X';
     }
   } finally {
@@ -172,43 +155,43 @@ async function checkApproved() {
   }
 }
 
+// [CHANGED] fetch → apiRequest(put) 로 교체 (JWT 첨부)
 async function putJSON(url, body) {
   try {
-    await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    await apiRequest("put", url, body, null);
   } catch (e) {
-    // no-op: best-effort
+    /* no-op */
   }
 }
 
+// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 첨부)
 async function loadHistory(initial = false) {
   if (loadingHistory.value) return;
   loadingHistory.value = true;
   try {
-    const params = new URLSearchParams({ userId: String(props.myUserId), limit: "30" });
-    if (oldestMessageId.value) params.set("beforeMessageId", String(oldestMessageId.value));
-    const url = `${props.baseUrl}/chat/rooms/${props.roomId}/messages?` + params.toString();
+    const params = { userId: props.myUserId, limit: 30 };
+    if (oldestMessageId.value) params.beforeMessageId = oldestMessageId.value;
 
-    const data = await getJSON(url);
-    const arr = (data?.messages ?? []).map(toViewMessage);
+    const res = await apiRequest(
+      "get",
+      `${props.baseUrl}/chat/rooms/${props.roomId}/messages`,
+      null,
+      params
+    );
+    const data = res?.data || {};
+    const arr = (data.messages ?? []).map(toViewMessage);
     if (arr.length === 0) { canLoadMore.value = false; return; }
 
     if (initial) {
-      // 초기: ASC 그대로 append 후 바닥으로
       messages.value = arr;
       oldestMessageId.value = arr[0].messageId;
       canLoadMore.value = true;
       await nextTick();
       scrollToBottom();
-      // 입장하자마자 바닥이면 읽음 처리
       if (messages.value.length) {
         markReadUpTo(messages.value[messages.value.length - 1].messageId);
       }
     } else {
-      // 더보기: 앞에 붙이고 스크롤 보정
       const el = listRef.value;
       const prevHeight = el?.scrollHeight ?? 0;
       messages.value = [...arr, ...messages.value];
@@ -217,7 +200,6 @@ async function loadHistory(initial = false) {
       if (el) el.scrollTop = el.scrollHeight - prevHeight;
     }
   } catch (e) {
-    // 사용자 알림은 과도하게 띄우지 않음
     console.warn("히스토리 로드 실패", e);
   } finally {
     loadingHistory.value = false;
@@ -236,17 +218,12 @@ function applyReadUpdate(upToId, readerId) {
 function markReadUpTo(id) {
   if (!id) return;
   const payload = { roomId: props.roomId, userId: props.myUserId, upToMessageId: id };
-  // WS
   if (stomp && connected.value) {
     try {
       stomp.publish({ destination: "/app/chat.read", body: JSON.stringify(payload) });
-    } catch (e) {
-      // no-op
-    }
+    } catch (e) { /* no-op */ }
   }
-  // REST 백업
   putJSON(`${props.baseUrl}/chat/rooms/${props.roomId}/read`, payload);
-  // UI 즉시 반영(낙관적)
   applyReadUpdate(id, props.myUserId);
 }
 
@@ -271,7 +248,6 @@ function sendMessage() {
     alert("연결되지 않았습니다.");
     return;
   }
-  // 전송 직전, 내가 본 마지막까지 읽음 처리
   if (messages.value.length) {
     const lastId = messages.value[messages.value.length - 1].messageId;
     markReadUpTo(lastId);
@@ -290,10 +266,10 @@ function connect() {
   stomp = new Client({
     webSocketFactory: () => new SockJS(wsUrl),
     reconnectDelay: 3000,
-    debug: () => { /* no-op */ },
+    debug: () => { /* no-op */ }, // 빈 블록 대신 주석
   });
 
-  stomp.onConnect = () => {
+  stomp.onConnect = async () => {
     connected.value = true;
     const topic = `/topic/chat.${props.roomId}`;
     stomp.subscribe(topic, async (frame) => {
@@ -304,7 +280,6 @@ function connect() {
           messages.value.push(vm);
           await nextTick();
           scrollToBottom();
-          // 상대 메시지면, 바닥 근처에서 자동 읽음 처리
           if (vm.sender !== "me") {
             const el = listRef.value;
             const nearBottom = el && (el.scrollTop + el.clientHeight >= el.scrollHeight - 40);
@@ -315,30 +290,19 @@ function connect() {
             applyReadUpdate(Number(data.upToMessageId), Number(data.readerId));
           }
         }
-      } catch (e) {
-        // no-op: ignore malformed frame
-      }
+      } catch (e) { /* no-op */ }
     });
-    // 초기 히스토리
-    loadHistory(true);
+    await loadHistory(true);
   };
 
   stomp.onStompError = () => { /* no-op */ };
   stomp.onWebSocketError = () => { /* no-op */ };
 
-  try {
-    stomp.activate();
-  } catch (e) {
-    // no-op: activation failed
-  }
+  try { stomp.activate(); } catch (e) { /* no-op */ }
 }
 
 function disconnect() {
-  try {
-    if (stomp) stomp.deactivate();
-  } catch (e) {
-    // no-op: socket already closed
-  }
+  try { if (stomp) stomp.deactivate(); } catch (e) { /* no-op */ }
   stomp = null;
 }
 

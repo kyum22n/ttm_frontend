@@ -1,3 +1,4 @@
+<!-- src/views/Propile/MyPage.vue -->
 <template>
   <div class="container py-4">
     <!-- 프로필 헤더 -->
@@ -293,7 +294,7 @@
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
+import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";

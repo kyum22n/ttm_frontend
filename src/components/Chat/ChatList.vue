@@ -50,7 +50,6 @@
               최근: {{ r.lastPreview || '-' }}
             </div>
 
-            <!-- P(대기)이고, 내가 요청자가 아닐 때 승인/거절 버튼 노출 -->
             <div
               v-if="r.chatroomStatus === 'P' && r.requestedBy !== myUserId"
               class="action-row"
@@ -86,6 +85,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
+import apiRequest from '@/apis/apiRequest' // [CHANGED] JWT 자동 첨부
 
 const BASE_URL =
   (import.meta?.env?.VITE_API_BASE) ||
@@ -102,29 +102,14 @@ const loading   = ref(false)
 const errorMsg  = ref('')
 const rooms     = ref([])
 
-// 승인/거절 진행중 표시용
 const acting = ref(new Set())
 
-// 캐시
 const avatarCache   = new Map()
 const petNameCache  = new Map()
 
 const FALLBACK_AVATAR = 'https://placehold.co/80x80?text=USER'
 
-async function getJSON(url) {
-  const res = await fetch(url)
-  const text = await res.text()
-  if (!res.ok) {
-    console.error('[ChatList:getJSON] URL:', url)
-    console.error('[ChatList:getJSON] HTTP', res.status, 'BODY:', text)
-    const err = new Error(`HTTP ${res.status}`)
-    try { err.body = JSON.parse(text) } catch { err.body = text }
-    err.status = res.status
-    throw err
-  }
-  return text ? JSON.parse(text) : null
-}
-
+// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 필요 없는 엔드포인트여도 통일)
 async function fetchPartnerMeta(userId) {
   const cachedAvatar  = avatarCache.get(userId)
   const cachedPetName = petNameCache.get(userId)
@@ -138,7 +123,8 @@ async function fetchPartnerMeta(userId) {
   let avatar = ''
   let petName = ''
   try {
-    const fp = await getJSON(`${BASE_URL}/pet/${userId}/first-pet`)
+    const res = await apiRequest('get', `${BASE_URL}/pet/${userId}/first-pet`)
+    const fp = res?.data
     petName = fp?.petName || ''
     if (fp?.imageUrl) {
       avatar = `${BASE_URL}${fp.imageUrl.startsWith('/') ? '' : '/'}${fp.imageUrl}`
@@ -150,6 +136,7 @@ async function fetchPartnerMeta(userId) {
   return { avatar, petName }
 }
 
+// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 첨부)
 async function fetchRooms() {
   if (!isLogin.value || !Number.isInteger(myUserId.value) || myUserId.value <= 0) {
     rooms.value = []
@@ -158,8 +145,8 @@ async function fetchRooms() {
   loading.value = true
   errorMsg.value = ''
   try {
-    const url  = `${BASE_URL}/chat/rooms/my?userId=${myUserId.value}`
-    const data = await getJSON(url)
+    const res  = await apiRequest('get', `${BASE_URL}/chat/rooms/my`, null, { userId: myUserId.value })
+    const data = res?.data
     const list = Array.isArray(data) ? data : (data?.rooms || [])
 
     const base = list.map(r => {
@@ -186,7 +173,7 @@ async function fetchRooms() {
 
     rooms.value = enriched
   } catch (e) {
-    errorMsg.value = (e?.body?.message) || (e?.message) || '알 수 없는 오류'
+    errorMsg.value = (e?.response?.data?.message) || (e?.message) || '알 수 없는 오류'
   } finally {
     loading.value = false
   }
@@ -196,21 +183,16 @@ function goRoom(roomId) {
   router.push({ path: '/message/detail', query: { roomId } })
 }
 
-// 승인/거절 액션들
+// [CHANGED] fetch → apiRequest(put) 로 교체 (JWT 첨부)
 async function approve(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/approve?by=${myUserId.value}`, {
-      method: 'PUT'
-    })
-    if (!res.ok) {
-      const t = await res.text()
-      console.error('approve fail:', res.status, t)
+    const res = await apiRequest('put', `${BASE_URL}/chat/rooms/${r.chatroomId}/approve`, null, { by: myUserId.value })
+    if (res?.status !== 200) {
       alert('승인에 실패했습니다.')
       return
     }
-    // 성공 시 상태 업데이트
     r.chatroomStatus = 'A'
   } catch (e) {
     console.error(e)
@@ -220,20 +202,16 @@ async function approve(r) {
   }
 }
 
+// [CHANGED] fetch → apiRequest(put) 로 교체 (JWT 첨부)
 async function reject(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/reject?by=${myUserId.value}`, {
-      method: 'PUT'
-    })
-    if (!res.ok) {
-      const t = await res.text()
-      console.error('reject fail:', res.status, t)
+    const res = await apiRequest('put', `${BASE_URL}/chat/rooms/${r.chatroomId}/reject`, null, { by: myUserId.value })
+    if (res?.status !== 200) {
       alert('거절에 실패했습니다.')
       return
     }
-    // 성공 시 상태 업데이트(닫힘)
     r.chatroomStatus = 'D'
   } catch (e) {
     console.error(e)
