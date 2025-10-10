@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="container-fluid py-5"
-    style="
+  <div class="container-fluid py-5" style="
       background-color:#faf8f5;
 
       /* 브랜드 색상 세트 */
@@ -17,85 +15,81 @@
       --bs-pagination-hover-color:#5b432c;
       --bs-pagination-active-bg:#6f5034;
       --bs-pagination-active-border-color:#6f5034;
-    "
-  >
-    <div class="row g-4">
-      <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
-      <div class="col-md-4">
-        <div class="border rounded p-3 text-center">
-          <img v-if="previewImage" :src="previewImage" class="img-fluid rounded" alt="대표 미리보기" />
-          <div v-else class="text-muted small">이미지 미리보기</div>
+    ">
+    <div class="container">
+
+      <div class="row g-4">
+        <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
+        <div class="col-md-4">
+          <div class="border rounded p-3 text-center">
+            <img v-if="previewImage" :src="previewImage" class="img-fluid rounded" alt="대표 미리보기" />
+            <div v-else class="text-muted small">이미지 미리보기</div>
+          </div>
         </div>
-      </div>
 
-      <!-- ===== 중앙: 글 작성 ===== -->
-      <div class="col-md-5">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title">게시글 작성</h5>
+        <!-- ===== 중앙: 글 작성 ===== -->
+        <div class="col-md-5">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">게시글 작성</h5>
 
-            <!-- 제목 -->
-            <input v-model="title" type="text" class="form-control mb-2" placeholder="제목을 입력하세요" />
+              <!-- 제목 -->
+              <input v-model="title" type="text" class="form-control mb-2" placeholder="제목을 입력하세요" />
 
-            <!-- 내용 -->
-            <textarea v-model="content" rows="6" class="form-control mb-3" placeholder="내용을 입력하세요"></textarea>
+              <!-- 내용 -->
+              <textarea v-model="content" rows="6" class="form-control mb-3" placeholder="내용을 입력하세요"></textarea>
 
-            <!-- 산책 모집글 여부 -->
-            <div class="form-check mb-3">
-              <input id="isRequest" class="form-check-input" type="checkbox" v-model="isRequest" />
-              <label class="form-check-label" for="isRequest">산책 모집글</label>
-            </div>
+              <!-- 산책 모집글 여부 -->
+              <div class="form-check mb-3">
+                <input id="isRequest" class="form-check-input" type="checkbox" v-model="isRequest" />
+                <label class="form-check-label" for="isRequest">산책 모집글</label>
+              </div>
 
-            <!-- 선택된 태그 보여주기 -->
-            <div class="mb-3">
-              <span v-for="tagId in selectedTags" :key="tagId" class="badge bg-primary me-2" style="cursor:pointer"
-                @click="removeTag(tagId)">
-                {{availableTags.find(t => t.tagId === tagId)?.tagName}} ✕
-              </span>
-            </div>
+              <!-- 선택된 태그 보여주기 -->
+              <div class="mb-3">
+                <span v-for="tagId in selectedTags" :key="tagId" class="badge bg-primary me-2" style="cursor:pointer"
+                  @click="removeTag(tagId)">
+                  {{availableTags.find(t => t.tagId === tagId)?.tagName}} ✕
+                </span>
+              </div>
 
-            <!-- 태그 선택 버튼 -->
-            <h6 class="fw-bold">태그 선택</h6>
-            <div class="d-flex flex-wrap gap-2 mb-2">
-              <button v-for="tag in availableTags.slice(0, 5)" :key="tag.tagId" type="button" class="btn btn-sm"
-                :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
-                @click="toggleTag(tag.tagId)">
-                {{ tag.tagName }}
-              </button>
-            </div>
-
-
-            <div class="collapse" id="moreTags">
-              <div class="d-flex flex-wrap gap-2 mt-2">
-                <button v-for="tag in availableTags.slice(5)" :key="tag.tagId" type="button" class="btn btn-sm"
+              <!-- 태그 선택 버튼 -->
+              <h6 class="fw-bold">태그 선택</h6>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <button v-for="tag in availableTags.slice(0, 5)" :key="tag.tagId" type="button" class="btn btn-sm"
                   :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
                   @click="toggleTag(tag.tagId)">
                   {{ tag.tagName }}
                 </button>
               </div>
+
+
+              <div class="collapse" id="moreTags">
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                  <button v-for="tag in availableTags.slice(5)" :key="tag.tagId" type="button" class="btn btn-sm"
+                    :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleTag(tag.tagId)">
+                    {{ tag.tagName }}
+                  </button>
+                </div>
+              </div>
+
+              <button class="btn btn-link p-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreTags"
+                aria-expanded="false" aria-controls="moreTags" @click="toggleMore">
+                {{ showMore ? "접기 ▲" : "더보기 ▼" }}
+              </button>
+
             </div>
 
-            <button class="btn btn-link p-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreTags"
-              aria-expanded="false" aria-controls="moreTags" @click="toggleMore">
-              {{ showMore ? "접기 ▲" : "더보기 ▼" }}
-            </button>
+            <div class="card-footer d-flex justify-content-between">
+              <!-- 파일 업로드 -->
+              <label class="btn btn-dark d-inline-flex align-items-center gap-2 mb-0">
+                <i class="bi bi-folder-plus"></i>
+                이미지 선택
+                <input type="file" class="d-none" multiple accept="image/*" @change="onFileChange" />
+              </label>
 
-          </div>
-
-          <div class="card-footer d-flex justify-content-between">
-            <!-- 파일 업로드 -->
-            <label class="btn btn-dark d-inline-flex align-items-center gap-2 mb-0">
-              <i class="bi bi-folder-plus"></i>
-              이미지 선택
-              <input type="file" class="d-none" multiple accept="image/*" @change="onFileChange" />
-            </label>
-
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              :disabled="submitting" 
-              @click="submitPost"
-              style="
+              <button type="button" class="btn btn-primary" :disabled="submitting" @click="submitPost" style="
               --bs-btn-bg:#6f5034;
               --bs-btn-border-color:#6f5034;
               --bs-btn-hover-bg:#5b432c;
@@ -104,28 +98,28 @@
               --bs-btn-active-border-color:#4d3826;
               --bs-btn-active-color:#fff;
               --bs-btn-focus-shadow-rgb:111,80,52;
-              "
-            >
-              {{ submitting ? "등록 중..." : "게시" }}
-            </button>
+              ">
+                {{ submitting ? "등록 중..." : "게시" }}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ===== 오른쪽: 첨부 이미지 썸네일 ===== -->
-      <div class="col-md-3">
-        <h6 class="fw-bold mb-3">첨부 이미지</h6>
-        <div class="d-flex flex-column gap-2">
-          <div v-for="(img, idx) in previewImages" :key="idx" class="position-relative">
-            <img :src="img" class="img-thumbnail w-100" style="max-height:120px; object-fit:cover;" />
-            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-              @click="removeImage(idx)">
-              ✕
-            </button>
-          </div>
+        <!-- ===== 오른쪽: 첨부 이미지 썸네일 ===== -->
+        <div class="col-md-3">
+          <h6 class="fw-bold mb-3">첨부 이미지</h6>
+          <div class="d-flex flex-column gap-2">
+            <div v-for="(img, idx) in previewImages" :key="idx" class="position-relative">
+              <img :src="img" class="img-thumbnail w-100" style="max-height:120px; object-fit:cover;" />
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+                @click="removeImage(idx)">
+                ✕
+              </button>
+            </div>
 
-          <div v-if="!previewImages.length" class="text-muted small">
-            아직 선택된 이미지가 없습니다.
+            <div v-if="!previewImages.length" class="text-muted small">
+              아직 선택된 이미지가 없습니다.
+            </div>
           </div>
         </div>
       </div>

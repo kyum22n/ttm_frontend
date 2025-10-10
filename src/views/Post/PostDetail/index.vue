@@ -1,132 +1,167 @@
 <template>
-  <div class="container my-5" v-if="post">
-    <div class="row g-4">
-      <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
-      <div class="col-md-5">
-        <div v-if="post.images && post.images.length" id="postCarousel" class="carousel slide shadow" data-bs-ride="carousel">
-          <div class="carousel-inner">
-            <div v-for="(img, i) in post.images" :key="i" class="carousel-item" :class="{ active: i === 0 }">
-              <img :src="`http://localhost:8080${img}`" class="d-block w-100 rounded" alt="게시물 이미지" />
-            </div>
-          </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#postCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#postCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-          </button>
-        </div>
+  <div class="container-fluid py-5" style="
+      background-color:#faf8f5;
 
-        <div v-else class="border rounded text-center p-5 bg-light text-muted">
-          이미지가 없습니다.
-        </div>
-      </div>
+      /* 브랜드 색상 세트 */
+      --bs-primary:#6f5034;
+      --bs-primary-rgb:111,80,52;
 
-      <!-- ===== 가운데: 게시글 + 댓글 ===== -->
-      <div class="col-md-5">
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <!-- 작성자 프로필 -->
-            <div class="d-flex align-items-center mb-3">
-              <img :src="authorProfileImg" class="rounded-circle me-2" width="40" height="40" />
-              <div>
-                <strong>{{ authorName }}</strong>
-                <div class="text-muted small">{{ formatDate(post.createdAt) }}</div>
+      /* 링크, 글자 */
+      --bs-link-color:#6f5034;
+      --bs-link-hover-color:#5b432c;
+
+      /* 버튼 */
+      --bs-btn-bg:#6f5034;
+      --bs-btn-border-color:#6f5034;
+      --bs-btn-hover-bg:#5b432c;
+      --bs-btn-hover-border-color:#5b432c;
+      --bs-btn-active-bg:#4d3826;
+      --bs-btn-active-border-color:#4d3826;
+      --bs-btn-active-color:#fff;
+      --bs-btn-focus-shadow-rgb:111,80,52;
+
+      /* 뱃지/페이지네이션 공용 */
+      --bs-pagination-color:#6f5034;
+      --bs-pagination-hover-color:#5b432c;
+      --bs-pagination-active-bg:#6f5034;
+      --bs-pagination-active-border-color:#6f5034;
+      --bs-pagination-focus-box-shadow:0 0 0 .25rem rgba(111,80,52,.25);
+    ">
+    <div class="container my-5" v-if="post">
+      <div class="row g-4">
+        <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
+        <div class="col-md-5">
+          <div v-if="post.images && post.images.length" id="postCarousel" class="carousel slide shadow"
+            data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div v-for="(img, i) in post.images" :key="i" class="carousel-item" :class="{ active: i === 0 }">
+                <img :src="`http://localhost:8080${img}`" class="d-block w-100 rounded" alt="게시물 이미지" />
               </div>
             </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#postCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#postCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          </div>
 
-            <!-- 게시글 내용 -->
-            <p class="mb-3">{{ post.postContent }}</p>
-
-            <!-- 태그 -->
-            <div class="mb-3">
-              <span v-for="(tag, i) in tags" :key="i" class="badge bg-primary me-1">
-                {{ tag.tagName }}
-              </span>
-            </div>
-
-            <!-- 좋아요 -->
-            <div class="d-flex align-items-center mb-3">
-              <button class="btn btn-outline-danger btn-sm me-2" @click="toggleLike">
-                <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
-              </button>
-              <span>{{ post.postLikeCount }} Likes</span>
-            </div>
-
-            <!-- 수정 버튼 (작성자 && 일반글만) -->
-            <div v-if="isAuthor && !isRecruitment" class="text-end mt-3">
-              <router-link :to="`/post/update/${post.postId}`" class="btn btn-outline-secondary btn-sm">
-                ✏️ 수정하기
-              </router-link>
-            </div>
-
-            <!-- 산책 모집글 버튼 -->
-            <div class="mt-3 text-end">
-              <!-- 신청자 -->
-              <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying" @click="applyGroupWalk">
-                <i class="bi bi-person-plus"></i>
-                {{ isApplying ? "신청 완료" : "신청하기" }}
-              </button>
-
-              <!-- 모집자 -->
-              <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing" @click="closeRecruitment">
-                <i class="bi bi-flag-fill"></i>
-                {{ isClosing ? "마감됨" : "모집 마감하기" }}
-              </button>
-            </div>
-
-
+          <div v-else class="border rounded text-center p-5 bg-light text-muted">
+            이미지가 없습니다.
           </div>
         </div>
 
-        <!-- 댓글 -->
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="input-group mb-3">
-              <input v-model="newComment" type="text" class="form-control" placeholder="댓글을 작성해주세요" />
-              <button class="btn btn-outline-secondary" @click="addComment">
-                작성
-              </button>
-            </div>
-
-            <ul class="list-group list-group-flush">
-              <!-- 🟢 로딩 중일 때 -->
-              <li v-if="loadingComments" class="list-group-item text-center text-muted py-3">
-                <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
-                댓글 불러오는 중...
-              </li>
-
-              <!-- 댓글 리스트 -->
-              <li v-else v-for="(c, i) in commentsWithProfiles" :key="i" class="list-group-item d-flex align-items-start">
-                <img :src="c.profileImage || 'https://placekitten.com/32/32'" class="rounded-circle me-2" width="32" height="32" alt="댓글 작성자" style="object-fit: cover;" />
+        <!-- ===== 가운데: 게시글 + 댓글 ===== -->
+        <div class="col-md-5">
+          <div class="card shadow-sm mb-3">
+            <div class="card-body">
+              <!-- 작성자 프로필 -->
+              <div class="d-flex align-items-center mb-3">
+                <img :src="authorProfileImg" class="rounded-circle me-2" width="40" height="40" />
                 <div>
-                  <strong>{{ c.userLoginId || c.cwriter }}</strong>:
-                  {{ c.commentContent }}
+                  <strong>{{ authorName }}</strong>
+                  <div class="text-muted small">{{ formatDate(post.createdAt) }}</div>
                 </div>
-              </li>
-            </ul>
+              </div>
+
+              <!-- 게시글 내용 -->
+              <p class="mb-3">{{ post.postContent }}</p>
+
+              <!-- 태그 -->
+              <div class="mb-3">
+                <span v-for="(tag, i) in tags" :key="i" class="badge bg-primary me-1">
+                  {{ tag.tagName }}
+                </span>
+              </div>
+
+              <!-- 좋아요 -->
+              <div class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-danger btn-sm me-2" @click="toggleLike">
+                  <i class="bi" :class="liked ? 'bi-heart-fill' : 'bi-heart'"></i>
+                </button>
+                <span>{{ post.postLikeCount }} Likes</span>
+              </div>
+
+              <!-- 수정 버튼 (작성자 && 일반글만) -->
+              <div v-if="isAuthor && !isRecruitment" class="text-end mt-3">
+                <router-link :to="`/post/update/${post.postId}`" class="btn btn-outline-secondary btn-sm">
+                  ✏️ 수정하기
+                </router-link>
+              </div>
+
+              <!-- 산책 모집글 버튼 -->
+              <div class="mt-3 text-end">
+                <!-- 신청자 -->
+                <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying"
+                  @click="applyGroupWalk">
+                  <i class="bi bi-person-plus"></i>
+                  {{ isApplying ? "신청 완료" : "신청하기" }}
+                </button>
+
+                <!-- 모집자 -->
+                <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing"
+                  @click="closeRecruitment">
+                  <i class="bi bi-flag-fill"></i>
+                  {{ isClosing ? "마감됨" : "모집 마감하기" }}
+                </button>
+              </div>
+
+
+            </div>
+          </div>
+
+          <!-- 댓글 -->
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="input-group mb-3">
+                <input v-model="newComment" type="text" class="form-control" placeholder="댓글을 작성해주세요" />
+                <button class="btn btn-outline-secondary" @click="addComment">
+                  작성
+                </button>
+              </div>
+
+              <ul class="list-group list-group-flush">
+                <!-- 🟢 로딩 중일 때 -->
+                <li v-if="loadingComments" class="list-group-item text-center text-muted py-3">
+                  <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
+                  댓글 불러오는 중...
+                </li>
+
+                <!-- 댓글 리스트 -->
+                <li v-else v-for="(c, i) in commentsWithProfiles" :key="i"
+                  class="list-group-item d-flex align-items-start">
+                  <img :src="c.profileImage || 'https://placekitten.com/32/32'" class="rounded-circle me-2" width="32"
+                    height="32" alt="댓글 작성자" style="object-fit: cover;" />
+                  <div>
+                    <strong>{{ c.userLoginId || c.cwriter }}</strong>:
+                    {{ c.commentContent }}
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ===== 오른쪽: 작성자 프로필 ===== -->
-      <div class="col-md-2">
-        <div class="card shadow-sm text-center">
-          <div class="card-body">
-            <img :src="authorProfileImg" class="rounded-circle mb-2" width="60" height="60" />
-            <h6 class="card-title">{{ authorName }}</h6>
+        <!-- ===== 오른쪽: 작성자 프로필 ===== -->
+        <div class="col-md-2">
+          <div class="card shadow-sm text-center">
+            <div class="card-body">
+              <img :src="authorProfileImg" class="rounded-circle mb-2" width="60" height="60" />
+              <h6 class="card-title">{{ authorName }}</h6>
 
-            <router-link :to="`/mypage/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">
-              프로필 놀러가기
-            </router-link>
+              <router-link :to="`/mypage/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">
+                프로필 놀러가기
+              </router-link>
 
-            <!-- 작성자 게시물 썸네일 -->
-            <div v-if="authorPosts.length">
-              <div v-for="p in authorPosts.slice(0, 3)" :key="p.postId" class="mb-2">
-                <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button" @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
+              <!-- 작성자 게시물 썸네일 -->
+              <div v-if="authorPosts.length">
+                <div v-for="p in authorPosts.slice(0, 3)" :key="p.postId" class="mb-2">
+                  <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button"
+                    @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
+                </div>
               </div>
+              <div v-else class="text-muted small">게시물이 없습니다</div>
             </div>
-            <div v-else class="text-muted small">게시물이 없습니다</div>
           </div>
         </div>
       </div>
@@ -368,4 +403,3 @@ async function closeRecruitment() {
   isClosing.value = true;
 }
 </script>
-

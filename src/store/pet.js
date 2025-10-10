@@ -149,6 +149,7 @@ const pet = {
 
       const petsWithImages = res.data.pets.map((pet) => ({
         ...pet,
+        userId: pet.petUserId,
         imageUrl: `http://localhost:8080/pet/image/${pet.petId}`,
       }));
 

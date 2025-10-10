@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="container-fluid py-5"
-    style="
+  <div class="container-fluid py-5" style="
       background-color:#faf8f5;
 
       /* 브랜드 색상 세트 */
@@ -29,87 +27,84 @@
       --bs-pagination-hover-color:#5b432c;
       --bs-pagination-active-bg:#6f5034;
       --bs-pagination-active-border-color:#6f5034;
-    "
-  >
-    <!-- 히어로 -->
-    <section class="row align-items-center g-4 mb-5">
-      <div class="col-lg-5">
-        <div class="text-center text-lg-start">
-          <img :src="logoBrown" alt="로고" class="img-fluid mb-3" style="max-width:260px;" />
-          <div class="ms-lg-4">
-            <div class="fw-bold fs-5">믿을 수 있는 이웃과 함께하는 교류</div>
-            <p class="text-muted small mb-3">
-              우리 아이와 어울릴 친구, 나와 산책할 이웃을 쉽게 만나는 공간.<br class="d-none d-lg-block" />
-              반려인들의 따뜻한 동네 커뮤니티가 열립니다.
-            </p>
-          </div>
-        </div>
-      </div>
+    ">
+    <div class="container">
 
-      <!-- 오른쪽: 히어로 이미지 -->
-      <div class="col-lg-7">
-        <img :src="heroImage" alt="히어로" class="img-fluid rounded-4 shadow w-100" />
-      </div>
-    </section>
-
-    <!-- 강아지 프로필 리스트 -->
-    <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
-      <div v-for="dog in dogs" :key="dog.petId" class="text-center" role="button" @click="goToOwnerProfile(dog.userId)">
-        <img :src="dog.imageUrl || 'https://placehold.co/400x250'"
-          class="rounded-circle border border-4 border-primary mb-2" width="100" height="100" alt="강아지 프로필" />
-        <div class="fw-semibold small">{{ dog.name }}</div>
-      </div>
-    </div>
-
-    <!-- 탭/그리드 -->
-    <div class="row g-4">
-      <div class="col-lg-8">
-        <!-- 탭 -->
-        <ul 
-          class="nav nav-pills mb-3"
-          style="
-            --bs-nav-pills-link-active-bg:#6f5034;
-            --bs-nav-pills-link-active-color:#fff;
-          "
-        >
-          <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
-              {{ t.label }}
-            </button>
-          </li>
-        </ul>
-
-        <!-- 게시물 그리드 -->
-        <div class="row g-3">
-          <div v-for="post in filteredPosts" :key="post.postId" class="col-md-6">
-            <div class="card h-100 border-0 shadow-sm position-relative">
-              <div class="ratio ratio-4x3">
-                <img :src="post.thumbnailUrl || 'https://placehold.co/400x250'" class="card-img-top" alt="게시물 이미지" />
-              </div>
-              <div class="card-body">
-                <div class="small text-muted mb-1">{{ post.postUserName || '익명' }}</div>
-                <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
-                <p class="card-text text-muted small mb-0">{{ post.postContent }}</p>
-              </div>
-              <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                <span class="small text-muted">{{ formatDate(post.createdAt) }}</span>
-                <button class="btn btn-sm btn-outline-secondary">
-                  ♡ {{ post.postLikeCount }}
-                </button>
-              </div>
-              <!-- 카드 전체 클릭 → 상세 -->
-              <router-link :to="`/post/${post.postId}`" class="stretched-link">
-                <span class="visually-hidden">상세보기로 이동</span>
-              </router-link>
+      <!-- 히어로 -->
+      <section class="row align-items-center g-4 mb-5">
+        <div class="col-lg-5">
+          <div class="text-center text-lg-start">
+            <img :src="logoBrown" alt="로고" class="img-fluid mb-3" style="max-width:260px;" />
+            <div class="ms-lg-4">
+              <div class="fw-bold fs-5">믿을 수 있는 이웃과 함께하는 교류</div>
+              <p class="text-muted small mb-3">
+                우리 아이와 어울릴 친구, 나와 산책할 이웃을 쉽게 만나는 공간.<br class="d-none d-lg-block" />
+                반려인들의 따뜻한 동네 커뮤니티가 열립니다.
+              </p>
             </div>
           </div>
         </div>
 
-        <!-- 페이지네이션 -->
-        <nav class="mt-4" v-if="pager">
-          <ul 
-            class="pagination justify-content-center"
-            style="
+        <!-- 오른쪽: 히어로 이미지 -->
+        <div class="col-lg-7">
+          <img :src="heroImage" alt="히어로" class="img-fluid rounded-4 shadow w-100" />
+        </div>
+      </section>
+
+      <!-- 강아지 프로필 리스트 -->
+      <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
+        <div v-for="dog in dogs" :key="dog.petId" class="text-center" role="button"
+          @click="goToOwnerProfile(dog.userId)">
+          <img :src="dog.imageUrl || 'https://placehold.co/400x250'"
+            class="rounded-circle border border-4 border-primary mb-2" width="100" height="100" alt="강아지 프로필" />
+          <div class="fw-semibold small">{{ dog.name }}</div>
+        </div>
+      </div>
+
+      <!-- 탭/그리드 -->
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <!-- 탭 -->
+          <ul class="nav nav-pills mb-3" style="
+            --bs-nav-pills-link-active-bg:#6f5034;
+            --bs-nav-pills-link-active-color:#fff;
+            ">
+            <li v-for="t in tabs" :key="t.key" class="nav-item">
+              <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
+                {{ t.label }}
+              </button>
+            </li>
+          </ul>
+
+          <!-- 게시물 그리드 -->
+          <div class="row g-3">
+            <div v-for="post in filteredPosts" :key="post.postId" class="col-md-6">
+              <div class="card h-100 border-0 shadow-sm position-relative">
+                <div class="ratio ratio-4x3">
+                  <img :src="post.thumbnailUrl || 'https://placehold.co/400x250'" class="card-img-top" alt="게시물 이미지" />
+                </div>
+                <div class="card-body">
+                  <div class="small text-muted mb-1">{{ post.postUserName || '익명' }}</div>
+                  <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
+                  <p class="card-text text-muted small mb-0">{{ post.postContent }}</p>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                  <span class="small text-muted">{{ formatDate(post.createdAt) }}</span>
+                  <button class="btn btn-sm btn-outline-secondary">
+                    ♡ {{ post.postLikeCount }}
+                  </button>
+                </div>
+                <!-- 카드 전체 클릭 → 상세 -->
+                <router-link :to="`/post/${post.postId}`" class="stretched-link">
+                  <span class="visually-hidden">상세보기로 이동</span>
+                </router-link>
+              </div>
+            </div>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <nav class="mt-4" v-if="pager">
+            <ul class="pagination justify-content-center" style="
               --bs-pagination-color:#6f5034;
               --bs-pagination-hover-color:#5b432c;
               --bs-pagination-active-bg:#6f5034;
@@ -117,81 +112,73 @@
               --bs-pagination-active-color:#fff;
               --bs-pagination-border-color:#6f5034;
               --bs-pagination-focus-box-shadow:0 0 0 .25rem rgba(111,80,52,.25);
-            "
-          >
-            <!-- 처음 -->
-            <li class="page-item" :class="{ disabled: pager.pageNo === 1 }">
-              <button class="page-link" @click="changePage(1)" :disabled="pager.pageNo === 1">처음</button>
-            </li>
+            ">
+              <!-- 처음 -->
+              <li class="page-item" :class="{ disabled: pager.pageNo === 1 }">
+                <button class="page-link" @click="changePage(1)" :disabled="pager.pageNo === 1">처음</button>
+              </li>
 
-            <!-- 이전 그룹 -->
-            <li class="page-item" :class="{ disabled: pager.groupNo <= 1 }">
-              <button class="page-link" @click="changePage(pager.startPageNo - 1)"
-                :disabled="pager.groupNo <= 1">이전</button>
-            </li>
+              <!-- 이전 그룹 -->
+              <li class="page-item" :class="{ disabled: pager.groupNo <= 1 }">
+                <button class="page-link" @click="changePage(pager.startPageNo - 1)"
+                  :disabled="pager.groupNo <= 1">이전</button>
+              </li>
 
-            <!-- 페이지 번호 -->
-            <li v-for="pno in pager.pageArray" :key="pno" class="page-item" :class="{ active: pager.pageNo === pno }">
-              <button class="page-link" @click="changePage(pno)">{{ pno }}</button>
-            </li>
+              <!-- 페이지 번호 -->
+              <li v-for="pno in pager.pageArray" :key="pno" class="page-item" :class="{ active: pager.pageNo === pno }">
+                <button class="page-link" @click="changePage(pno)">{{ pno }}</button>
+              </li>
 
-            <!-- 다음 그룹 -->
-            <li class="page-item" :class="{ disabled: pager.groupNo >= pager.totalGroupNo }">
-              <button class="page-link" @click="changePage(pager.endPageNo + 1)"
-                :disabled="pager.groupNo >= pager.totalGroupNo">다음</button>
-            </li>
+              <!-- 다음 그룹 -->
+              <li class="page-item" :class="{ disabled: pager.groupNo >= pager.totalGroupNo }">
+                <button class="page-link" @click="changePage(pager.endPageNo + 1)"
+                  :disabled="pager.groupNo >= pager.totalGroupNo">다음</button>
+              </li>
 
-            <!-- 맨끝 -->
-            <li class="page-item" :class="{ disabled: pager.pageNo === pager.totalPageNo }">
-              <button class="page-link" @click="changePage(pager.totalPageNo)"
-                :disabled="pager.pageNo === pager.totalPageNo">맨끝</button>
-            </li>
-          </ul>
-        </nav>
+              <!-- 맨끝 -->
+              <li class="page-item" :class="{ disabled: pager.pageNo === pager.totalPageNo }">
+                <button class="page-link" @click="changePage(pager.totalPageNo)"
+                  :disabled="pager.pageNo === pager.totalPageNo">맨끝</button>
+              </li>
+            </ul>
+          </nav>
 
 
-      </div>
+        </div>
 
-      <!-- 사이드바 -->
-      <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-3">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <strong>필터</strong>
-              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">
-                초기화
-              </button>
-            </div>
+        <!-- 사이드바 -->
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <strong>필터</strong>
+                <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">
+                  초기화
+                </button>
+              </div>
 
-            <div class="mb-3">
-              <label class="form-label small">태그</label>
-              <div class="d-flex flex-wrap gap-2">
-                <div v-for="t in tags" :key="t.tagId" class="form-check">
-                  <input class="form-check-input" type="checkbox" :id="`tag-${t.tagId}`" :value="t.tagName"
-                    v-model="filters.cats" @change="applyFilters" />
-                  <label class="form-check-label small" :for="`tag-${t.tagId}`">
-                    {{ t.tagName }}
-                  </label>
+              <div class="mb-3">
+                <label class="form-label small">태그</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <div v-for="t in tags" :key="t.tagId" class="form-check">
+                    <input class="form-check-input" type="checkbox" :id="`tag-${t.tagId}`" :value="t.tagName"
+                      v-model="filters.cats" @change="applyFilters" />
+                    <label class="form-check-label small" :for="`tag-${t.tagId}`">
+                      {{ t.tagName }}
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="mb-2">
-              <label class="form-label small">정렬</label>
-              <select v-model="filters.sort" class="form-select form-select-sm">
-                <option value="latest">최신순</option>
-                <option value="likes">좋아요순</option>
-              </select>
-            </div>
+              <div class="mb-2">
+                <label class="form-label small">정렬</label>
+                <select v-model="filters.sort" class="form-select form-select-sm">
+                  <option value="latest">최신순</option>
+                  <option value="likes">좋아요순</option>
+                </select>
+              </div>
 
-            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">
-              적용
-            </button>
-
-            <router-link 
-              to="/post/create" 
-              class="btn btn-primary w-100 btn-sm mt-3"
-              style="    
+              <router-link to="/post/create" class="btn btn-primary w-100 btn-sm mt-3" style="    
               --bs-btn-bg:#6f5034;
               --bs-btn-border-color:#6f5034;
               --bs-btn-hover-bg:#5b432c;
@@ -199,13 +186,13 @@
               --bs-btn-active-bg:#4d3826;
               --bs-btn-active-border-color:#4d3826;
               --bs-btn-focus-shadow-rgb:111,80,52;
-              "
-            >
-              ✏️ 게시글 작성하기
-            </router-link>
+              ">
+                ✏️ 게시글 작성하기
+              </router-link>
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   </div>
@@ -424,4 +411,3 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString("ko-KR");
 }
 </script>
-
