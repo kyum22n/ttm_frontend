@@ -1,194 +1,92 @@
 <template>
-  <div class="walk-apply-list">
-    <h2 class="title">🐾 산책 신청 목록</h2>
+  <div class="container py-4" style="max-width:640px">
+    <h3 class="mb-3">🐾 1:1 산책 신청</h3>
 
-    <div
-      v-for="(apply, i) in applyList"
-      :key="i"
-      class="apply-card"
-    >
-      <!-- 프로필 이미지 -->
-      <img :src="apply.img" alt="pet" class="pet-img" />
-
-      <!-- 기본 정보 -->
-      <div class="info">
-        <div class="info-header">
-          <span class="name">{{ apply.name }}</span>
-          <span class="age">만 {{ apply.age }} 세</span>
-          <span class="gender">{{ apply.gender }}</span>
-          <span class="weight">{{ apply.weight }}kg</span>
-          <span class="region">{{ apply.region }}</span>
+    <!-- 대상 표시 & 신청 -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">
+            대상 사용자 ID:
+            <span class="text-primary">{{ receiveUserId || "-" }}</span>
+          </div>
+          <small class="text-muted">해당 사용자에게 1:1 산책 신청을 보냅니다.</small>
         </div>
-        <div class="content">
-          {{ apply.message }}
-        </div>
-        <div class="user-id">ID: {{ apply.userId }}</div>
-      </div>
-
-      <!-- 버튼 그룹 -->
-      <div class="actions">
-        <button class="post-btn">게시글 가기</button>
 
         <button
-          v-if="apply.status === '신청중'"
-          class="status-btn pending"
+          class="btn btn-primary"
+          :disabled="!canApply || applying"
+          @click="apply"
         >
-          신청중
+          {{ applying ? "신청 중..." : "신청하기" }}
         </button>
-        <button
-          v-else-if="apply.status === '수락됨'"
-          class="status-btn accepted"
-        >
-          수락됨
-        </button>
-
-        <button class="cancel-btn">신청 취소</button>
       </div>
+    </div>
+
+    <div v-if="!receiveUserId" class="alert alert-warning">
+      대상 사용자 ID가 없습니다. <code>?receiveUserId=상대ID</code> 쿼리를 전달해 주세요.
+    </div>
+    <div v-else-if="isMine" class="alert alert-secondary">
+      자기 자신에게는 신청할 수 없습니다.
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { useStore } from "vuex";
+import { useRoute, useRouter } from "vue-router";
 
-const applyList = ref([
-  {
-    name: "Labrador",
-    age: 2,
-    gender: "남",
-    weight: 4,
-    region: "서울 마포구",
-    message: "서울 강서구 식물원에서 산책하실 분 구해요",
-    userId: "LABR_4E",
-    img: "https://placedog.net/100/100?id=1",
-    status: "신청중",
-  },
-  {
-    name: "Maru",
-    age: 4,
-    gender: "남",
-    weight: 5,
-    region: "서울 강서구",
-    message: "서울 강서구 식물원에서 산책하실 분 구해요",
-    userId: "GIGANTIC_MARU",
-    img: "https://placedog.net/100/100?id=2",
-    status: "수락됨",
-  },
-  {
-    name: "Loki",
-    age: 2,
-    gender: "남",
-    weight: 4,
-    region: "서울 마포구",
-    message: "서울 강서구 식물원에서 산책하실 분 구해요",
-    userId: "LOKI_YA",
-    img: "https://placekitten.com/100/100",
-    status: "신청중",
-  },
-]);
+const store = useStore();
+const route = useRoute();
+const router = useRouter();
+
+const meId = computed(() => Number(store.state.user?.userId || 0));
+const receiveUserId = computed(() => Number(route.query.receiveUserId || 0));
+const isMine = computed(
+  () => meId.value > 0 && receiveUserId.value > 0 && meId.value === receiveUserId.value
+);
+const canApply = computed(
+  () => store.getters.isLogin && receiveUserId.value > 0 && !isMine.value
+);
+
+const applying = ref(false);
+
+async function apply() {
+  if (!store.getters.isLogin) {
+    router.push({ path: "/Login", query: { redirect: route.fullPath } });
+    return;
+  }
+  if (!canApply.value) return;
+
+  try {
+    applying.value = true;
+    const res = await store.dispatch("walk/apply", {
+      requestUserId: meId.value,
+      receiveUserId: receiveUserId.value,
+    });
+
+    if (res?.data?.result === "success") {
+      alert("산책 신청을 전송했습니다.");
+      // 필요하면 이전 화면으로: router.back();
+    } else {
+      alert(res?.data?.message || "신청 처리에 실패했습니다.");
+    }
+  } catch (e) {
+    console.error("apply error:", e);
+    alert("신청 중 오류가 발생했습니다.");
+  } finally {
+    applying.value = false;
+  }
+}
+
+onMounted(() => {
+  if (!store.getters.isLogin) {
+    router.replace({ path: "/Login", query: { redirect: route.fullPath } });
+  }
+});
 </script>
 
 <style scoped>
-.walk-apply-list {
-  background: #fff;
-  border: 2px solid #6b4a2b;
-  border-radius: 12px;
-  padding: 20px;
-  max-width: 900px;
-  margin: 20px auto;
-  font-family: "Noto Sans KR", sans-serif;
-}
-
-.title {
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 24px;
-  color: #6b4a2b;
-}
-
-.apply-card {
-  display: flex;
-  align-items: center;
-  background: #faf7f3;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  gap: 20px;
-}
-
-.pet-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #f1c40f;
-}
-
-.info {
-  flex: 1;
-}
-.info-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-}
-.name {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-.content {
-  font-size: 0.95rem;
-  margin-bottom: 8px;
-}
-.user-id {
-  font-size: 0.8rem;
-  color: #777;
-}
-
-/* 버튼 그룹 */
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-end;
-}
-
-/* 공통 버튼 스타일 */
-.post-btn,
-.status-btn,
-.cancel-btn {
-  width: 100px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-/* 게시글 버튼 */
-.post-btn {
-  background: #6b4a2b;
-  color: #fff;
-}
-
-/* 상태 버튼 */
-.status-btn.pending {
-  background: #f1e3c1;
-  color: #6b4a2b;
-}
-.status-btn.accepted {
-  background: #27ae60;
-  color: #fff;
-}
-
-/* 취소 버튼 */
-.cancel-btn {
-  background: #e74c3c;
-  color: #fff;
-}
+/* 최소 스타일만 유지 */
 </style>

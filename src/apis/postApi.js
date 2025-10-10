@@ -1,4 +1,4 @@
-// src/api/postApi.js
+// src/apis/postApi.js
 import axios from "axios";
 
 /** =========================

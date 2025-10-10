@@ -1,4 +1,4 @@
-// src/api/walkApi.js
+// src/apis/walkApi.js
 import axios from "axios";
 
 /** =========================
