@@ -10,19 +10,12 @@
 import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import apiRequest from '@/apis/apiRequest' // JWT 자동 첨부
-
-// 백엔드 주소
-const BASE_URL =
-  (import.meta?.env?.VITE_API_BASE) ||
-  process.env.VUE_APP_API_BASE ||
-  'http://localhost:8080'
+import { ensureRoom } from '@/apis/chatApi'
 
 const store = useStore()
 const route = useRoute()
 const router = useRouter()
 
-// prop 또는 라우터 param/query에서 상대 유저 ID 가져오기
 const props = defineProps({
   otherUserId: { type: Number, required: false }
 })
@@ -49,15 +42,12 @@ async function requestChat() {
 
   loading.value = true
   try {
-    // POST /chat/rooms/ensure?userA=..&userB=..&requestedBy=..
-    const res = await apiRequest(
-      'post',
-      `${BASE_URL}/chat/rooms/ensure`,
-      null,
-      { userA: meId.value, userB: otherId.value, requestedBy: meId.value }
-    )
-    const data = res?.data || {}
-    const room = data.room
+    const { data } = await ensureRoom({
+      userA: meId.value,
+      userB: otherId.value,
+      requestedBy: meId.value
+    })
+    const room = data?.room
     if (!room?.chatroomId) throw new Error('roomId missing')
 
     if (room.chatroomStatus === 'A') {
@@ -66,9 +56,8 @@ async function requestChat() {
       alert('채팅 요청을 보냈습니다. 상대가 승인하면 이용할 수 있어요.')
     }
   } catch (e) {
-    const status = e?.response?.status
     const msg = e?.response?.data?.message || e?.message || '채팅 요청에 실패했습니다.'
-    console.error('requestChat error:', status, e)
+    console.error('requestChat error:', e)
     alert(msg)
   } finally {
     loading.value = false

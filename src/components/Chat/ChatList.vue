@@ -85,12 +85,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import apiRequest from '@/apis/apiRequest' // [CHANGED] JWT 자동 첨부
-
-const BASE_URL =
-  (import.meta?.env?.VITE_API_BASE) ||
-  process.env.VUE_APP_API_BASE ||
-  'http://localhost:8080'
+import axios from 'axios'
+import { approveRoom, rejectRoom } from '@/apis/chatApi'
 
 const store = useStore()
 const router = useRouter()
@@ -109,34 +105,35 @@ const petNameCache  = new Map()
 
 const FALLBACK_AVATAR = 'https://placehold.co/80x80?text=USER'
 
-// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 필요 없는 엔드포인트여도 통일)
+async function fetchJSON(url, config) {
+  const res = await axios.get(url, config)
+  return res.data
+}
+
 async function fetchPartnerMeta(userId) {
   const cachedAvatar  = avatarCache.get(userId)
   const cachedPetName = petNameCache.get(userId)
   if (cachedAvatar !== undefined || cachedPetName !== undefined) {
-    return {
-      avatar:  cachedAvatar  || '',
-      petName: cachedPetName || ''
-    }
+    return { avatar: cachedAvatar || '', petName: cachedPetName || '' }
   }
 
   let avatar = ''
   let petName = ''
   try {
-    const res = await apiRequest('get', `${BASE_URL}/pet/${userId}/first-pet`)
-    const fp = res?.data
+    const { data: fp } = await axios.get(`/pet/${userId}/first-pet`)
     petName = fp?.petName || ''
     if (fp?.imageUrl) {
-      avatar = `${BASE_URL}${fp.imageUrl.startsWith('/') ? '' : '/'}${fp.imageUrl}`
+      avatar = fp.imageUrl.startsWith('/') ? fp.imageUrl : `/${fp.imageUrl}`
     }
-  } catch { /* no-op */ }
+  } catch {
+    // no-op
+  }
 
   avatarCache.set(userId, avatar)
   petNameCache.set(userId, petName)
   return { avatar, petName }
 }
 
-// [CHANGED] fetch → apiRequest(get) 로 교체 (JWT 첨부)
 async function fetchRooms() {
   if (!isLogin.value || !Number.isInteger(myUserId.value) || myUserId.value <= 0) {
     rooms.value = []
@@ -145,8 +142,7 @@ async function fetchRooms() {
   loading.value = true
   errorMsg.value = ''
   try {
-    const res  = await apiRequest('get', `${BASE_URL}/chat/rooms/my`, null, { userId: myUserId.value })
-    const data = res?.data
+    const data = await fetchJSON('/chat/rooms/my', { params: { userId: myUserId.value } })
     const list = Array.isArray(data) ? data : (data?.rooms || [])
 
     const base = list.map(r => {
@@ -160,11 +156,7 @@ async function fetchRooms() {
       base.map(async r => {
         try {
           const meta = await fetchPartnerMeta(r.partnerId)
-          return {
-            ...r,
-            partnerPetName: meta.petName,
-            partnerAvatar:  meta.avatar
-          }
+          return { ...r, partnerPetName: meta.petName, partnerAvatar: meta.avatar }
         } catch {
           return { ...r }
         }
@@ -183,52 +175,35 @@ function goRoom(roomId) {
   router.push({ path: '/message/detail', query: { roomId } })
 }
 
-// [CHANGED] fetch → apiRequest(put) 로 교체 (JWT 첨부)
 async function approve(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await apiRequest('put', `${BASE_URL}/chat/rooms/${r.chatroomId}/approve`, null, { by: myUserId.value })
-    if (res?.status !== 200) {
-      alert('승인에 실패했습니다.')
-      return
-    }
+    await approveRoom(r.chatroomId, myUserId.value)
     r.chatroomStatus = 'A'
   } catch (e) {
     console.error(e)
-    alert('승인 도중 오류가 발생했습니다.')
+    alert('승인에 실패했습니다.')
   } finally {
     acting.value.delete(r.chatroomId)
   }
 }
 
-// [CHANGED] fetch → apiRequest(put) 로 교체 (JWT 첨부)
 async function reject(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await apiRequest('put', `${BASE_URL}/chat/rooms/${r.chatroomId}/reject`, null, { by: myUserId.value })
-    if (res?.status !== 200) {
-      alert('거절에 실패했습니다.')
-      return
-    }
+    await rejectRoom(r.chatroomId, myUserId.value)
     r.chatroomStatus = 'D'
   } catch (e) {
     console.error(e)
-    alert('거절 도중 오류가 발생했습니다.')
+    alert('거절에 실패했습니다.')
   } finally {
     acting.value.delete(r.chatroomId)
   }
 }
 
-onMounted(async () => {
-  try {
-    await fetchRooms()
-  } catch (e) {
-    console.error('[ChatList:onMounted] unhandled:', e)
-    errorMsg.value = '초기 로딩 중 오류가 발생했습니다.'
-  }
-})
+onMounted(() => { fetchRooms() })
 </script>
 
 <style scoped>

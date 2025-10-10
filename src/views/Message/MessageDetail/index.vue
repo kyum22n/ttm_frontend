@@ -34,9 +34,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import ChatRoom from '@/components/Chat/ChatRoom.vue'
 import petApi from '@/apis/petApi'
-import apiRequest from '@/apis/apiRequest' // JWT 자동 첨부
+import axios from 'axios'
 
-// 백엔드 주소
 const BASE_URL =
   (import.meta?.env?.VITE_API_BASE) ||
   process.env.VUE_APP_API_BASE ||
@@ -44,17 +43,14 @@ const BASE_URL =
 
 const store = useStore()
 
-// URL에서 roomId 뽑기 (쿼리 우선, 없으면 path 마지막 조각)
 const roomId = computed(() => {
   const q = new URLSearchParams(window.location.search)
   return Number(q.get('roomId') || (window.location.pathname.split('/').pop() || 0))
 })
 
-// 스토어에서 로그인/유저ID 가져오기
 const isLogin  = computed(() => store.getters.isLogin)
 const myUserId = computed(() => Number(store.getters.getUser?.userId || 0))
 
-// 내 프로필 이미지 절대 URL
 const myProfilePath = computed(() => store.getters.getUser?.profileImage || '')
 const myAvatarUrl   = computed(() => {
   if (!myProfilePath.value) return ''
@@ -62,27 +58,20 @@ const myAvatarUrl   = computed(() => {
   return `${BASE_URL}${path}`
 })
 
-// 상대 아바타 URL
 const otherAvatarUrl = ref('')
 
 const loading    = ref(true)
-const roomStatus = ref(null) // 'A' | 'P' | 그외(X)
+const roomStatus = ref(null)
 const errorMsg   = ref('')
 
-// 공용 GET(JSON) → apiRequest 사용
-async function getJSON(url, params) {
-  const res = await apiRequest('get', url, null, params)
-  return res?.data ?? null
-}
-
-// 방 정보 가져와서 상태와 '상대 userId' 계산
 async function fetchRoomInfo() {
-  const info = await getJSON(`${BASE_URL}/chat/rooms/${roomId.value}/info`, { userId: myUserId.value })
+  const { data: info } = await axios.get(`/chat/rooms/${roomId.value}/info`, {
+    params: { userId: myUserId.value }
+  })
   const room = info?.room
   roomStatus.value = room?.chatroomStatus ?? null
   if (!room) throw new Error('ROOM_NOT_FOUND')
 
-  // 내가 u1이면 상대는 u2, 반대면 u1
   const otherId = (myUserId.value === room.chatuser1Id) ? room.chatuser2Id : room.chatuser1Id
   return { otherId }
 }
@@ -95,14 +84,11 @@ onMounted(async () => {
       return
     }
 
-    // 1) 방 상태/상대ID 확인
     const { otherId } = await fetchRoomInfo()
-
-    // 2) 상대 아바타 URL 조회 (없으면 '' → ChatRoom에서 폴백)
     otherAvatarUrl.value = await petApi.avatarUrlByUser(otherId, BASE_URL)
   } catch (e) {
-    const code = e?.response?.data?.code || e?.body?.code
-    const status = e?.response?.status || e?.status
+    const code = e?.response?.data?.code
+    const status = e?.response?.status
 
     if (code === 'NOT_MEMBER') {
       roomStatus.value = 'X'
