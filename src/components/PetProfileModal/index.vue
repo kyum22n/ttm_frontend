@@ -42,7 +42,7 @@
             <p class="mb-1">지역: {{ pet?.userAddress }}</p>
           </div>
 
-          <!-- ❤️ 좋아요 -->
+          <!-- 좋아요 -->
           <div class="text-center">
             <button
               class="btn btn-link p-0"

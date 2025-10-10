@@ -136,8 +136,6 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import axios from "axios";
-import postApi from "@/apis/postApi";
 import userApi from "@/apis/userApi";
 
 const store = useStore();
@@ -195,7 +193,7 @@ onMounted(async () => {
   const id = Number(route.params.id);
   if (!id) return;
 
-  // 1️. 게시글 상세 불러오기
+  // 1. 게시글 상세 불러오기
   await store.dispatch("post/fetchDetail", id);
   const currentPost = post.value;
   if (!currentPost) return;
@@ -214,13 +212,13 @@ onMounted(async () => {
     console.error("작성자 정보 불러오기 실패:", e);
   }
 
-  // 3️. 작성자 게시물 목록
+  // 3. 작성자 게시물 목록
   await store.dispatch("post/fetchUserPostList", {
     userId: currentPost.postUserId,
   });
   authorPosts.value = store.state.post.list || [];
 
-  // 4️. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
+  // 4. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = storedUser.userId;
   if (userId && currentPost.postId) {
