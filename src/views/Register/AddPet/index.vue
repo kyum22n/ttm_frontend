@@ -1,128 +1,136 @@
 <template>
-  <div class="container-fluid bg-light min-vh-100 d-flex align-items-center">
-    <div class="row w-100">
-      <!-- 왼쪽: 로고/일러스트 -->
-      <div
-        class="col-md-6 d-flex flex-column align-items-center justify-content-center"
-      >
-        <img
-          src="@/assets/logo_white_bigsize.png"
-          alt="로고"
-          class="img-fluid mb-4"
-          style="max-width: 250px"
-        />
-        <img
-          src="@/assets/catdog.png"
-          alt="고양이개"
-          class="img-fluid"
-          style="width: 260px"
-        />
-      </div>
+  <div class="container py-5">
+    <div class="card border-3 rounded-4 shadow-sm profile-frame">
+      <div class="card-body p-4 p-md-5">
+        <h4 class="fw-bold text-brown mb-4">Register New Pet</h4>
 
-      <!-- 오른쪽: 등록 폼 -->
-      <div class="col-md-6 d-flex justify-content-center">
-        <div
-          class="card shadow border-brown p-4"
-          style="max-width: 480px; width: 100%"
-        >
-          <h4 class="text-brown fw-bold mb-4 text-center">Register Pet</h4>
+        <div class="row g-5 align-items-start">
+          <!-- 왼쪽: 아바타 미리보기 -->
+          <div class="col-12 col-md-4 d-flex flex-column align-items-center">
+            <div class="avatar-wrap mb-3">
+              <img
+                v-if="previewUrl"
+                :src="previewUrl"
+                class="rounded-circle object-cover border"
+                width="220"
+                height="220"
+                alt="미리보기"
+              />
+              <div
+                v-else
+                class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
+                style="width: 220px; height: 220px"
+              >
+                <i class="bi bi-image text-muted fs-1"></i>
+              </div>
+            </div>
 
-          <form @submit.prevent="submit">
-            <div class="vstack gap-3">
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-paw"></i></span>
+            <div class="d-grid gap-2 w-100" style="max-width: 260px">
+              <label class="btn btn-outline-secondary btn-sm rounded-pill">
+                사진 업로드
                 <input
-                  v-model.trim="pet.petName"
-                  type="text"
-                  class="form-control"
-                  placeholder="반려견 이름"
-                  required
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onSelectImage"
                 />
-              </div>
+              </label>
+            </div>
+          </div>
 
-              <div class="input-group">
-                <span class="input-group-text"
-                  ><i class="bi bi-emoji-smile"></i
-                ></span>
-                <input
-                  v-model.trim="pet.petBreed"
-                  type="text"
-                  class="form-control"
-                  placeholder="품종 (예: 푸들)"
-                  required
-                />
-              </div>
-
-              <div class="input-group">
-                <span class="input-group-text"
-                  ><i class="bi bi-gender-ambiguous"></i
-                ></span>
-                <select v-model="pet.petGender" class="form-select" required>
-                  <option value="M">남</option>
-                  <option value="F">여</option>
-                </select>
-              </div>
-
-              <div class="input-group">
-                <span class="input-group-text"
-                  ><i class="bi bi-capslock"></i
-                ></span>
-                <input
-                  v-model.number="pet.petWeight"
-                  type="number"
-                  class="form-control"
-                  placeholder="몸무게 (kg)"
-                  min="0"
-                  required
-                />
-              </div>
-
-              <div class="form-floating">
-                <textarea
-                  v-model.trim="pet.petDesc"
-                  class="form-control"
-                  placeholder="소개를 입력하세요"
-                  style="height: 100px"
-                ></textarea>
-                <label>소개</label>
-              </div>
-
-              <!-- 이미지 업로드 -->
-              <div class="text-center">
-                <label class="btn btn-outline-brown rounded-pill">
-                  <i class="bi bi-image me-2"></i> 이미지 업로드
+          <!-- 오른쪽: 등록 폼 -->
+          <div class="col-12 col-md-8">
+            <form @submit.prevent="submit">
+              <div class="vstack gap-3">
+                <!-- 이름 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-paw"></i
+                  ></span>
                   <input
-                    type="file"
-                    accept="image/*"
-                    class="d-none"
-                    @change="onSelectImage"
-                  />
-                </label>
-                <div v-if="previewUrl" class="mt-3">
-                  <img
-                    :src="previewUrl"
-                    alt="미리보기"
-                    class="rounded-circle object-cover border"
-                    width="120"
-                    height="120"
+                    v-model.trim="pet.petName"
+                    type="text"
+                    class="form-control"
+                    placeholder="반려견 이름"
+                    required
                   />
                 </div>
+
+                <!-- 품종 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-emoji-smile"></i
+                  ></span>
+                  <input
+                    v-model.trim="pet.petBreed"
+                    type="text"
+                    class="form-control"
+                    placeholder="품종 (예: 푸들)"
+                    required
+                  />
+                </div>
+
+                <!-- 성별 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-gender-ambiguous"></i
+                  ></span>
+                  <select v-model="pet.petGender" class="form-select" required>
+                    <option value="M">남</option>
+                    <option value="F">여</option>
+                  </select>
+                </div>
+
+                <!-- 몸무게 -->
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="bi bi-capslock"></i
+                  ></span>
+                  <input
+                    v-model.number="pet.petWeight"
+                    type="number"
+                    class="form-control"
+                    placeholder="몸무게 (kg)"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <!-- 소개 -->
+                <div class="form-floating">
+                  <textarea
+                    v-model.trim="pet.petDesc"
+                    class="form-control"
+                    placeholder="소개를 입력하세요"
+                    style="height: 100px"
+                  ></textarea>
+                  <label>소개</label>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="text-center mt-3">
+                  <button
+                    type="submit"
+                    class="btn btn-brown px-5 py-2 rounded-pill"
+                  >
+                    <span class="paw me-2">🐾</span> 등록하기
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary px-4 py-2 rounded-pill ms-2"
+                    @click="goBack"
+                  >
+                    취소
+                  </button>
+                </div>
               </div>
-
-              <button type="submit" class="btn btn-brown mt-3 py-2">
-                <span class="paw me-2">🐾</span> 등록하기
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-outline-secondary mt-2"
-                @click="goBack"
-              >
-                취소
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
+
+        <!-- 귀여운 장식 -->
+        <div class="d-none d-md-block cute-pets">🐶 🐱 🐾</div>
       </div>
     </div>
   </div>
@@ -149,6 +157,7 @@ const pet = ref({
 
 const previewUrl = ref(null);
 
+// 이미지 미리보기
 function onSelectImage(e) {
   const file = e.target.files[0];
   if (file) {
@@ -158,6 +167,7 @@ function onSelectImage(e) {
   }
 }
 
+// 등록 요청
 async function submit() {
   try {
     if (!pet.value.petName || !pet.value.petAttach) {
@@ -186,14 +196,16 @@ async function submit() {
   }
 }
 
+// 뒤로가기
 function goBack() {
   router.push(`/Profile/${store.state.user.userId}`);
 }
 </script>
 
 <style scoped>
-.border-brown {
-  border: 2px solid #6b4a2b !important;
+.profile-frame {
+  max-width: 960px;
+  margin: auto;
 }
 .text-brown {
   color: #6b4a2b;
@@ -208,5 +220,23 @@ function goBack() {
 }
 .object-cover {
   object-fit: cover;
+}
+.avatar-wrap img {
+  width: 220px;
+  height: 220px;
+  object-fit: cover;
+}
+.cute-pets {
+  text-align: center;
+  font-size: 1.6rem;
+  margin-top: 2rem;
+}
+.input-group-text {
+  width: 44px; /* ✅ 고정 너비 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem; /* ✅ 아이콘 크기 동일 */
+  color: #6b4a2b; /* 브랜드 색 (EditProfile 기준) */
 }
 </style>

@@ -1,7 +1,7 @@
 const routes = [
   {
-    path: "/Profile/MyProfile/:userId",
-    component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/MyProfile"),
+    path: "/Profile/MyPage/:userId",
+    component: () => import(/*webpackChunkName: "ProfileRouting"*/ "@/views/Profile/MyPage"),
     props: true,
   },
   {
