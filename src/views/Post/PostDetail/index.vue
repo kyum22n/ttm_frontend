@@ -112,7 +112,7 @@
             <img :src="authorProfileImg" class="rounded-circle mb-2" width="60" height="60" />
             <h6 class="card-title">{{ authorName }}</h6>
 
-            <router-link :to="`/Profile/OtherProfile/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">
+            <router-link :to="`/mypage/${post.postUserId}`" class="btn btn-outline-dark btn-sm mb-3">
               프로필 놀러가기
             </router-link>
 
