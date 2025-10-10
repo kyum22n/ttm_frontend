@@ -50,7 +50,6 @@
               최근: {{ r.lastPreview || '-' }}
             </div>
 
-            <!-- P(대기)이고, 내가 요청자가 아닐 때 승인/거절 버튼 노출 -->
             <div
               v-if="r.chatroomStatus === 'P' && r.requestedBy !== myUserId"
               class="action-row"
@@ -86,11 +85,8 @@
 import { computed, ref, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-
-const BASE_URL =
-  (import.meta?.env?.VITE_API_BASE) ||
-  process.env.VUE_APP_API_BASE ||
-  'http://localhost:8080'
+import axios from 'axios'
+import { approveRoom, rejectRoom } from '@/apis/chatApi'
 
 const store = useStore()
 const router = useRouter()
@@ -102,48 +98,36 @@ const loading   = ref(false)
 const errorMsg  = ref('')
 const rooms     = ref([])
 
-// 승인/거절 진행중 표시용
 const acting = ref(new Set())
 
-// 캐시
 const avatarCache   = new Map()
 const petNameCache  = new Map()
 
 const FALLBACK_AVATAR = 'https://placehold.co/80x80?text=USER'
 
-async function getJSON(url) {
-  const res = await fetch(url)
-  const text = await res.text()
-  if (!res.ok) {
-    console.error('[ChatList:getJSON] URL:', url)
-    console.error('[ChatList:getJSON] HTTP', res.status, 'BODY:', text)
-    const err = new Error(`HTTP ${res.status}`)
-    try { err.body = JSON.parse(text) } catch { err.body = text }
-    err.status = res.status
-    throw err
-  }
-  return text ? JSON.parse(text) : null
+async function fetchJSON(url, config) {
+  const res = await axios.get(url, config)
+  return res.data
 }
 
 async function fetchPartnerMeta(userId) {
   const cachedAvatar  = avatarCache.get(userId)
   const cachedPetName = petNameCache.get(userId)
   if (cachedAvatar !== undefined || cachedPetName !== undefined) {
-    return {
-      avatar:  cachedAvatar  || '',
-      petName: cachedPetName || ''
-    }
+    return { avatar: cachedAvatar || '', petName: cachedPetName || '' }
   }
 
   let avatar = ''
   let petName = ''
   try {
-    const fp = await getJSON(`${BASE_URL}/pet/${userId}/first-pet`)
+    const { data: fp } = await axios.get(`/pet/${userId}/first-pet`)
     petName = fp?.petName || ''
     if (fp?.imageUrl) {
-      avatar = `${BASE_URL}${fp.imageUrl.startsWith('/') ? '' : '/'}${fp.imageUrl}`
+      avatar = fp.imageUrl.startsWith('/') ? fp.imageUrl : `/${fp.imageUrl}`
     }
-  } catch { /* no-op */ }
+  } catch {
+    // no-op
+  }
 
   avatarCache.set(userId, avatar)
   petNameCache.set(userId, petName)
@@ -158,8 +142,7 @@ async function fetchRooms() {
   loading.value = true
   errorMsg.value = ''
   try {
-    const url  = `${BASE_URL}/chat/rooms/my?userId=${myUserId.value}`
-    const data = await getJSON(url)
+    const data = await fetchJSON('/chat/rooms/my', { params: { userId: myUserId.value } })
     const list = Array.isArray(data) ? data : (data?.rooms || [])
 
     const base = list.map(r => {
@@ -173,11 +156,7 @@ async function fetchRooms() {
       base.map(async r => {
         try {
           const meta = await fetchPartnerMeta(r.partnerId)
-          return {
-            ...r,
-            partnerPetName: meta.petName,
-            partnerAvatar:  meta.avatar
-          }
+          return { ...r, partnerPetName: meta.petName, partnerAvatar: meta.avatar }
         } catch {
           return { ...r }
         }
@@ -186,7 +165,7 @@ async function fetchRooms() {
 
     rooms.value = enriched
   } catch (e) {
-    errorMsg.value = (e?.body?.message) || (e?.message) || '알 수 없는 오류'
+    errorMsg.value = (e?.response?.data?.message) || (e?.message) || '알 수 없는 오류'
   } finally {
     loading.value = false
   }
@@ -196,25 +175,15 @@ function goRoom(roomId) {
   router.push({ path: '/message/detail', query: { roomId } })
 }
 
-// 승인/거절 액션들
 async function approve(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/approve?by=${myUserId.value}`, {
-      method: 'PUT'
-    })
-    if (!res.ok) {
-      const t = await res.text()
-      console.error('approve fail:', res.status, t)
-      alert('승인에 실패했습니다.')
-      return
-    }
-    // 성공 시 상태 업데이트
+    await approveRoom(r.chatroomId, myUserId.value)
     r.chatroomStatus = 'A'
   } catch (e) {
     console.error(e)
-    alert('승인 도중 오류가 발생했습니다.')
+    alert('승인에 실패했습니다.')
   } finally {
     acting.value.delete(r.chatroomId)
   }
@@ -224,33 +193,17 @@ async function reject(r) {
   if (acting.value.has(r.chatroomId)) return
   acting.value.add(r.chatroomId)
   try {
-    const res = await fetch(`${BASE_URL}/chat/rooms/${r.chatroomId}/reject?by=${myUserId.value}`, {
-      method: 'PUT'
-    })
-    if (!res.ok) {
-      const t = await res.text()
-      console.error('reject fail:', res.status, t)
-      alert('거절에 실패했습니다.')
-      return
-    }
-    // 성공 시 상태 업데이트(닫힘)
+    await rejectRoom(r.chatroomId, myUserId.value)
     r.chatroomStatus = 'D'
   } catch (e) {
     console.error(e)
-    alert('거절 도중 오류가 발생했습니다.')
+    alert('거절에 실패했습니다.')
   } finally {
     acting.value.delete(r.chatroomId)
   }
 }
 
-onMounted(async () => {
-  try {
-    await fetchRooms()
-  } catch (e) {
-    console.error('[ChatList:onMounted] unhandled:', e)
-    errorMsg.value = '초기 로딩 중 오류가 발생했습니다.'
-  }
-})
+onMounted(() => { fetchRooms() })
 </script>
 
 <style scoped>

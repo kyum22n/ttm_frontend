@@ -24,6 +24,15 @@ const routes = [
       import(/*webpackChunkName: "RegisterRouting"*/ "@/views/Register/AddPet"),
     meta: { hideLayout: false },
   },
+  {
+    path: "/Register/EditPet",
+    name: "EditPet",
+    component: () =>
+      import(
+        /*webpackChunkName: "RegisterRouting"*/ "@/views/Register/EditPet"
+      ),
+    meta: { hideLayout: false },
+  },
 ];
 
 export default routes;

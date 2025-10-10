@@ -10,7 +10,7 @@ async function apiRequest(method, url, data = null, params = null) {
     // 기본 헤더 (Authorization만 공통으로 붙임)
     const headers = {};
     if (token) {
-      headers["Authorization"] = "Bearer" + token;
+      headers["Authorization"] = "Bearer " + token;
     }
 
     // FormData가 아닌 경우에만 Content-Type JSON으로 세팅
