@@ -3,8 +3,7 @@
     <div class="row g-4">
       <!-- ===== 왼쪽: 이미지 슬라이드 ===== -->
       <div class="col-md-5">
-        <div v-if="post.images && post.images.length" id="postCarousel" class="carousel slide shadow"
-          data-bs-ride="carousel">
+        <div v-if="post.images && post.images.length" id="postCarousel" class="carousel slide shadow" data-bs-ride="carousel">
           <div class="carousel-inner">
             <div v-for="(img, i) in post.images" :key="i" class="carousel-item" :class="{ active: i === 0 }">
               <img :src="`http://localhost:8080${img}`" class="d-block w-100 rounded" alt="게시물 이미지" />
@@ -64,15 +63,13 @@
             <!-- 산책 모집글 버튼 -->
             <div class="mt-3 text-end">
               <!-- 신청자 -->
-              <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying"
-                @click="applyGroupWalk">
+              <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying" @click="applyGroupWalk">
                 <i class="bi bi-person-plus"></i>
                 {{ isApplying ? "신청 완료" : "신청하기" }}
               </button>
 
               <!-- 모집자 -->
-              <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing"
-                @click="closeRecruitment">
+              <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing" @click="closeRecruitment">
                 <i class="bi bi-flag-fill"></i>
                 {{ isClosing ? "마감됨" : "모집 마감하기" }}
               </button>
@@ -93,10 +90,17 @@
             </div>
 
             <ul class="list-group list-group-flush">
-              <li v-for="(c, i) in comments" :key="i" class="list-group-item d-flex align-items-start">
-                <img src="https://placekitten.com/32/32" class="rounded-circle me-2" width="32" height="32" />
+              <!-- 🟢 로딩 중일 때 -->
+              <li v-if="loadingComments" class="list-group-item text-center text-muted py-3">
+                <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
+                댓글 불러오는 중...
+              </li>
+
+              <!-- 댓글 리스트 -->
+              <li v-else v-for="(c, i) in commentsWithProfiles" :key="i" class="list-group-item d-flex align-items-start">
+                <img :src="c.profileImage || 'https://placekitten.com/32/32'" class="rounded-circle me-2" width="32" height="32" alt="댓글 작성자" style="object-fit: cover;" />
                 <div>
-                  <strong>{{ c.cwriter }}</strong>:
+                  <strong>{{ c.userLoginId || c.cwriter }}</strong>:
                   {{ c.commentContent }}
                 </div>
               </li>
@@ -119,8 +123,7 @@
             <!-- 작성자 게시물 썸네일 -->
             <div v-if="authorPosts.length">
               <div v-for="p in authorPosts.slice(0, 3)" :key="p.postId" class="mb-2">
-                <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button"
-                  @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
+                <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button" @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
               </div>
             </div>
             <div v-else class="text-muted small">게시물이 없습니다</div>
@@ -132,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
@@ -158,6 +161,9 @@ const isAuthor = computed(() => post.value && post.value.postUserId === userId);
 const isRecruitment = computed(() => post.value && post.value.isRequest === "Y");
 const isApplying = ref(false);
 const isClosing = ref(false);
+
+const commentsWithProfiles = ref([]); // 댓글 + 작성자 프로필 통합 리스트
+const loadingComments = ref(false); // 🟢 로딩 상태 추가
 
 // 날짜 포맷
 function formatDate(iso) {
@@ -189,7 +195,6 @@ async function toggleLike() {
 }
 
 onMounted(async () => {
-
   const id = Number(route.params.id);
   if (!id) return;
 
@@ -214,7 +219,6 @@ onMounted(async () => {
     authorProfileImg.value = profileImage
       ? `http://localhost:8080${profileImage}`
       : "https://placekitten.com/60/60";
-      
   } catch (e) {
     console.error("작성자 정보 불러오기 실패:", e);
   }
@@ -242,8 +246,85 @@ onMounted(async () => {
   }
 });
 
+// ===== 댓글 작성자 프로필 불러오기 (Promise.all 병렬 처리) =====
+watch(
+  comments,
+  async (newComments) => {
+    if (!newComments || newComments.length === 0) {
+      commentsWithProfiles.value = [];
+      return;
+    }
 
+    loadingComments.value = true; // 🟢 로딩 시작
+    const jwt = localStorage.getItem("jwt");
 
+    try {
+      // 🟢 모든 userInfo 요청을 병렬로 처리
+      const requests = newComments.map(async (c) => {
+        try {
+          const res = await userApi.userInfo(c.cwriter, jwt);
+          const userData = res.data.data;
+          const profileImage = res.data.profileImage;
+
+          return {
+            ...c,
+            userLoginId: userData.userLoginId,
+            profileImage: profileImage
+              ? `http://localhost:8080${profileImage}`
+              : "https://placekitten.com/32/32",
+          };
+        } catch (err) {
+          console.error("댓글 작성자 정보 불러오기 실패:", err);
+          return {
+            ...c,
+            userLoginId: `User#${c.cwriter}`,
+            profileImage: "https://placekitten.com/32/32",
+          };
+        }
+      });
+
+      // 🟢 모든 요청 병렬 실행 후 결과 대입
+      commentsWithProfiles.value = await Promise.all(requests);
+    } catch (e) {
+      console.error("댓글 전체 프로필 로딩 실패:", e);
+      commentsWithProfiles.value = [];
+    } finally {
+      loadingComments.value = false; // 🟢 로딩 종료
+    }
+  },
+  { immediate: true }
+);
+
+// 🟢 라우트 변경 시 모든 상태 초기화
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      console.log("게시글 이동 감지:", oldId, "→", newId);
+
+      // 이전 게시글 관련 상태 초기화
+      commentsWithProfiles.value = [];
+      newComment.value = "";
+      liked.value = false;
+      isApplying.value = false;
+      isClosing.value = false;
+      loadingComments.value = false;
+
+      // 새 게시글 데이터 재요청
+      await store.dispatch("post/fetchDetail", Number(newId));
+    }
+  }
+);
+
+// 🟢 컴포넌트 언마운트 시 클린업
+onBeforeUnmount(() => {
+  commentsWithProfiles.value = [];
+  newComment.value = "";
+  liked.value = false;
+  isApplying.value = false;
+  isClosing.value = false;
+  loadingComments.value = false;
+});
 
 // 댓글 작성
 async function addComment() {
@@ -286,5 +367,5 @@ async function closeRecruitment() {
   });
   isClosing.value = true;
 }
-
 </script>
+
