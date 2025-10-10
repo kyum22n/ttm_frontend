@@ -7,14 +7,8 @@
         <div class="row align-items-center g-3">
           <div class="col-auto">
             <!-- profileImgUrl이 존재하면 표시 -->
-            <img
-              v-if="profileImgUrl"
-              :src="profileImgUrl"
-              alt="프로필"
-              class="rounded-circle object-cover"
-              width="88"
-              height="88"
-            />
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
+              height="88" />
           </div>
 
           <div class="col">
@@ -30,13 +24,8 @@
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
-              <li
-                class="list-inline-item"
-                v-for="(s, i) in profile.stats"
-                :key="i"
-              >
-                <span class="me-1">{{ s.label }}</span
-                ><strong class="text-dark">{{ s.value }}</strong>
+              <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
+                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
@@ -47,7 +36,12 @@
                 </div>
               </div>
               <div class="col-lg-2 text-lg-end">
-                <button class="btn btn-primary">산책신청+</button>
+                <!-- 산책신청+ -->
+                <button class="btn btn-primary"
+                  @click="router.push({ path: '/walk/request', query: { receiveUserId: Number(route.params.userId) } })"
+                  :disabled="isMine">
+                  산책신청+
+                </button>
               </div>
               <div class="col-lg-2">
                 <button class="btn btn-primary">메세지 목록</button>
@@ -65,41 +59,24 @@
 
     <!-- 하이라이트 펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button
-        class="btn btn-outline-secondary btn-sm"
-        @click="router.push('/Register/AddPet')"
-      >
+      <button class="btn btn-outline-secondary btn-sm" @click="router.push('/Register/AddPet')">
         Add Pets
       </button>
 
       <!-- 유저의 모든 펫 썸네일 렌더링 -->
-      <div
-        v-for="pet in petList"
-        :key="pet.petId"
-        class="text-center"
-        @click="openPetModal(pet)"
-        style="cursor: pointer"
-      >
+      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)"
+        style="cursor: pointer">
         <div class="story-ring mx-auto mb-1">
-          <img
-            :src="getPetImageUrl(pet)"
-            alt="pet thumbnail"
-            class="rounded-circle object-cover"
-            width="64"
-            height="64"
-          />
+          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64"
+            height="64" />
         </div>
         <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 모달 컴포넌트 -->
-    <PetProfileModal
-      v-model:show="showPetModal"
-      :pet="selectedPet"
-      :currentUserId="store.state.user.userId"
-      @edit="goToEditPet"
-    />
+    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId"
+      @edit="goToEditPet" />
 
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
@@ -107,11 +84,7 @@
         <!-- 필터 탭 -->
         <ul class="nav nav-pills mb-3">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button
-              class="nav-link"
-              :class="{ active: activeTab === t.key }"
-              @click="activeTab = t.key"
-            >
+            <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
               {{ t.label }}
             </button>
           </li>
@@ -123,26 +96,16 @@
             불러오는 중...
           </div>
 
-          <div
-            v-else-if="myPosts.length === 0"
-            class="text-center text-muted py-5"
-          >
+          <div v-else-if="myPosts.length === 0" class="text-center text-muted py-5">
             아직 작성한 게시물이 없습니다.
           </div>
 
           <div v-else class="row g-3">
-            <div
-              v-for="post in myPosts"
-              :key="post.postId"
-              class="col-md-6 col-lg-4"
-            >
+            <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
               <div class="card h-100 border-0 shadow-sm">
                 <div class="ratio ratio-4x3">
-                  <img
-                    :src="post.thumbnailUrl || '/default_post.png'"
-                    class="card-img-top object-cover"
-                    alt="게시물 이미지"
-                  />
+                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover"
+                    alt="게시물 이미지" />
                 </div>
                 <div class="card-body">
                   <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
@@ -150,22 +113,15 @@
                     {{ post.postContent }}
                   </p>
                 </div>
-                <div
-                  class="card-footer bg-white d-flex justify-content-between align-items-center"
-                >
+                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
                   <small class="text-muted">{{
                     formatDate(post.createdAt)
                   }}</small>
-                  <span class="text-muted small"
-                    >♥ {{ post.postLikeCount }}</span
-                  >
+                  <span class="text-muted small">♥ {{ post.postLikeCount }}</span>
                 </div>
 
                 <!-- 상세 페이지로 이동 -->
-                <router-link
-                  :to="`/post/${post.postId}`"
-                  class="stretched-link"
-                ></router-link>
+                <router-link :to="`/post/${post.postId}`" class="stretched-link"></router-link>
               </div>
             </div>
           </div>
@@ -179,20 +135,11 @@
                 Prev
               </button>
             </li>
-            <li
-              class="page-item"
-              v-for="n in totalPages"
-              :key="n"
-              :class="{ active: page === n }"
-            >
+            <li class="page-item" v-for="n in totalPages" :key="n" :class="{ active: page === n }">
               <button class="page-link" @click="page = n">{{ n }}</button>
             </li>
             <li class="page-item" :class="{ disabled: page === totalPages }">
-              <button
-                class="page-link"
-                @click="page++"
-                :disabled="page === totalPages"
-              >
+              <button class="page-link" @click="page++" :disabled="page === totalPages">
                 Next
               </button>
             </li>
@@ -206,35 +153,21 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <strong>필터</strong>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @click="resetFilters"
-              >
+              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">
                 초기화
               </button>
             </div>
 
             <div class="mb-3">
               <label class="form-label small">검색</label>
-              <input
-                v-model="filters.q"
-                type="search"
-                class="form-control form-control-sm"
-                placeholder="키워드..."
-              />
+              <input v-model="filters.q" type="search" class="form-control form-control-sm" placeholder="키워드..." />
             </div>
 
             <div class="mb-3">
               <label class="form-label small">종류</label>
               <div class="d-flex flex-wrap gap-2">
                 <div v-for="c in categories" :key="c" class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="`cat-${c}`"
-                    :value="c"
-                    v-model="filters.cats"
-                  />
+                  <input class="form-check-input" type="checkbox" :id="`cat-${c}`" :value="c" v-model="filters.cats" />
                   <label class="form-check-label small" :for="`cat-${c}`">{{
                     c
                   }}</label>
@@ -250,10 +183,7 @@
               </select>
             </div>
 
-            <button
-              class="btn btn-dark w-100 btn-sm mt-2"
-              @click="applyFilters"
-            >
+            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">
               적용
             </button>
           </div>
@@ -265,15 +195,8 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox
-                  title="해시태그"
-                  :tags="tagsFromReviews"
-                  :max-visible="10"
-                  prefix="#"
-                  pill
-                  clickable
-                  @select="onSelect"
-                />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
+                  @select="onSelect" />
               </div>
             </div>
 
@@ -292,7 +215,7 @@
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
+import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
@@ -600,12 +523,27 @@ watch(
 const totalLikes = computed(() => { // reduce: 모든 요소를 하나의 값으로 합치는 함수
   return myPosts.value.reduce((sum, post) => sum + (post.postLikeCount || 0), 0);
 });
+
+
+function goWalkRequest() {
+  // 현재 프로필 주인의 userId를 쿼리로 넘김
+  const targetId = Number(route.params.userId) || 0;
+  if (!store.getters.isLogin) {
+    router.push({ path: "/Login", query: { redirect: route.fullPath } });
+    return;
+  }
+  if (!targetId || isMine.value) return;
+  router.push({ path: "/walk/request", query: { receiveUserId: targetId } });
+}
+
+
 </script>
 
 <style scoped>
 .object-cover {
   object-fit: cover;
 }
+
 .story-ring {
   width: 68px;
   height: 68px;
@@ -616,7 +554,8 @@ const totalLikes = computed(() => { // reduce: 모든 요소를 하나의 값으
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* ✅ 혹시 모서리 벗어나는거 방지 */
+  overflow: hidden;
+  /* ✅ 혹시 모서리 벗어나는거 방지 */
 }
 
 .story-ring img {
