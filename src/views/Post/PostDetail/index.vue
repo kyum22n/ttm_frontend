@@ -202,12 +202,19 @@ onMounted(async () => {
   try {
     const jwt = localStorage.getItem("jwt");
     const res = await userApi.userInfo(currentPost.postUserId, jwt);
-    const userData = res.data.user || res.data;
 
+    // 유저 정보와 프로필 이미지 데이터
+    const userData = res.data.data;
+    const profileImage = res.data.profileImage;
+
+    // 로그인 아이디
     authorName.value = userData.userLoginId || `User#${currentPost.postUserId}`;
-    authorProfileImg.value = userData.profileImage
-      ? `http://localhost:8080${userData.profileImage}`
+
+    // 프로필 이미지
+    authorProfileImg.value = profileImage
+      ? `http://localhost:8080${profileImage}`
       : "https://placekitten.com/60/60";
+      
   } catch (e) {
     console.error("작성자 정보 불러오기 실패:", e);
   }
