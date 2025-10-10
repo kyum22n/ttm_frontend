@@ -155,6 +155,7 @@ import logoBrown from "@/assets/logo_brown.png";
 import heroImage from "@/assets/heroImage_main.jpg";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import userApi from "@/apis/userApi";
 
 const router = useRouter();
 const store = useStore();
@@ -192,22 +193,53 @@ const tabs = [
 const activeTab = ref("all");
 
 /* 게시물 목록 */
-const posts = ref([]);
+const posts = computed(() => store.getters["post/getList"]);
 /* 태그 목록 */
 const tags = ref([]);
 
 onMounted(async () => {
-  // 게시물 목록(기본)
-  await store.dispatch("post/fetchList", 1);
-  posts.value = store.getters["post/getList"];
+  try {
+    // 게시물 목록
+    await store.dispatch("post/fetchList", 1);
+    // 태그 필터 적용한 게시물 목록
+    await store.dispatch("post/fetchTags");
+    tags.value = store.getters["post/getTags"];
 
-  // 태그 필터 적용한 게시물 목록
-  await store.dispatch("post/fetchTags");
-  tags.value = store.getters["post/getTags"];
+    // 강아지 프로필 랜덤 목록
+    fetchRandomDogs();
+  
+    const jwt = localStorage.getItem("jwt");
+    const authorCache = new Map(); // 중복 호출 방지 캐시
 
-  // 강아지 프로필 랜덤 목록
-  fetchRandomDogs();
+    const postsWithAuthors = await Promise.all(
+      posts.value.map(async (p) => {
+        // 캐시에 이미 있다면 재사용
+        if (authorCache.has(p.postUserId)) {
+          return {
+            ...p,
+            postUserName: authorCache.get(p.postUserId),
+          };
+        }
+
+        try {
+          const res = await userApi.userInfo(p.postUserId, jwt);
+          const userData = res.data.data;
+          const userName = userData.userLoginId || `User#${p.postUserId}`;
+          authorCache.set(p.postUserId, userName);
+          return { ...p, postUserName: userName };
+        } catch (err) {
+          console.warn(`작성자 ${p.postUserId} 정보 불러오기 실패`, err);
+          return { ...p, postUserName: "익명" };
+        }
+      })
+    );
+
+    posts.value = postsWithAuthors;
+  } catch (err) {
+    console.error("게시물 목록 불러오기 실패:", err);
+  }
 });
+
 
 /* 탭 변경 시 목록 분기 */
 watch(activeTab, async (newTab) => {
@@ -290,12 +322,7 @@ const filteredPosts = computed(() => {
       (p.postTitle && p.postTitle.includes(filters.q)) ||
       (p.postContent && p.postContent.includes(filters.q));
 
-    // 카테고리 필터 (선택된 cats 중 하나라도 포함되면 통과)
-    const matchCat =
-      filters.cats.length === 0 ||
-      filters.cats.some((cat) => (p.postCategory || "").includes(cat));
-
-    return matchTab && matchQ && matchCat;
+    return matchTab && matchQ;
   });
 
   // 정렬

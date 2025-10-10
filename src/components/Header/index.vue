@@ -99,7 +99,7 @@ function onSearchInput() {
 function goToUserProfile(userId) {
   store.commit("setSearchResults", []);
   searchText.value = "";
-  router.push(`/Profile/OtherProfile/${userId}`);
+  router.push(`/mypage/${userId}`);
 }
 
 // Vuex getters 사용 새로 고침해도 유저 정보 보일수 있게
