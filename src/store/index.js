@@ -119,8 +119,8 @@ const store = createStore({
     async searchUserByLoginId({ commit }, query) {
       try {
         const res = await userApi.searchUserByLoginId(query);
-        if(res.data.result === "success" && Array.isArray(res.data.user)) {
-          commit("setSearchResults", [res.data.user]);
+        if(res.data.result === "success") {
+          commit("setSearchResults", res.data.user);
         } else {
           commit("setSearchResults", []);
         }

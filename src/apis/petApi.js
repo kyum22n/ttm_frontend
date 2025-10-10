@@ -80,6 +80,13 @@ async function avatarUrlByUser(userId, basePrefix = "") {
   return basePrefix ? `${basePrefix}${ref.imageUrl}` : ref.imageUrl;
 }
 
+// 펫 목록 랜덤으로 불러오기
+async function getRandomList(limit = 7) {
+  return axios.get("/pet/random-list", {
+    params: { limit }
+  });
+}
+
 const petApi = {
   register,
   update,
@@ -89,7 +96,8 @@ const petApi = {
   petLike,
   firstPetOfUser,
   avatarUrlByUser,
-  getPetLikeStatus
+  getPetLikeStatus,
+  getRandomList
 };
 
 export default petApi;

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="container py-4"
+    class="container-fluid py-5"
     style="
       background-color:#faf8f5;
 
@@ -54,10 +54,9 @@
 
     <!-- 강아지 프로필 리스트 -->
     <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
-      <div v-for="(dog, i) in dogs" :key="i" class="text-center" role="button" @click="goToOwnerProfile(dog.userId)">
-        <img :src="dog.img" @error="e => e.target.src = '/default_dog.png'"
+      <div v-for="dog in dogs" :key="dog.petId" class="text-center" role="button" @click="goToOwnerProfile(dog.userId)">
+        <img :src="dog.imageUrl || 'https://placehold.co/400x250'"
           class="rounded-circle border border-4 border-primary mb-2" width="100" height="100" alt="강아지 프로필" />
-
         <div class="fw-semibold small">{{ dog.name }}</div>
       </div>
     </div>
@@ -220,6 +219,7 @@ import heroImage from "@/assets/heroImage_main.jpg";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import userApi from "@/apis/userApi";
+import petApi from "@/apis/petApi";
 
 const router = useRouter();
 const store = useStore();
@@ -230,21 +230,19 @@ const store = useStore();
 const dogs = ref([]);
 async function fetchRandomDogs() {
   try {
-    const res = await axios.get("/pet/random-list?limit=7");
-    dogs.value = res.data.pets.map(pet => ({
-      petId: pet.petId,
-      name: pet.petName,
-      img: `/api/pet/image/${pet.petId}`,
-      userId: pet.petUserId,
-    }));
+    // 랜덤 펫 불러오기
+    await store.dispatch("pet/fetchRandomList", 7);
+    // 스토어 상태값 가져오기
+    dogs.value = store.getters["pet/getRandomList"];
+
   } catch (e) {
-    console.error("🐶 펫 목록 불러오기 실패:", e);
+    console.log("🐶 펫 목록 불러오기 실패:", e);
   }
 }
 
 /* 클릭 시 반려인 프로필로 이동 */
 function goToOwnerProfile(userId) {
-  router.push(`/profile/${userId}`);
+  router.push(`/mypage/${userId}`);
 }
 
 /* ========================
@@ -278,7 +276,7 @@ onMounted(async () => {
     await loadPostAuthors();
 
   } catch (err) {
-    console.error("초기 데이터 로딩 실패:", err);
+    console.log("초기 데이터 로딩 실패:", err);
   }
 });
 
@@ -305,7 +303,7 @@ async function loadPostAuthors() {
         authorCache.set(p.postUserId, userName);
         return { ...p, postUserName: userName };
       } catch (err) {
-        console.warn(`작성자 ${p.postUserId} 정보 불러오기 실패`, err);
+        console.log(`작성자 ${p.postUserId} 정보 불러오기 실패`, err);
         return { ...p, postUserName: "익명" };
       }
     })
@@ -325,7 +323,7 @@ watch(activeTab, async (newTab) => {
         thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
       }));
     } catch (e) {
-      console.error("🚫 모집글 불러오기 실패:", e);
+      console.log("🚫 모집글 불러오기 실패:", e);
       posts.value = [];
     }
   } else {
@@ -385,7 +383,7 @@ async function applyFilters() {
       posts.value = store.getters["post/getList"];
     }
   } catch (e) {
-    console.error("태그별 게시물 불러오기 실패:", e);
+    console.log("태그별 게시물 불러오기 실패:", e);
   }
 }
 

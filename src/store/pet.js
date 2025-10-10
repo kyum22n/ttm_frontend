@@ -145,10 +145,14 @@ const pet = {
 
     // 랜덤 펫 목록
     async fetchRandomList(context, limit = 7) {
-      const res = await petApi.getRandomPets(limit);
-      if (res.data && res.data.pets) {
-        context.commit("setRandomList", res.data.pets);
-      }
+      const res = await petApi.getRandomList(limit);
+
+      const petsWithImages = res.data.pets.map((pet) => ({
+        ...pet,
+        imageUrl: `http://localhost:8080/pet/image/${pet.petId}`,
+      }));
+
+      context.commit("setRandomList", petsWithImages);
     },
   },
 };
