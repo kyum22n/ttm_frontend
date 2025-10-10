@@ -168,7 +168,7 @@ function handleSelect(key) {
   // 메뉴별 라우팅
   if (key === "profile") {
     if (userId) {
-      router.push(`/Profile/MyPage/${userId}`);
+      router.push(`/mypage/${userId}`);
     } else {
       alert("로그인 정보가 없습니다. 다시 로그인 해주세요.");
     }
@@ -183,7 +183,7 @@ function handleSelect(key) {
 
   const map = {
     mypage: "/Profile/EditProfile",
-    mate: "/Profile/MyProfile",
+    mate: "/mypage",
     // likes: "/likes",
     viewed: "/history",
     settings: "/Profile/OtherProfile",
