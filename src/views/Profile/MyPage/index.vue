@@ -87,12 +87,7 @@
 
           <div v-if="loadingMyPosts" class="text-center text-muted py-5">불러오는 중...</div>
 
-          <div
-            v-else-if="myPosts.length === 0"
-            class="text-center text-muted py-5"
-          >
-            아직 작성한 게시물이 없습니다.
-          </div>
+          <div v-else-if="myPosts.length === 0" class="text-center text-muted py-5">아직 작성한 게시물이 없습니다.</div>
 
           <div v-else class="row g-3">
             <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
