@@ -44,9 +44,9 @@
               <div class="vstack gap-3">
                 <!-- 이름 -->
                 <div class="input-group">
-                  <span class="input-group-text"
-                    ><i class="bi bi-paw"></i
-                  ></span>
+                  <span class="input-group-text">
+                    <i class="bi bi-heart text-brown"></i>
+                  </span>
                   <input
                     v-model.trim="pet.petName"
                     type="text"
@@ -56,11 +56,24 @@
                   />
                 </div>
 
+                <!-- 생년월일 -->
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="bi bi-calendar3 text-brown"></i>
+                  </span>
+                  <input
+                    v-model="pet.petBirthDay"
+                    type="date"
+                    class="form-control"
+                    required
+                  />
+                </div>
+
                 <!-- 품종 -->
                 <div class="input-group">
-                  <span class="input-group-text"
-                    ><i class="bi bi-emoji-smile"></i
-                  ></span>
+                  <span class="input-group-text">
+                    <i class="bi bi-emoji-smile text-brown"></i>
+                  </span>
                   <input
                     v-model.trim="pet.petBreed"
                     type="text"
@@ -72,9 +85,9 @@
 
                 <!-- 성별 -->
                 <div class="input-group">
-                  <span class="input-group-text"
-                    ><i class="bi bi-gender-ambiguous"></i
-                  ></span>
+                  <span class="input-group-text">
+                    <i class="bi bi-gender-ambiguous text-brown"></i>
+                  </span>
                   <select v-model="pet.petGender" class="form-select" required>
                     <option value="M">남</option>
                     <option value="F">여</option>
@@ -83,9 +96,9 @@
 
                 <!-- 몸무게 -->
                 <div class="input-group">
-                  <span class="input-group-text"
-                    ><i class="bi bi-capslock"></i
-                  ></span>
+                  <span class="input-group-text">
+                    <i class="bi bi-capslock text-brown"></i>
+                  </span>
                   <input
                     v-model.number="pet.petWeight"
                     type="number"
@@ -94,6 +107,7 @@
                     min="0"
                     required
                   />
+                  <span class="input-group-text">kg</span>
                 </div>
 
                 <!-- 소개 -->
@@ -148,6 +162,7 @@ const router = useRouter();
 const pet = ref({
   petUserId: store.state.user.userId,
   petName: "",
+  petBirthDay: "", // ✅ 생년월일 추가
   petBreed: "",
   petWeight: 0,
   petGender: "M",
@@ -237,6 +252,6 @@ function goBack() {
   align-items: center;
   justify-content: center;
   font-size: 1.2rem; /* ✅ 아이콘 크기 동일 */
-  color: #6b4a2b; /* 브랜드 색 (EditProfile 기준) */
+  color: #6b4a2b; /* 브랜드 색상 */
 }
 </style>

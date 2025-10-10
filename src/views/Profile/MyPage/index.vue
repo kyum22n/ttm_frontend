@@ -95,12 +95,10 @@
 
     <!-- 모달 컴포넌트 -->
     <PetProfileModal
+      v-model:show="showPetModal"
       :pet="selectedPet"
-      :show="showModal"
-      :currentUserId="currentUserId"
-      @update:show="showModal = $event"
-      @edit="handleEdit"
-      @chat="handleChat"
+      :currentUserId="store.state.user.userId"
+      @edit="goToEditPet"
     />
 
     <!-- 콘텐츠 + 사이드바 -->
@@ -294,7 +292,7 @@
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
+import ReviewDisplayBox from "@/components/reviewDisplayBox.vue";
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
@@ -460,7 +458,6 @@ const tagsFromReviews = computed(() => {
 const highlights2 = [
   { id: 1, name: "뽀삐", img: "https://via.placeholder.com/80" },
 ];
-const selectedPet = ref(null);
 const showModal = ref(false);
 const currentUserId = 1;
 
@@ -512,25 +509,32 @@ function goToPetRegister() {
 }
 
 // 기존 openPetModal 재사용
+const showPetModal = ref(false);
+const selectedPet = ref(null);
+
 async function openPetModal(pet) {
-  selectedPet.value = { ...pet }; // 펫 기본 정보는 그대로 세팅
+  // 1️⃣ 펫 기본 정보 먼저 세팅
+  selectedPet.value = { ...pet };
 
   try {
-    // 🧩 유저 정보 따로 불러오기
+    // 2️⃣ 펫 주인(user) 정보 불러오기
     const res = await axios.get("/user/info", {
       params: { userId: pet.petUserId },
     });
 
-    // user/info 응답 구조에 맞게 추가
+    // 3️⃣ 응답 데이터에서 필요한 정보 병합
     if (res.data?.data) {
       selectedPet.value.userLoginId = res.data.data.userLoginId;
       selectedPet.value.userAddress = res.data.data.userAddress;
     }
   } catch (e) {
-    console.error("유저 정보 불러오기 실패:", e);
+    console.error("🚫 유저 정보 불러오기 실패:", e);
   }
 
-  showModal.value = true;
+  // 4️⃣ 모달 표시
+  showPetModal.value = true;
+
+
 }
 
 
