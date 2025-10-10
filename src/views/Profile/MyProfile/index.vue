@@ -64,7 +64,10 @@
 
     <!-- 하이라이트 펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button class="btn btn-outline-secondary btn-sm" @click="goToPetRegister">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        @click="router.push('/Register/AddPet')"
+      >
         Add Pets
       </button>
 
@@ -168,36 +171,6 @@
             </div>
           </div>
         </section>
-
-        <!-- 카드 그리드
-        <div class="row g-3">
-          <div v-for="post in filteredPosts" :key="post.id" class="col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-              <div class="ratio ratio-4x3">
-                <img
-                  :src="
-                    post.img || 'https://picsum.photos/seed/default/600/400'
-                  "
-                  class="card-img-top object-cover"
-                  alt="게시물 이미지"
-                />
-              </div>
-              <div class="card-body">
-                <div class="small text-muted mb-1">{{ post.subtitle }}</div>
-                <h6 class="card-title mb-1">{{ post.title }}</h6>
-                <p class="card-text text-muted small mb-0">{{ post.desc }}</p>
-              </div>
-              <div
-                class="card-footer bg-white d-flex justify-content-between align-items-center"
-              >
-                <span class="small text-muted">{{ post.time }}</span>
-                <button class="btn btn-sm btn-outline-secondary">
-                  ♥ {{ post.likes }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div> -->
 
         <!-- 페이지네이션 -->
         <nav class="mt-4">
@@ -370,26 +343,6 @@ async function loadProfileUser() {
   }
 }
 
-onMounted(async () => {
-  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
-
-  await loadProfileUser(); // ✅ 유저 정보도 불러오기
-  await loadPetProfile();
-  await loadAllPets();
-  await loadUserPosts();
-  await loadMyPosts();
-});
-
-watch(
-  () => route.params.userId,
-  async (newVal, oldVal) => {
-    if (newVal && newVal !== oldVal) {
-      await loadProfileUser(); // ✅ 라우트 변경 시 다시 로드
-      await loadMyPosts();
-    }
-  }
-);
-
 // ✅ 펫 이미지 + pet_desc 로드
 async function loadPetProfile() {
   try {
@@ -475,14 +428,6 @@ const filteredPosts = computed(() => {
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(posts.value.length / pageSize))
 );
-
-onMounted(async () => {
-  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
-  await loadPetProfile();
-  await loadAllPets(); // ✅ 펫 리스트 로드 추가
-  await loadUserPosts(); // ✅ 게시물도 로드
-  await loadMyPosts();
-});
 
 // ✅ 필터 및 게시물 로직
 const tabs = [
@@ -599,28 +544,35 @@ async function loadMyPosts() {
   }
 }
 
-watch(
-  () => route.params.userId,
-  async (newVal, oldVal) => {
-    if (newVal && newVal !== oldVal) {
-      await loadMyPosts(); // ✅ 라우트 변경 시 재로드
-    }
-  }
-);
-
-onMounted(async () => {
-  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
-  await loadPetProfile();
-  await loadAllPets();
-  await loadUserPosts();
-  await loadMyPosts(); // ✅ route param 기반으로 로드됨
-});
-
 /* 날짜 포맷 (기존 함수 없으면) */
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("ko-KR");
 }
+
+onMounted(async () => {
+  if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
+
+  const userId = Number(route.params.userId) || store.state.user.userId;
+
+  await Promise.all([
+    loadProfileUser(userId),
+    loadPetProfile(userId),
+    loadAllPets(userId),
+    loadUserPosts(userId),
+    loadMyPosts(userId),
+  ]);
+});
+
+watch(
+  () => route.params.userId,
+  async (newVal, oldVal) => {
+    if (newVal && newVal !== oldVal) {
+      await loadProfileUser(); // ✅ 라우트 변경 시 다시 로드
+      await loadMyPosts();
+    }
+  }
+);
 </script>
 
 <style scoped>
