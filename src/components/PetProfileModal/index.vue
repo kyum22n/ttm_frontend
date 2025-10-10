@@ -40,9 +40,10 @@
             <p class="mb-1">
               <strong>{{ pet?.petName }}</strong>
             </p>
+            <p class="mb-1">이름: {{ pet?.petName }}</p>
             <p class="mb-1">품종: {{ pet?.petBreed }}</p>
             <p class="mb-1">성별: {{ pet?.petGender }}</p>
-            <p class="mb-1">출생일: {{ pet?.petBirthDay }}</p>
+            <p class="mb-1">출생일: {{ displayBirthDay }}</p>
             <p class="mb-1">몸무게: {{ pet?.petWeight }}kg</p>
             <p class="mb-1">지역: {{ pet?.userAddress }}</p>
           </div>
@@ -214,6 +215,25 @@ function requestChat() {
   emit("chat", props.pet);
   closeModal();
 }
+
+const displayBirthDay = computed(() => {
+  if (!props.pet) return "정보 없음";
+  const val = props.pet.petBirthDay;
+  if (!val) return "정보 없음";
+
+  // 날짜 문자열 포맷팅
+  try {
+    const d = new Date(val);
+    return d.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch (e) {
+    return val; // 혹시 Date로 변환 안 되면 원본 그대로
+  }
+});
+
 </script>
 
 <style scoped>

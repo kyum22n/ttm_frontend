@@ -1,3 +1,4 @@
+<!-- src/views/Propile/MyPage.vue -->
 <template>
   <div class="container py-4">
     <!-- 프로필 헤더 -->
@@ -457,7 +458,6 @@ const tagsFromReviews = computed(() => {
 const highlights2 = [
   { id: 1, name: "뽀삐", img: "https://via.placeholder.com/80" },
 ];
-const selectedPet = ref(null);
 const showModal = ref(false);
 const currentUserId = 1;
 
@@ -508,12 +508,35 @@ function goToPetRegister() {
   router.push("/Pet/RegisterPet");
 }
 
+// 기존 openPetModal 재사용
 const showPetModal = ref(false);
+const selectedPet = ref(null);
 
-function openPetModal(pet) {
-  selectedPet.value = pet;
+async function openPetModal(pet) {
+  // 1️⃣ 펫 기본 정보 먼저 세팅
+  selectedPet.value = { ...pet };
+
+  try {
+    // 2️⃣ 펫 주인(user) 정보 불러오기
+    const res = await axios.get("/user/info", {
+      params: { userId: pet.petUserId },
+    });
+
+    // 3️⃣ 응답 데이터에서 필요한 정보 병합
+    if (res.data?.data) {
+      selectedPet.value.userLoginId = res.data.data.userLoginId;
+      selectedPet.value.userAddress = res.data.data.userAddress;
+    }
+  } catch (e) {
+    console.error("🚫 유저 정보 불러오기 실패:", e);
+  }
+
+  // 4️⃣ 모달 표시
   showPetModal.value = true;
+
+
 }
+
 
 /* -------------------------
    📰 내 게시물 불러오기
@@ -572,6 +595,11 @@ watch(
     }
   }
 );
+
+// 게시물 좋아요 합계
+const totalLikes = computed(() => { // reduce: 모든 요소를 하나의 값으로 합치는 함수
+  return myPosts.value.reduce((sum, post) => sum + (post.postLikeCount || 0), 0);
+});
 </script>
 
 <style scoped>

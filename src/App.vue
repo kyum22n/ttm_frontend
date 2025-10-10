@@ -6,7 +6,7 @@
 
     <!-- 메인 -->
     <div class="flex-grow-1">
-      <RouterView />
+      <RouterView :key="$route.fullPath"/> <!--:key="$route.fullPath" 마운트 재사용시 새로 마운트함-->
     </div>
 
     <!-- 공통 푸터 -->
