@@ -1,5 +1,36 @@
 <template>
-  <div class="container py-4">
+  <div
+    class="container py-4"
+    style="
+      background-color:#faf8f5;
+
+      /* 브랜드 색상 세트 */
+      --bs-primary:#6f5034;
+      --bs-primary-rgb:111,80,52;
+
+      /* 링크, 글자 */
+      --bs-link-color:#6f5034;
+      --bs-link-hover-color:#5b432c;
+
+      /* 버튼 (btn-primary) */
+      --bs-btn-bg:#6f5034;
+      --bs-btn-border-color:#6f5034;
+      --bs-btn-hover-bg:#5b432c;
+      --bs-btn-hover-border-color:#5b432c;
+      --bs-btn-active-bg:#4d3826; 
+      --bs-btn-active-border-color:#4d3826; 
+      --bs-btn-active-color:#fff;
+
+      /* 탭(nav-pills) */
+      --bs-nav-pills-link-active-bg:#6f5034;
+
+      /* 페이지네이션 */
+      --bs-pagination-color:#6f5034;
+      --bs-pagination-hover-color:#5b432c;
+      --bs-pagination-active-bg:#6f5034;
+      --bs-pagination-active-border-color:#6f5034;
+    "
+  >
     <!-- 히어로 -->
     <section class="row align-items-center g-4 mb-5">
       <div class="col-lg-5">
@@ -35,7 +66,13 @@
     <div class="row g-4">
       <div class="col-lg-8">
         <!-- 탭 -->
-        <ul class="nav nav-pills mb-3">
+        <ul 
+          class="nav nav-pills mb-3"
+          style="
+            --bs-nav-pills-link-active-bg:#6f5034;
+            --bs-nav-pills-link-active-color:#fff;
+          "
+        >
           <li v-for="t in tabs" :key="t.key" class="nav-item">
             <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
               {{ t.label }}
@@ -71,7 +108,18 @@
 
         <!-- 페이지네이션 -->
         <nav class="mt-4" v-if="pager">
-          <ul class="pagination justify-content-center">
+          <ul 
+            class="pagination justify-content-center"
+            style="
+              --bs-pagination-color:#6f5034;
+              --bs-pagination-hover-color:#5b432c;
+              --bs-pagination-active-bg:#6f5034;
+              --bs-pagination-active-border-color:#6f5034;
+              --bs-pagination-active-color:#fff;
+              --bs-pagination-border-color:#6f5034;
+              --bs-pagination-focus-box-shadow:0 0 0 .25rem rgba(111,80,52,.25);
+            "
+          >
             <!-- 처음 -->
             <li class="page-item" :class="{ disabled: pager.pageNo === 1 }">
               <button class="page-link" @click="changePage(1)" :disabled="pager.pageNo === 1">처음</button>
@@ -140,6 +188,22 @@
             <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">
               적용
             </button>
+
+            <router-link 
+              to="/post/create" 
+              class="btn btn-primary w-100 btn-sm mt-3"
+              style="    
+              --bs-btn-bg:#6f5034;
+              --bs-btn-border-color:#6f5034;
+              --bs-btn-hover-bg:#5b432c;
+              --bs-btn-hover-border-color:#5b432c;
+              --bs-btn-active-bg:#4d3826;
+              --bs-btn-active-border-color:#4d3826;
+              --bs-btn-focus-shadow-rgb:111,80,52;
+              "
+            >
+              ✏️ 게시글 작성하기
+            </router-link>
           </div>
         </div>
 
@@ -166,7 +230,7 @@ const store = useStore();
 const dogs = ref([]);
 async function fetchRandomDogs() {
   try {
-    const res = await axios.get("/api/pet/random-list?limit=7");
+    const res = await axios.get("/pet/random-list?limit=7");
     dogs.value = res.data.pets.map(pet => ({
       petId: pet.petId,
       name: pet.petName,
@@ -193,52 +257,62 @@ const tabs = [
 const activeTab = ref("all");
 
 /* 게시물 목록 */
-const posts = computed(() => store.getters["post/getList"]);
+const posts = ref([]);
 /* 태그 목록 */
 const tags = ref([]);
 
 onMounted(async () => {
   try {
     // 게시물 목록
-    await store.dispatch("post/fetchList", 1);
+    // 페이지 데이터 로드
+    await fetchPosts(1);
+
     // 태그 필터 적용한 게시물 목록
     await store.dispatch("post/fetchTags");
     tags.value = store.getters["post/getTags"];
 
     // 강아지 프로필 랜덤 목록
-    fetchRandomDogs();
-  
-    const jwt = localStorage.getItem("jwt");
-    const authorCache = new Map(); // 중복 호출 방지 캐시
+    await fetchRandomDogs();
 
-    const postsWithAuthors = await Promise.all(
-      posts.value.map(async (p) => {
-        // 캐시에 이미 있다면 재사용
-        if (authorCache.has(p.postUserId)) {
-          return {
-            ...p,
-            postUserName: authorCache.get(p.postUserId),
-          };
-        }
+    // 작성자명 로드
+    await loadPostAuthors();
 
-        try {
-          const res = await userApi.userInfo(p.postUserId, jwt);
-          const userData = res.data.data;
-          const userName = userData.userLoginId || `User#${p.postUserId}`;
-          authorCache.set(p.postUserId, userName);
-          return { ...p, postUserName: userName };
-        } catch (err) {
-          console.warn(`작성자 ${p.postUserId} 정보 불러오기 실패`, err);
-          return { ...p, postUserName: "익명" };
-        }
-      })
-    );
-
-    posts.value = postsWithAuthors;
   } catch (err) {
-    console.error("게시물 목록 불러오기 실패:", err);
+    console.error("초기 데이터 로딩 실패:", err);
   }
 });
+
+// 작성자명 로드
+async function loadPostAuthors() {
+
+  const jwt = localStorage.getItem("jwt");
+  const authorCache = new Map(); // 중복 호출 방지 캐시
+
+  const postsWithAuthors = await Promise.all(
+    posts.value.map(async (p) => {
+      // 캐시에 이미 있다면 재사용
+      if (authorCache.has(p.postUserId)) {
+        return {
+          ...p,
+          postUserName: authorCache.get(p.postUserId),
+        };
+      }
+
+      try {
+        const res = await userApi.userInfo(p.postUserId, jwt);
+        const userData = res.data.data || res.data;
+        const userName = userData.userLoginId || `User#${p.postUserId}`;
+        authorCache.set(p.postUserId, userName);
+        return { ...p, postUserName: userName };
+      } catch (err) {
+        console.warn(`작성자 ${p.postUserId} 정보 불러오기 실패`, err);
+        return { ...p, postUserName: "익명" };
+      }
+    })
+  );
+
+  posts.value = postsWithAuthors;
+}
 
 
 /* 탭 변경 시 목록 분기 */
@@ -264,13 +338,19 @@ watch(activeTab, async (newTab) => {
   페이지네이션
   ======================== */
 // 페이징
-const pager = computed(() => store.getters["post/getPager"]);
+const pager = ref(null);
+
+async function fetchPosts(pageNo = 1) {
+  await store.dispatch("post/fetchList", pageNo);
+  posts.value = store.getters["post/getList"];
+  pager.value = store.getters["post/getPager"];
+}
 
 // 페이지 변경
 function changePage(pageNo) {
   if (!pager.value) return;
   if (pageNo < 1 || pageNo > pager.value.totalPageNo) return;
-  store.dispatch("post/fetchList", pageNo);
+  fetchPosts(pageNo);
 }
 
 /* ========================
@@ -346,3 +426,4 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString("ko-KR");
 }
 </script>
+
