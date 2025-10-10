@@ -119,12 +119,13 @@ const store = createStore({
     async searchUserByLoginId({ commit }, query) {
       try {
         const res = await userApi.searchUserByLoginId(query);
-        if(res.data.result === "success") {
+        if(res.data.result === "success" && Array.isArray(res.data.user)) {
           commit("setSearchResults", [res.data.user]);
         } else {
           commit("setSearchResults", []);
         }
       } catch (e) {
+        console.log("유저 검색 실패: ", e);
         commit("setSearchResults", []);
       }
     }

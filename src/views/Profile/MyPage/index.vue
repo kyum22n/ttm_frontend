@@ -512,10 +512,27 @@ function goToPetRegister() {
 }
 
 // 기존 openPetModal 재사용
-function openPetModal(pet) {
-  selectedPet.value = pet;
+async function openPetModal(pet) {
+  selectedPet.value = { ...pet }; // 펫 기본 정보는 그대로 세팅
+
+  try {
+    // 🧩 유저 정보 따로 불러오기
+    const res = await axios.get("/user/info", {
+      params: { userId: pet.petUserId },
+    });
+
+    // user/info 응답 구조에 맞게 추가
+    if (res.data?.data) {
+      selectedPet.value.userLoginId = res.data.data.userLoginId;
+      selectedPet.value.userAddress = res.data.data.userAddress;
+    }
+  } catch (e) {
+    console.error("유저 정보 불러오기 실패:", e);
+  }
+
   showModal.value = true;
 }
+
 
 /* -------------------------
    📰 내 게시물 불러오기
@@ -574,6 +591,11 @@ watch(
     }
   }
 );
+
+// 게시물 좋아요 합계
+const totalLikes = computed(() => { // reduce: 모든 요소를 하나의 값으로 합치는 함수
+  return myPosts.value.reduce((sum, post) => sum + (post.postLikeCount || 0), 0);
+});
 </script>
 
 <style scoped>

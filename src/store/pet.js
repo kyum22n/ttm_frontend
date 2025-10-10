@@ -133,11 +133,7 @@ const pet = {
           return res;
         }
       } catch (err) {
-        if (err.response?.data?.message?.includes("자신의 반려동물")) {
-          alert("자신의 반려동물에는 좋아요를 누를 수 없습니다 ");
-        } else {
           console.error("좋아요 토글 실패:", err);
-        }
       }
     },
 
