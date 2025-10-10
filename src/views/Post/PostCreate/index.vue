@@ -1,5 +1,24 @@
 <template>
-  <div class="container my-5">
+  <div
+    class="container-fluid py-5"
+    style="
+      background-color:#faf8f5;
+
+      /* 브랜드 색상 세트 */
+      --bs-primary:#6f5034;
+      --bs-primary-rgb:111,80,52;
+
+      /* 링크, 글자 */
+      --bs-link-color:#6f5034;
+      --bs-link-hover-color:#5b432c;
+
+      /* 뱃지/페이지네이션 공용 */
+      --bs-pagination-color:#6f5034;
+      --bs-pagination-hover-color:#5b432c;
+      --bs-pagination-active-bg:#6f5034;
+      --bs-pagination-active-border-color:#6f5034;
+    "
+  >
     <div class="row g-4">
       <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
       <div class="col-md-4">
@@ -71,7 +90,22 @@
               <input type="file" class="d-none" multiple accept="image/*" @change="onFileChange" />
             </label>
 
-            <button type="button" class="btn btn-success" :disabled="submitting" @click="submitPost">
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              :disabled="submitting" 
+              @click="submitPost"
+              style="
+              --bs-btn-bg:#6f5034;
+              --bs-btn-border-color:#6f5034;
+              --bs-btn-hover-bg:#5b432c;
+              --bs-btn-hover-border-color:#5b432c;
+              --bs-btn-active-bg:#4d3826;
+              --bs-btn-active-border-color:#4d3826;
+              --bs-btn-active-color:#fff;
+              --bs-btn-focus-shadow-rgb:111,80,52;
+              "
+            >
               {{ submitting ? "등록 중..." : "게시" }}
             </button>
           </div>

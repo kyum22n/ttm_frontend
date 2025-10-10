@@ -83,20 +83,20 @@ const store = createStore({
       // 25.10.04 LocalStorage는 문자열로만 저장 하기때문에 서버에서 넘어온 JSON 객체는 JSON 문자열로 변환하여 저장해야 함
       // 꺼내올 때는 JSON.parse()로 다시 JS 객체로 복원해서 사용해야 한다. -> loadAuthFromStorage() 참고
       // JWT는 발급 되었을 때 이미 문자열 형ㅌ애로 넘어오기 떄문에 JSON으로 변환하지 않아도 됨
-      localStorage.setItem("user", JSON.stringify(payload.user)); //Json 문자열로 변환
-      localStorage.setItem("jwt", payload.jwt);
+      sessionStorage.setItem("user", JSON.stringify(payload.user)); //Json 문자열로 변환
+      sessionStorage.setItem("jwt", payload.jwt);
       axiosConfig.addAuthHeader(payload.jwt);
     },
     removeAuth(context) {
       context.commit("clearAuth");
-      localStorage.removeItem("user");
-      localStorage.removeItem("jwt");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("jwt");
       axiosConfig.removeAuthHeader();
     },
     loadAuthFromStorage(context) {
       try {
-        const userStr = localStorage.getItem("user");
-        const jwt = localStorage.getItem("jwt") || "";
+        const userStr = sessionStorage.getItem("user");
+        const jwt = sessionStorage.getItem("jwt") || "";
         const user = userStr
           ? JSON.parse(userStr)
           : {
@@ -120,8 +120,8 @@ const store = createStore({
     async searchUserByLoginId({ commit }, query) {
       try {
         const res = await userApi.searchUserByLoginId(query);
-        if(res.data.result === "success" && Array.isArray(res.data.user)) {
-          commit("setSearchResults", [res.data.user]);
+        if(res.data.result === "success") {
+          commit("setSearchResults", res.data.user);
         } else {
           commit("setSearchResults", []);
         }
