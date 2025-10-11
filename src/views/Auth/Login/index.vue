@@ -72,9 +72,6 @@ async function handleLogin() {
         profileImage: resultObject.profileImage || "https://via.placeholder.com/40",
       };
 
-      store.commit("setUser", resultObject.user);
-      store.commit("setJwt", resultObject.jwt);
-
       store.dispatch("saveAuth", { user, jwt: resultObject.jwt });
       router.push("/Post/MainFeed");
     } else {

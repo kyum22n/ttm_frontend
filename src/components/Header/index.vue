@@ -50,7 +50,7 @@
         <!-- 프로필 이미지 -->
         <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" style="width: 35px; height: 35px; object-fit: cover"
           class="rounded-circle border border-light" />
-
+        <!--프로필 모달-->
         <ProfileMenuDropdown label="내 메뉴" :items="items" align="bottom" @select="handleSelect" />
       </div>
     </div>
@@ -106,11 +106,11 @@ const profileImgUrl = ref(null);
 const items = [
   { key: "profile", text: "마이페이지", icon: "🧑‍💻" },
   { key: "mypage", text: "내 프로필", icon: "📒" },
-  { key: "mate", text: "내 산책 메이트", icon: "🐕" },
-  { key: "likes", text: "좋아요 목록(인데 임시로 채팅목록)", icon: "🤍" },
-  { key: "viewed", text: "조회한 게시물", icon: "🕒" },
+  // { key: "mate", text: "내 산책 메이트", icon: "🐕" },
+  { key: "chat", text: "채팅 목록", icon: "🤍" },
+  // { key: "viewed", text: "조회한 게시물", icon: "🕒" },
   { divider: true },
-  { key: "settings", text: "OtherProfile", icon: "⚙️" },
+  // { key: "settings", text: "OtherProfile", icon: "⚙️" },
 ];
 
 function handleSelect(key) {
@@ -126,7 +126,7 @@ function handleSelect(key) {
     return;
   }
 
-  if (key === "likes") {
+  if (key === "chat") {
     // ✅ 수정: likes 클릭 시 모달 열기
     showChatList.value = true;
     return;

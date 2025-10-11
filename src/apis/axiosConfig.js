@@ -20,7 +20,7 @@ function removeAuthHeader() {
 // 요청 인터셉터
 axios.interceptors.request.use(
   (config) => {
-    const token = store.state.jwt || localStorage.getItem("jwt");
+    const token = store.state.jwt || sessionStorage.getItem("jwt");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
