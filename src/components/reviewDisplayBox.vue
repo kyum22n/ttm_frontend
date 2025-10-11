@@ -1,4 +1,3 @@
-<!-- components/HashtagDisplayBox.vue -->
 <template>
   <div class="tagbox card border-2 rounded-4">
     <div v-if="title" class="card-header bg-transparent border-0 pt-3 pb-0">
@@ -29,7 +28,7 @@
         </button>
 
         <!-- 비어있을 때 -->
-        <span v-if="!tags?.length" class="text-muted small">표시할 태그가 없습니다.</span>
+        <span v-if="!tags?.length" class="text-muted small"></span>
       </div>
     </div>
   </div>
@@ -38,6 +37,9 @@
 <script setup>
 import { computed, defineProps, defineEmits, ref } from 'vue'
 
+/**
+ * 기존 props 유지 (props가 비어 있으면 자동으로 더미데이터 사용)
+ */
 const props = defineProps({
   /** ['#강아지','산책','@Loki'] 같은 배열 */
   tags: { type: Array, default: () => [] },
@@ -55,9 +57,20 @@ const props = defineProps({
 const emit = defineEmits(['select'])
 const expanded = ref(false)
 
-const canToggle = computed(() => props.tags.length > props.maxVisible)
+/** ✅ 더미 태그 (props.tags가 비어 있을 때 대체용) */
+const dummyTags = [
+  '강아지', '고양이', '산책', '귀여워', '분위기좋은카페',
+  '애견동반', '우리집최고', '댕댕스타그램', '하루일기', '산책코스추천'
+]
+
+/** ✅ 실제 표시할 태그 (props 없으면 dummy로 대체) */
+const actualTags = computed(() => (props.tags?.length ? props.tags : dummyTags))
+
+const canToggle = computed(() => actualTags.value.length > props.maxVisible)
 const visibleTags = computed(() =>
-  expanded.value || !canToggle.value ? props.tags : props.tags.slice(0, props.maxVisible)
+  expanded.value || !canToggle.value
+    ? actualTags.value
+    : actualTags.value.slice(0, props.maxVisible)
 )
 
 function handleSelect(tag) {
@@ -66,9 +79,6 @@ function handleSelect(tag) {
 }
 </script>
 
-
-
-<!-- 일단은 스타일 사용 추후 수정 -->
 <style scoped>
 :root { --brown:#6b3f2a; --chip-bg:#fff7ee; --chip-bd:#e9dfcf; }
 .tagbox { border-color: var(--brown); }
@@ -91,7 +101,3 @@ function handleSelect(tag) {
 }
 .badge:hover { filter: brightness(.98); }
 </style>
-
-
-
-

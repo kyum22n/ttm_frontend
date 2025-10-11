@@ -1,42 +1,91 @@
 <template>
-  <div id="fixed-screen" class="bg-light">
-    <!-- 로고 영역 -->
-    <div class="logo-container position-absolute">
-      <!-- 좌 강아지 -->
-      <img src="@/assets/dog.png" alt="강아지" class="pet-left" />
-      <!-- 로고 텍스트 -->
-      <router-link to="/" class="text-decoration-none text-dark">
-        <h1 class="fw-bold text-center">나와 <span class="paw">🐾</span><br />산책가개</h1>
-      </router-link>
-      <!-- 우 강아지 -->
-      <img src="@/assets/dog.png" alt="강아지" class="pet-right" />
+  <div
+    class="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-cream"
+  >
+    <!-- ===== 로고 + 캐릭터 ===== -->
+    <div class="logo-container position-relative mb-3">
+      <!-- 중앙 로고 -->
+      <img
+        src="@/assets/logo_brown_bigsize.png"
+        alt="나와산책가개 로고"
+        class="logo-main"
+      />
+
+      <!-- 고양이 -->
+      <img src="@/assets/cat.png" alt="고양이" class="cat-img" />
+
+      <!-- 강아지 -->
+      <img src="@/assets/dog.png" alt="강아지" class="dog-img" />
     </div>
 
-    <!-- 로그인 박스 -->
-    <div class="card bg-brown text-white p-4 position-absolute login-box">
-      <div class="d-grid mb-3 grid-login-header">
-        <span class="fs-5">Login</span>
-        <router-link to="/Register/User" class="text-white text-decoration-none small align-self-start">Sign up</router-link>
+    <!-- ===== 로그인 카드 + 길 ===== -->
+    <div class="login-wrapper position-relative">
+      <div
+        class="card border-0 shadow-lg p-4 text-white text-center"
+        style="background-color: #7b4a2d; width: 400px; border-radius: 18px;"
+      >
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-semibold mb-0">Login</h5>
+          <router-link
+            to="/Register/User"
+            class="text-white small text-decoration-none"
+          >
+            Sign up
+          </router-link>
+        </div>
+
+        <form @submit.prevent="handleLogin">
+          <div class="mb-3 position-relative">
+            <i
+              class="bi bi-person-fill position-absolute top-50 start-0 translate-middle-y ms-3 text-light"
+            ></i>
+            <input
+              v-model="loginForm.loginId"
+              type="text"
+              class="form-control ps-5 rounded-pill"
+              placeholder="NickName"
+              required
+            />
+          </div>
+
+          <div class="mb-3 position-relative">
+            <i
+              class="bi bi-lock-fill position-absolute top-50 start-0 translate-middle-y ms-3 text-light"
+            ></i>
+            <input
+              v-model="loginForm.password"
+              type="password"
+              class="form-control ps-5 rounded-pill"
+              placeholder="Password"
+              required
+            />
+          </div>
+
+          <div class="text-end mb-3">
+            <router-link
+              to="/Auth/FindAccount"
+              class="text-white small text-decoration-none"
+            >
+              계정 찾기
+            </router-link>
+          </div>
+
+          <button
+            type="submit"
+            class="btn w-100 fw-bold rounded-pill"
+            style="background-color: #ffe9b3; color: #000;"
+          >
+            Login
+          </button>
+        </form>
       </div>
 
-      <form @submit.prevent="handleLogin">
-        <div class="mb-3 position-relative">
-          <span class="icon-user">👤</span>
-          <input v-model="loginForm.loginId" type="text" class="form-control ps-5" placeholder="NickName" required />
-        </div>
-
-        <div class="mb-3 position-relative">
-          <span class="icon-pass">🔒</span>
-          <input v-model="loginForm.password" type="password" class="form-control ps-5" placeholder="Password" required />
-        </div>
-
-        <div class="text-end mb-3">
-          <router-link to="/Auth/FindAccount" class="text-white small text-decoration-none">계정 찾기</router-link>
-        </div>
-
-        <button type="submit" class="btn btn-warning w-100 fw-bold">Login</button>
-        <!-- <router-link to="/Post/MainFeed" class="btn btn-warning w-100 fw-bold">Login</router-link> -->
-      </form>
+      <!-- 길 이미지 (로그인 박스 아래 붙이기) -->
+      <img
+        src="@/assets/Bg1 1.png"
+        alt="길 배경"
+        class="ground-img position-absolute start-50 translate-middle-x"
+      />
     </div>
   </div>
 </template>
@@ -58,94 +107,99 @@ const loginForm = ref({
 async function handleLogin() {
   try {
     const response = await userLoginApi.userLogin(loginForm.value);
-    const resultObject = response.data;
+    const result = response.data;
 
-    if (resultObject.result === "success") {
+    if (result.result === "success") {
       const user = {
-        userId: resultObject.userId,
-        userLoginId: resultObject.loginId,
-        userName: resultObject.userName,
-        userEmail: resultObject.userEmail,
-        userAddress: resultObject.userAddress,
-        userBirthDate: resultObject.userBirthDate,
-        // 서버에서 내려주는 첫 번째 펫 이미지 URL
-        profileImage: resultObject.profileImage || "https://via.placeholder.com/40",
+        userId: result.userId,
+        userLoginId: result.loginId,
+        userName: result.userName,
+        userEmail: result.userEmail,
+        userAddress: result.userAddress,
+        userBirthDate: result.userBirthDate,
+        profileImage: result.profileImage || "https://via.placeholder.com/40",
       };
-
-      store.dispatch("saveAuth", { user, jwt: resultObject.jwt });
+      store.dispatch("saveAuth", { user, jwt: result.jwt });
       router.push("/Post/MainFeed");
     } else {
-      alert(resultObject.message || "로그인 실패");
+      alert(result.message || "로그인 실패");
     }
-  } catch (error) {
-    console.error("로그인 중 오류:", error);
+  } catch (e) {
+    console.error(e);
     alert("로그인 중 오류 발생");
   }
 }
 </script>
 
 <style scoped>
-/* ----------------- 부트스트랩 아닌 커스텀 스타일 ----------------- */
-
-/* 전체 화면 고정 대신 반응형 */
-#fixed-screen {
-  width: 100vw; /* 브라우저 가로 꽉 채우기 */
-  height: 100vh; /* 브라우저 세로 꽉 채우기 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.bg-cream {
   background-color: #fdfcf9;
-  position: relative;
-  overflow: hidden;
 }
 
-/* 로고 영역 */
+/* ===== 로고 영역 ===== */
 .logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem; /* 좌우 간격 */
-  margin-bottom: 2rem;
+  position: relative;
+  width: 580px;
+  height: 260px;
 }
 
-/* 강아지 이미지 크기 조절 */
-.pet-left,
-.pet-right {
-  width: 60px;
-  height: auto;
+/* 로고 크기 */
+.logo-main {
+  position: relative;
+  width: 330px;
+  z-index: 5;
+  display: block;
+  margin: 0 auto;
 }
 
-/* 로고 paw 아이콘 크기 */
-.paw {
-  font-size: 1.6rem;
-}
-
-/* 로그인 박스 */
-.login-box {
-  width: 100%;
-  max-width: 350px;
-  border-radius: 20px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* 로그인 헤더 그리드 */
-.grid-login-header {
-  grid-template-columns: 1fr auto;
-}
-
-/* 입력 아이콘 */
-.icon-user,
-.icon-pass {
+/* 고양이 왼쪽 */
+.cat-img {
   position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 18px;
+  width: 120px;
+  bottom: 0;
+  left: 40px;
+  z-index: 2;
 }
 
-/* bg-brown 정의 */
-.bg-brown {
-  background-color: #7b4a2d !important;
+/* 강아지 오른쪽 */
+.dog-img {
+  position: absolute;
+  width: 120px;
+  bottom: 0;
+  right: 40px;
+  z-index: 2;
+}
+
+/* ===== 로그인 + 길 ===== */
+.login-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* 길은 로그인 박스 하단에 붙음 */
+.ground-img {
+  width: 500px;
+  bottom: -55px; /* 로그인 박스와 자연스럽게 맞춤 */
+  z-index: 1;
+  filter: drop-shadow(0px 4px 8px rgba(166, 124, 82, 0.4)); /* 갈색 그림자 */
+  transition: filter 0.3s ease;
+}
+
+/* hover 시 살짝 진한 그림자 */
+.ground-img:hover {
+  filter: drop-shadow(0px 6px 10px rgba(166, 124, 82, 0.55));
+}
+
+/* 입력창 */
+input.form-control {
+  height: 46px;
+  border: none;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+}
+
+/* 카드 */
+.card {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 </style>
