@@ -99,11 +99,43 @@
                 </button>
 
                 <!-- 모집자 -->
-                <button v-if="isRecruitment && isAuthor" class="btn btn-warning btn-sm" :disabled="isClosing"
-                  @click="closeRecruitment">
-                  <i class="bi bi-flag-fill"></i>
-                  {{ isClosing ? "마감됨" : "모집 마감하기" }}
-                </button>
+                <div v-if="isRecruitment && isAuthor" class="mt-3 text-end">
+                  <!-- 모집 마감 버튼 -->
+                  <button 
+                    v-if="!isClosing && !isStarted && !isCompleted" 
+                    class="btn btn-warning btn-sm"
+                    @click="closeRecruitment"
+                  >
+                    <i class="bi bi-flag-fill"></i>모집 마감하기
+                  </button>
+
+                  <!-- 산책 시작 버튼 -->
+                  <button
+                    v-else-if="isClosing && !isStarted && !isCompleted"
+                    class="btn btn-success btn-sm"
+                    @click="startWalk"
+                  >
+                    <i class="bi bi-play-fill"></i> 산책 시작하기
+                  </button>
+
+                  <!-- 산책 완료 버튼 -->
+                  <button
+                    v-else-if="isStarted && !isCompleted"
+                    class="btn btn-danger btn-sm"
+                    @click="completeWalk"
+                  >
+                    <i class="bi bi-check-circle-fill"></i> 산책 완료하기
+                  </button>
+
+                  <!-- 완료 후 상태 -->
+                  <button
+                    v-else
+                    class="btn btn-secondary btn-sm"
+                    disabled
+                  >
+                    <i class="bi bi-check-all"></i> 산책 완료됨
+                  </button>
+                </div>
               </div>
 
 
@@ -192,10 +224,17 @@ const authorProfileImg = ref("https://placekitten.com/60/60");
 const authorName = ref("익명");
 const authorPosts = ref([]);
 
+// 글 작성자(또는 그룹 산책 모집자) 구분
 const isAuthor = computed(() => post.value && post.value.postUserId === userId);
 const isRecruitment = computed(() => post.value && post.value.isRequest === "Y");
+
+// 모집 상태 또는 신청 상태
 const isApplying = ref(false);
 const isClosing = ref(false);
+
+// 그룹 산책 진행 상태
+const isStarted = ref(false);
+const isCompleted = ref(false);
 
 const commentsWithProfiles = ref([]); // 댓글 + 작성자 프로필 통합 리스트
 const loadingComments = ref(false); // 🟢 로딩 상태 추가
@@ -394,12 +433,43 @@ async function applyGroupWalk() {
   isApplying.value = true;
 }
 
-// 모집 마감
+// 모집 마감 -> 산책 시작 -> 산책 완료
 async function closeRecruitment() {
-  await store.dispatch("post/groupwalkMarkNow", {
-    postId: post.value.postId,
-    code: 1,
-  });
-  isClosing.value = true;
+  try{
+    await store.dispatch("post/groupwalkMarkNow", {
+      postId: post.value.postId,
+      code: 1, // 모집 마감
+    });
+    isClosing.value = true;
+    
+  } catch (err) {
+    console.log("모집 마감 실패", err);
+  }
+}
+
+async function startWalk() {
+  try {
+    await store.dispatch("post/groupwalkMarkNow", {
+      postId: post.value.postId,
+      code: 2, // 산책 시작
+    });
+    isStarted.value = true;
+
+  } catch (err) {
+    console.log("산책 완료 실패", err);
+  }
+}
+
+async function completeWalk() {
+  try {
+    await store.dispatch("post/groupwalkMarkNow", {
+      postId: post.value.postId,
+      code: 3,  // 산책 완료
+    });
+    isCompleted.value = true;
+
+  } catch (err) {
+    console.log("산책 완료 실패", err);
+  }
 }
 </script>
