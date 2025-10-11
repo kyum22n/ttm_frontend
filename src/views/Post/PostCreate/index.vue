@@ -57,8 +57,8 @@
               <h6 class="fw-bold">태그 선택</h6>
               <div class="d-flex flex-wrap gap-2 mb-2">
                 <button v-for="(t, i) in topTags" :key="`top-${i}`" class="btn btn-sm"
-                  :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
-                  @click="toggleTag(t.tagName)">
+                  :class="selectedTags.includes(t.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
+                  @click="toggleTag(t.tagId)">
                   {{ t.tagName }}
                 </button>
               </div>
@@ -67,8 +67,8 @@
               <div class="collapse" id="moreTags">
                 <div class="d-flex flex-wrap gap-2 mt-2">
                   <button v-for="(t, i) in moreTags" :key="`more-${i}`" class="btn btn-sm"
-                    :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
-                    @click="toggleTag(t.tagName)">
+                    :class="selectedTags.includes(t.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleTag(t.tagId)">
                     {{ t.tagName }}
                   </button>
                 </div>
@@ -163,10 +163,10 @@ const topTags = computed(() => tags.value.slice(0, 5));  // 첫 5개
 const moreTags = computed(() => tags.value.slice(5));
 const showMore = ref(false);
 
-function toggleTag(tagName) {
-  const idx = selectedTags.value.indexOf(tagName);
+function toggleTag(tagId) {
+  const idx = selectedTags.value.indexOf(tagId);
   if (idx >= 0) selectedTags.value.splice(idx, 1);
-  else selectedTags.value.push(tagName);
+  else selectedTags.value.push(tagId);
 }
 function removeTag(tagName) {
   const idx = selectedTags.value.indexOf(tagName);

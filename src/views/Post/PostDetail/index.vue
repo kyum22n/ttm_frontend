@@ -202,7 +202,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
@@ -277,18 +277,30 @@ onMounted(async () => {
   const currentPost = post.value;
   if (!currentPost) return;
 
+  // 모집/신청/산책 상태
+  const { wapplyEndedAt, walkStartedAt, walkEndedAt } = currentPost;
+  isClosing.value = !!wapplyEndedAt;
+  isStarted.value = !!walkStartedAt;
+  isCompleted.value = !!walkEndedAt;
+
+  const status = currentPost.walkStatus;
+  console.log("현재 walkStatus: ", status);
+  if (status === "C") isClosing.value = true;
+  else if (status === "S") isStarted.value = true;
+  else if (status === "E") isCompleted.value= true;
+  
   // 2. 작성자 정보 불러오기 (userId 기반)
   try {
     const jwt = localStorage.getItem("jwt");
     const res = await userApi.userInfo(currentPost.postUserId, jwt);
-
+    
     // 유저 정보와 프로필 이미지 데이터
     const userData = res.data.data;
     const profileImage = res.data.profileImage;
-
+    
     // 로그인 아이디
     authorName.value = userData.userLoginId || `User#${currentPost.postUserId}`;
-
+    
     // 프로필 이미지
     authorProfileImg.value = profileImage
       ? `http://localhost:8080${profileImage}`
@@ -302,7 +314,7 @@ onMounted(async () => {
     userId: currentPost.postUserId,
   });
   authorPosts.value = store.state.post.list || [];
-
+  
   // 4. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = storedUser.userId;
@@ -318,6 +330,10 @@ onMounted(async () => {
       console.error("좋아요 상태 확인 실패:", err.response?.data || err);
     }
   }
+
+  // 신청 상태
+  const participants = store.state.post.detail.participants || [];
+  isApplying.value = participants.some(p => p.userId === userId);
 });
 
 // ===== 댓글 작성자 프로필 불러오기 (Promise.all 병렬 처리) =====
@@ -440,7 +456,12 @@ async function closeRecruitment() {
       postId: post.value.postId,
       code: 1, // 모집 마감
     });
-    isClosing.value = true;
+    await store.dispatch("post/fetchDetail", post.value.postId);
+    await nextTick(); // store 반영 후 읽기
+    const current = post.value;
+    isClosing.value = current.wapplyEndedAt != null ? true : false;
+    isStarted.value = current.walkStartedAt != null ? true : false;
+    isCompleted.value = current.walkEndedAt != null ? true : false;
     
   } catch (err) {
     console.log("모집 마감 실패", err);
@@ -453,8 +474,13 @@ async function startWalk() {
       postId: post.value.postId,
       code: 2, // 산책 시작
     });
-    isStarted.value = true;
-
+    await store.dispatch("post/fetchDetail", post.value.postId);
+    await nextTick(); // store 반영 후 읽기
+    const current = post.value;
+    isClosing.value = current.wapplyEndedAt != null ? true : false;
+    isStarted.value = current.walkStartedAt != null ? true : false;
+    isCompleted.value = current.walkEndedAt != null ? true : false;
+    
   } catch (err) {
     console.log("산책 완료 실패", err);
   }
@@ -466,7 +492,12 @@ async function completeWalk() {
       postId: post.value.postId,
       code: 3,  // 산책 완료
     });
-    isCompleted.value = true;
+    await store.dispatch("post/fetchDetail", post.value.postId);
+    await nextTick(); // store 반영 후 읽기
+    const current = post.value;
+    isClosing.value = current.wapplyEndedAt != null ? true : false;
+    isStarted.value = current.walkStartedAt != null ? true : false;
+    isCompleted.value = current.walkEndedAt != null ? true : false;
 
   } catch (err) {
     console.log("산책 완료 실패", err);

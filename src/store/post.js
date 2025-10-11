@@ -64,6 +64,7 @@ const post = {
           payload.tags && payload.tags.length > 0 ? payload.tags : [];
 
         state.detail.images = payload.images || [];
+        state.detail.participants = payload.participants || [];
       }
     },
     setTags(state, tags) {
