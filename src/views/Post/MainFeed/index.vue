@@ -246,6 +246,7 @@ const posts = ref([]);
 /* 태그 목록 */
 const tags = ref([]);
 
+// 초기 로딩
 onMounted(async () => {
   try {
     // 게시물 목록

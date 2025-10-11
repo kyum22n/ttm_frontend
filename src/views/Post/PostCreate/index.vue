@@ -49,31 +49,32 @@
               <div class="mb-3">
                 <span v-for="tagId in selectedTags" :key="tagId" class="badge bg-primary me-2" style="cursor:pointer"
                   @click="removeTag(tagId)">
-                  {{availableTags.find(t => t.tagId === tagId)?.tagName}} ✕
+                  {{tags.find(t => t.tagId === tagId)?.tagName}} ✕
                 </span>
               </div>
 
               <!-- 태그 선택 버튼 -->
               <h6 class="fw-bold">태그 선택</h6>
               <div class="d-flex flex-wrap gap-2 mb-2">
-                <button v-for="tag in availableTags.slice(0, 5)" :key="tag.tagId" type="button" class="btn btn-sm"
-                  :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
-                  @click="toggleTag(tag.tagId)">
-                  {{ tag.tagName }}
+                <button v-for="(t, i) in topTags" :key="`top-${i}`" class="btn btn-sm"
+                  :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
+                  @click="toggleTag(t.tagName)">
+                  {{ t.tagName }}
                 </button>
               </div>
 
-
+              <!-- collapse 안에 숨겨진 태그 -->
               <div class="collapse" id="moreTags">
                 <div class="d-flex flex-wrap gap-2 mt-2">
-                  <button v-for="tag in availableTags.slice(5)" :key="tag.tagId" type="button" class="btn btn-sm"
-                    :class="selectedTags.includes(tag.tagId) ? 'btn-secondary' : 'btn-outline-primary'"
-                    @click="toggleTag(tag.tagId)">
-                    {{ tag.tagName }}
+                  <button v-for="(t, i) in moreTags" :key="`more-${i}`" class="btn btn-sm"
+                    :class="selectedTags.includes(t.tagName) ? 'btn-secondary' : 'btn-outline-primary'"
+                    @click="toggleTag(t.tagName)">
+                    {{ t.tagName }}
                   </button>
                 </div>
               </div>
 
+              <!-- 더보기/접기 버튼 -->
               <button class="btn btn-link p-0 mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#moreTags"
                 aria-expanded="false" aria-controls="moreTags" @click="toggleMore">
                 {{ showMore ? "접기 ▲" : "더보기 ▼" }}
@@ -90,14 +91,14 @@
               </label>
 
               <button type="button" class="btn btn-primary" :disabled="submitting" @click="submitPost" style="
-              --bs-btn-bg:#6f5034;
-              --bs-btn-border-color:#6f5034;
-              --bs-btn-hover-bg:#5b432c;
-              --bs-btn-hover-border-color:#5b432c;
-              --bs-btn-active-bg:#4d3826;
-              --bs-btn-active-border-color:#4d3826;
-              --bs-btn-active-color:#fff;
-              --bs-btn-focus-shadow-rgb:111,80,52;
+                --bs-btn-bg:#6f5034;
+                --bs-btn-border-color:#6f5034;
+                --bs-btn-hover-bg:#5b432c;
+                --bs-btn-hover-border-color:#5b432c;
+                --bs-btn-active-bg:#4d3826;
+                --bs-btn-active-border-color:#4d3826;
+                --bs-btn-active-color:#fff;
+                --bs-btn-focus-shadow-rgb:111,80,52;
               ">
                 {{ submitting ? "등록 중..." : "게시" }}
               </button>
@@ -128,51 +129,57 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import postApi from "@/apis/postApi";
 
 const store = useStore();
 const router = useRouter();
 
-// 작성 상태
+/* ========================
+  작성 상태
+======================== */
 const title = ref("");
 const content = ref("");
 const isRequest = ref(false);
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 const userId = user.userId || null;
 
-// 태그
-const availableTags = [
-  { tagId: 1, tagName: "강아지산책" },
-  { tagId: 2, tagName: "애견카페" },
-  { tagId: 3, tagName: "반려견일상" },
-  { tagId: 4, tagName: "멍스타그램" },
-  { tagId: 5, tagName: "귀여운강아지" },
-];
+// 초기 로딩
+onMounted(async () => {
+  const res = await postApi.getTagList();
+  tags.value = res.data.tags || [];
+});
+
+/* ========================
+  태그
+======================== */
+// 전체 태그 목록(이름→id 매핑용)
+const tags = ref([]);
 
 const selectedTags = ref([]); // tagId만 담김
-
-function toggleTag(tagId) {
-  if (selectedTags.value.includes(tagId)) {
-    selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
-  } else {
-    selectedTags.value.push(tagId);
-  }
-}
-
-function removeTag(tagId) {
-  selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
-}
-
+const topTags = computed(() => tags.value.slice(0, 5));  // 첫 5개
+const moreTags = computed(() => tags.value.slice(5));
 const showMore = ref(false);
 
+function toggleTag(tagName) {
+  const idx = selectedTags.value.indexOf(tagName);
+  if (idx >= 0) selectedTags.value.splice(idx, 1);
+  else selectedTags.value.push(tagName);
+}
+function removeTag(tagName) {
+  const idx = selectedTags.value.indexOf(tagName);
+  if (idx >= 0) selectedTags.value.splice(idx, 1);
+}
 function toggleMore() {
   showMore.value = !showMore.value;
 }
 
 
-// 이미지
+/* ========================
+  이미지
+======================== */
 const previewImages = ref([]);
 const files = ref([]);
 const previewImage = ref(null);
@@ -200,7 +207,9 @@ function removeImage(idx) {
   previewImage.value = previewImages.value[0] || null;
 }
 
-// 제출
+/* ========================
+  작성한 내용 제출
+======================== */
 async function submitPost() {
   if (!title.value.trim() || !content.value.trim()) return;
   submitting.value = true;
@@ -218,9 +227,9 @@ async function submitPost() {
     if (!newId) return;
 
     if (selectedTags.value.length) {
-      const fakeTagId = (name) => name;
-      const tagIds = selectedTags.value.map((t) => fakeTagId(t));
-      await store.dispatch("post/addTags", { postId: newId, tagIds });
+      await store.dispatch("post/addTags", { 
+        postId: newId, tagIds: selectedTags.value 
+      });
     }
 
     router.push(`/post/${newId}`);

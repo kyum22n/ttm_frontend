@@ -96,18 +96,6 @@
             </div>
 
             <div class="card-footer d-flex flex-wrap gap-3 justify-content-between align-items-center">
-              <!-- 이미지 추가 방식 -->
-              <div class="d-flex align-items-center gap-3">
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" id="modeAppend" value="append" v-model="imageMode">
-                  <label class="form-check-label" for="modeAppend">이미지 추가(append)</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" id="modeReplace" value="replace" v-model="imageMode">
-                  <label class="form-check-label" for="modeReplace">이미지 교체(replace)</label>
-                </div>
-              </div>
-
               <button class="btn btn-primary" :disabled="submitting" @click="updatePost" style="
                   --bs-btn-bg:#6f5034;
                   --bs-btn-border-color:#6f5034;
@@ -116,8 +104,7 @@
                   --bs-btn-active-bg:#4d3826;
                   --bs-btn-active-border-color:#4d3826;
                   --bs-btn-focus-shadow-rgb:111,80,52;
-                "
-              >  
+                ">
                 {{ submitting ? "저장 중..." : "수정 저장" }}
               </button>
             </div>
@@ -130,14 +117,26 @@
 
           <!-- 기존 이미지 리스트: 유지/삭제 토글 -->
           <div class="mb-3">
-            <div v-for="img in existingImages" :key="img.id" class="card mb-2">
-              <img :src="absoluteUrl(img.url)" class="card-img-top img-fluid" :alt="`기존 이미지 ${img.id}`" />
+            <div v-for="img in existingImages" :key="img.id" class="position-relative card mb-2">
+              <!-- X 버튼 -->
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+                @click="img.keep = !img.keep">
+                <i :class="img.keep ? 'bi bi-x-lg' : 'bi bi-arrow-clockwise'"></i>
+              </button>
+
+              <img :src="absoluteUrl(img.url)" class="card-img-top img-fluid" :class="{ 'opacity-50': !img.keep }"
+                :alt="`기존 이미지 ${img.id}`" />
+
+              <div class="card-body text-center small text-muted" v-if="!img.keep">
+                삭제 예정
+              </div>
             </div>
 
             <div v-if="!existingImages.length" class="text-muted small">
               기존 이미지가 없습니다.
             </div>
           </div>
+
 
           <hr>
 
@@ -192,6 +191,9 @@ const route = useRoute();
 const router = useRouter();
 const store = useStore();
 
+/* ========================
+  상태 정의
+======================== */
 const loaded = ref(false);
 const submitting = ref(false);
 
@@ -202,10 +204,10 @@ const isRequest = ref(false);
 
 // 태그
 const selectedTags = ref([]);
-const allTags = ref([]); // [{tagId, tagName}, ...]
+const tags = ref([]);
 const showMore = ref(false);
-const topTags = computed(() => allTags.value.slice(0, 5));
-const moreTags = computed(() => allTags.value.slice(5));
+const topTags = computed(() => tags.value.slice(0, 5));
+const moreTags = computed(() => tags.value.slice(5));
 
 // 기존/신규 이미지
 const existingImages = ref([]);  // [{ id, url, keep: true }]
@@ -217,14 +219,18 @@ const imageMode = ref("append"); // 'append' | 'replace'
 // 기존 상세
 const detail = computed(() => store.state.post.detail);
 
+/* =====================================================
+  절대 경로 설정(백엔드 서버 기준)
+  이미지를 프론트엔드 서버 기준으로 요청하는 것을 방지하기 위함
+======================================================== */
 // util: 절대 URL 만들기 (미리보기/재업로드용)
 function absoluteUrl(url) {
   return url.startsWith("http") ? url : `http://localhost:8080${url}`;
 }
 function parseImageId(url) {
   try {
-    const u = new URL(absoluteUrl(url));
-    return Number(u.searchParams.get("postImageId"));
+    const u = new URL(absoluteUrl(url));  // 문자열을 url 구조로 분석
+    return Number(u.searchParams.get("postImageId")); // 이미지 id를 숫자형으로 변환
   } catch {
     return null;
   }
@@ -239,8 +245,8 @@ onMounted(async () => {
   await store.dispatch("post/fetchDetail", postId);
 
   // 2) 전체 태그 목록(이름→id 매핑용)
-  const tagRes = await postApi.getTagList();
-  allTags.value = (tagRes.data && tagRes.data.tags) ? tagRes.data.tags : [];
+  const tagList = await postApi.getTagList();
+  tags.value = (tagList.data && tagList.data.tags) ? tagList.data.tags : [];
 
   // 3) 폼 채우기 + 기존 이미지 세팅
   if (detail.value) {
@@ -262,20 +268,25 @@ onMounted(async () => {
   loaded.value = true;
 });
 
-// 태그 토글
-function toggleTag(name) {
-  const idx = selectedTags.value.indexOf(name);
+/* ========================
+  태그
+======================== */
+function toggleTag(tagName) {
+  const idx = selectedTags.value.indexOf(tagName);
   if (idx >= 0) selectedTags.value.splice(idx, 1);
-  else selectedTags.value.push(name);
+  else selectedTags.value.push(tagName);
 }
-function removeTag(name) {
-  const idx = selectedTags.value.indexOf(name);
+function removeTag(tagName) {
+  const idx = selectedTags.value.indexOf(tagName);
   if (idx >= 0) selectedTags.value.splice(idx, 1);
 }
 function toggleMore() {
   showMore.value = !showMore.value;
 }
 
+/* ========================
+  이미지
+======================== */
 // 파일 추가 (신규)
 function onFileChange(e) {
   const picked = Array.from(e.target.files || []);
@@ -314,7 +325,9 @@ function setAsMain(idx) {
   previewImage.value = pickedPreview;
 }
 
-// 저장
+/* ========================
+  수정 사항 저장
+======================== */
 async function updatePost() {
   if (!detail.value) return;
 
@@ -348,7 +361,7 @@ async function updatePost() {
           filesToUpload.push(file);
         } catch (err) {
           // 개별 실패는 건너뜀 (최소한 저장이 막히지 않도록)
-          console.error("기존 이미지 재첨부 실패:", url, err);
+          console.log("기존 이미지 재첨부 실패:", url, err);
         }
       }
       // 2) 신규 파일 이어붙이기
@@ -376,7 +389,7 @@ async function updatePost() {
     const toDelNames = [...oldNames].filter(n => !newNames.has(n));
 
     if (toAddNames.length || toDelNames.length) {
-      const nameToId = new Map(allTags.value.map(t => [t.tagName, t.tagId]));
+      const nameToId = new Map(tags.value.map(t => [t.tagName, t.tagId]));
       const addIds = toAddNames.map(n => nameToId.get(n)).filter(Boolean);
       const delIds = toDelNames.map(n => nameToId.get(n)).filter(Boolean);
 
@@ -392,8 +405,7 @@ async function updatePost() {
     // 상세로 이동
     router.push(`/post/${detail.value.postId}`);
   } catch (e) {
-    console.error("업데이트 실패:", e);
-    // alert 금지: 버튼 텍스트/상태로만 피드백
+    console.log("업데이트 실패:", e);
   } finally {
     submitting.value = false;
   }
