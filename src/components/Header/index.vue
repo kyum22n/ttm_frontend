@@ -57,6 +57,7 @@
   </nav>
   <!-- ✅ 추가: 채팅 목록 모달 -->
   <ChatListModal v-model="showChatList" />
+  <WalkListModal v-model="showWalkList" />
 </template>
 
 <script setup>
@@ -67,8 +68,10 @@ import logoImg from "@/assets/logo_white.png";
 import ProfileMenuDropdown from "@/components/ProfileMenuDropdown";
 import axios from "axios";
 
-import ChatListModal from "@/components/Chat/ChatListModal.vue"; // ✅ 추가
+import ChatListModal from "@/components/Chat/ChatListModal.vue";
+import WalkListModal from "@/components/Walk/WalkListModal.vue";
 const showChatList = ref(false); // ✅ 추가: 모달 open 상태
+const showWalkList = ref(false);
 
 const store = useStore();
 const router = useRouter();
@@ -103,11 +106,13 @@ const isLogin = computed(() => store.getters.isLogin);
 // 프로필 이미지 Blob URL
 const profileImgUrl = ref(null);
 
+// 드롭다운 메뉴
 const items = [
   { key: "profile", text: "마이페이지", icon: "🧑‍💻" },
   { key: "mypage", text: "내 프로필", icon: "📒" },
   // { key: "mate", text: "내 산책 메이트", icon: "🐕" },
   { key: "chat", text: "채팅 목록", icon: "🤍" },
+  { key: "walk", text: "산책 신청 내역", icon: "🐾" },
   // { key: "viewed", text: "조회한 게시물", icon: "🕒" },
   { divider: true },
   // { key: "settings", text: "OtherProfile", icon: "⚙️" },
@@ -131,6 +136,12 @@ function handleSelect(key) {
     showChatList.value = true;
     return;
   }
+
+  if (key === "walk") {
+  if (!isLogin.value) { alert("로그인이 필요합니다."); return; }
+  showWalkList.value = true;   // 모달 오픈
+  return;
+}
 
   const map = {
     mypage: "/Profile/EditProfile",

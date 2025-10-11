@@ -5,7 +5,6 @@ import post from "./post";
 import review from "./review";
 import userApi from "@/apis/userApi";
 import pet from "./pet";
-import walk from "./walk";
 
 const store = createStore({
   state: {
@@ -131,7 +130,7 @@ const store = createStore({
       }
     }
   },
-  modules: { post, review, pet, walk },
+  modules: { post, review, pet },
 });
 
 export default store;

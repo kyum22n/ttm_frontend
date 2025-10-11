@@ -7,7 +7,8 @@
         <div class="row align-items-center g-3">
           <div class="col-auto">
             <!-- profileImgUrl이 존재하면 표시 -->
-            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88" height="88" />
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
+              height="88" />
           </div>
 
           <div class="col">
@@ -22,8 +23,7 @@
 
             <ul class="list-inline text-muted small mb-2 mt-2">
               <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
-                <span class="me-1">{{ s.label }}</span
-                ><strong class="text-dark">{{ s.value }}</strong>
+                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
@@ -35,11 +35,7 @@
               </div>
               <div class="col-lg-2 text-lg-end">
                 <!-- 산책신청+ -->
-                <button class="btn btn-primary"
-                  @click="router.push({ path: '/walk/request', query: { receiveUserId: Number(route.params.userId) } })"
-                  :disabled="isMine">
-                  산책신청+
-                </button>
+                <WalkRequest :receive-user-id="Number(route.params.userId)" />
               </div>
               <div class="col-lg-2">
                 <button class="btn btn-primary">메세지 목록</button>
@@ -60,16 +56,19 @@
       <button class="btn btn-outline-secondary btn-sm" @click="router.push('/Register/AddPet')">Add Pets</button>
 
       <!-- 유저의 모든 펫 썸네일 렌더링 -->
-      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)" style="cursor: pointer">
+      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)"
+        style="cursor: pointer">
         <div class="story-ring mx-auto mb-1">
-          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64" height="64" />
+          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64"
+            height="64" />
         </div>
         <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 모달 컴포넌트 -->
-    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId" @edit="goToEditPet" />
+    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId"
+      @edit="goToEditPet" />
 
     <!-- 콘텐츠 + 사이드바 -->
     <div class="row g-4">
@@ -93,7 +92,8 @@
             <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
               <div class="card h-100 border-0 shadow-sm">
                 <div class="ratio ratio-4x3">
-                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover" alt="게시물 이미지" />
+                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover"
+                    alt="게시물 이미지" />
                 </div>
                 <div class="card-body">
                   <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
@@ -171,7 +171,8 @@
             <!-- 해시태그 박스 -->
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable @select="onSelect" />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
+                  @select="onSelect" />
               </div>
             </div>
 
@@ -197,9 +198,11 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import PetProfileModal from "@/components/PetProfileModal";
 import postApi from "@/apis/postApi";
+import WalkRequest from "@/components/Walk/WalkRequest.vue";
 
 // 채팅 신청 버튼
 import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
+
 
 const profileUser = ref(null); // URL 기준 유저 정보 저장
 
@@ -208,6 +211,7 @@ const route = useRoute();
 const router = useRouter();
 const profileImgUrl = ref(null);
 const profile = reactive({ bio: "로딩 중입니다..." });
+
 
 // ✅ 유저 ID
 const routeUserId = ref(null);
@@ -486,17 +490,6 @@ function goToEditPet(pet) {
   router.push(`/Register/EditPet/${pet.petId}`);
 }
 
-
-function goWalkRequest() {
-  // 현재 프로필 주인의 userId를 쿼리로 넘김
-  const targetId = Number(route.params.userId) || 0;
-  if (!store.getters.isLogin) {
-    router.push({ path: "/Login", query: { redirect: route.fullPath } });
-    return;
-  }
-  if (!targetId || isMine.value) return;
-  router.push({ path: "/walk/request", query: { receiveUserId: targetId } });
-}
 
 
 </script>

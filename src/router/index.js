@@ -3,7 +3,6 @@ import AuthRouting from "./AuthRouting";
 import RegisterRouting from "./RegisterRouting";
 import PostRouting from "./PostRouting";
 import ProfileRouting from "./ProfileRouting";
-import WalkRouting from "./WalkRouting";
 import MessageRouting from "./MessageRouting";
 
 const routes = [
@@ -28,7 +27,6 @@ const routes = [
   ...RegisterRouting,
   ...PostRouting,
   ...ProfileRouting,
-  ...WalkRouting,
   ...MessageRouting,
 ];
 

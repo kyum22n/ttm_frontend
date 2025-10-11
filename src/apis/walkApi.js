@@ -5,6 +5,13 @@ import axios from "axios";
  *  Walks (1:1 & Group)
  *  ========================= */
 
+/** 1:1 산책 신청받은 목록 불러오기 */
+function getReceivedRequests(userId) {
+  return axios.get("/walk/apply/receive-list", {
+    params: { receiveUserId: userId },
+  });
+}
+
 /** 1:1 산책 신청한 목록 불러오기 */
 function getOneOnOneRequests(userId) {
   return axios.get("/walk/apply/request-list", {
@@ -21,12 +28,7 @@ function getGroupRequests(userId) {
   });
 }
 
-/** 1:1 산책 신청받은 목록 불러오기 */
-function getReceivedRequests(userId) {
-  return axios.get("/walk/apply/receive-list", {
-    params: { receiveUserId: userId },
-  });
-}
+
 
 /** 1:1 완료된 산책 내역 불러오기 */
 function getCompletedWalks(userId) {
