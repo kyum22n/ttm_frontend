@@ -10,6 +10,7 @@ const routes = [
   {
     path: "/",
     component: () => import(/* webpackChunkName: "home" */ "@/views/HomeView.vue"),
+    meta: { hideLayout: true }
   },
 
   {
