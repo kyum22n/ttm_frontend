@@ -100,6 +100,10 @@
 
                 <!-- 모집자 -->
                 <div v-if="isRecruitment && isAuthor" class="mt-3 text-end">
+                  <!-- ✅ 신청 내역 보기 -->
+                  <button class="btn btn-outline-primary btn-sm" @click="showParticipants = true">
+                    <i class="bi bi-people"></i> 신청 내역 보기
+                  </button>
                   <!-- 모집 마감 버튼 -->
                   <button v-if="!isClosing && !isStarted && !isCompleted" class="btn btn-warning btn-sm"
                     @click="closeRecruitment">
@@ -124,6 +128,9 @@
                 </div>
               </div>
 
+              <!-- ✅ 모달 추가 -->
+              <GroupParticipantsModal v-if="post" v-model="showParticipants" :post-id="post.postId"
+                :is-author="isAuthor" />
 
             </div>
           </div>
@@ -193,6 +200,10 @@ import { useRoute } from "vue-router";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import userApi from "@/apis/userApi";
+
+// 그룹 산책 신청 관리 버튼 모달
+import GroupParticipantsModal from "@/components/Walk/GroupParticipantsModal.vue";
+const showParticipants = ref(false);
 
 const store = useStore();
 const route = useRoute();
