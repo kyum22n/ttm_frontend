@@ -140,9 +140,19 @@
                 </div>
               </div>
 
+              <!-- ✅ 산책 완료 + 승인 참가자일 때만 노출 -->
+              <div class="mt-2 text-end" v-if="isRecruitment && isCompleted && isParticipantApproved">
+                <button class="btn btn-outline-success btn-sm" @click="showSticker = true">
+                  <i class="bi bi-emoji-heart-eyes"></i> 스티커 남기기
+                </button>
+              </div>
+
               <!-- ✅ 모달 추가 -->
               <GroupParticipantsModal v-if="post" v-model="showParticipants" :post-id="post.postId"
                 :is-author="isAuthor" />
+
+              <!-- ✅ 스티커 모달 -->
+              <StickerGiveModal v-if="post" v-model="showSticker" :post-id="post.postId" />
 
             </div>
           </div>
@@ -216,6 +226,9 @@ import userApi from "@/apis/userApi";
 // 그룹 산책 신청 관리 버튼 모달
 import GroupParticipantsModal from "@/components/Walk/GroupParticipantsModal.vue";
 const showParticipants = ref(false);
+// 스티커(리뷰) 남기기 모달
+import StickerGiveModal from "@/components/Review/StickerGiveModal.vue";
+const showSticker = ref(false);
 
 const store = useStore();
 const route = useRoute();
@@ -448,8 +461,8 @@ async function applyGroupWalk() {
   // ✅ 모집 마감/시작/완료 상태면 신청 불가
   if (isClosing.value || isStarted.value || isCompleted.value) {
     alert(isCompleted.value ? "이미 산책이 완료되었습니다."
-         : (isStarted.value ? "산책이 이미 시작되었습니다."
-         : "모집이 마감되었습니다."));
+      : (isStarted.value ? "산책이 이미 시작되었습니다."
+        : "모집이 마감되었습니다."));
     return;
   }
 
@@ -516,4 +529,11 @@ async function completeWalk() {
     console.log("산책 완료 실패", err);
   }
 }
+
+const isParticipantApproved = computed(() => {
+  const list = (post.value?.participants) || [];
+  // applyStatus가 'A'로 들어오고 있을 때 기준
+  return list.some(p => p.userId === userId && (p.applyStatus || p.APPLY_STATUS) === 'A');
+});
+
 </script>
