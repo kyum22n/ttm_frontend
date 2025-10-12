@@ -159,6 +159,7 @@ async function handleLogin() {
   bottom: 0;
   left: 40px;
   z-index: 2;
+  pointer-events: none; /* 클릭 막지 않게 */
 }
 
 /* 강아지 오른쪽 */
@@ -168,6 +169,7 @@ async function handleLogin() {
   bottom: 0;
   right: 40px;
   z-index: 2;
+  pointer-events: none; /* 클릭 막지 않게 */
 }
 
 /* ===== 로그인 + 길 ===== */
@@ -176,13 +178,20 @@ async function handleLogin() {
   display: inline-block;
 }
 
+/* 카드가 항상 위로 오게 */
+.login-wrapper .card {
+  position: relative;
+  z-index: 5;
+}
+
 /* 길은 로그인 박스 하단에 붙음 */
 .ground-img {
   width: 500px;
-  bottom: -55px; /* 로그인 박스와 자연스럽게 맞춤 */
-  z-index: 1;
-  filter: drop-shadow(0px 4px 8px rgba(166, 124, 82, 0.4)); /* 갈색 그림자 */
+  bottom: -55px;
+  z-index: 1; /* 카드보다 아래 */
+  filter: drop-shadow(0px 4px 8px rgba(166, 124, 82, 0.4));
   transition: filter 0.3s ease;
+  pointer-events: none; /* 클릭 이벤트 차단 */
 }
 
 /* hover 시 살짝 진한 그림자 */
