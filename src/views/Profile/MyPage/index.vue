@@ -5,14 +5,8 @@
       <div class="card-body">
         <div class="row align-items-center g-3">
           <div class="col-auto">
-            <img
-              v-if="profileImgUrl"
-              :src="profileImgUrl"
-              alt="프로필"
-              class="rounded-circle object-cover"
-              width="88"
-              height="88"
-            />
+            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
+              height="88" />
           </div>
 
           <div class="col">
@@ -45,14 +39,17 @@
 
               <div class="col-lg-2">
                 <!-- ✅ 1:1 산책 수락(A) 건이 있을 때에만 활성화 -->
-                <button
-                  class="btn"
-                  :class="canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'"
-                  :disabled="!canOneOnOneGo"
-                  @click="openOneOnOneModal"
-                  :title="canOneOnOneGo ? '' : '1:1 산책이 수락되면 활성화됩니다.'"
-                >
+                <button class="btn" :class="canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'"
+                  :disabled="!canOneOnOneGo" @click="openOneOnOneModal"
+                  :title="canOneOnOneGo ? '' : '1:1 산책이 수락되면 활성화됩니다.'">
                   산책 하러가기!
+                </button>
+              </div>
+
+              <!-- ✅ 새 버튼: 스티커 구경하기 -->
+              <div class="col-lg-2">
+                <button class="btn btn-warning" @click="showStickerModal = true" :title="'내가 받은 스티커 리뷰를 모아 보여줍니다.'">
+                  스티커 구경하기
                 </button>
               </div>
 
@@ -69,33 +66,26 @@
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
       <button class="btn btn-outline-secondary btn-sm" @click="router.push('/Register/AddPet')">Add Pets</button>
 
-      <div
-        v-for="pet in petList"
-        :key="pet.petId"
-        class="text-center"
-        @click="openPetModal(pet)"
-        style="cursor: pointer"
-      >
+      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)"
+        style="cursor: pointer">
         <div class="story-ring mx-auto mb-1">
-          <img
-            :src="getPetImageUrl(pet)"
-            alt="pet thumbnail"
-            class="rounded-circle object-cover"
-            width="64"
-            height="64"
-          />
+          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64"
+            height="64" />
         </div>
         <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 펫 프로필 모달 -->
-    <PetProfileModal
-      v-model:show="showPetModal"
-      :pet="selectedPet"
-      :currentUserId="store.state.user.userId"
-      @edit="goToEditPet"
-    />
+    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId"
+      @edit="goToEditPet" />
+
+    <!-- 스티커 보여주기 모달 -->
+    + <StickerWallModal
+   v-model:show="showStickerModal"
+   :user-id="userId || store.state.user.userId"
+   :max="20"
+/>
 
     <!-- ===== 콘텐츠 + 사이드바 ===== -->
     <div class="row g-4">
@@ -121,7 +111,8 @@
             <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
               <div class="card h-100 border-0 shadow-sm">
                 <div class="ratio ratio-4x3">
-                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover" alt="게시물 이미지" />
+                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover"
+                    alt="게시물 이미지" />
                 </div>
                 <div class="card-body">
                   <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
@@ -196,15 +187,8 @@
           <div class="card-body">
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox
-                  title="해시태그"
-                  :tags="tagsFromReviews"
-                  :max-visible="10"
-                  prefix="#"
-                  pill
-                  clickable
-                  @select="onSelect"
-                />
+                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
+                  @select="onSelect" />
               </div>
             </div>
 
@@ -221,12 +205,9 @@
     </div>
 
     <!-- ✅ 1:1 산책 진행 모달 -->
-    <OneOnOneWalkModal
-      v-model="showOOOWalk"
-      :request-one-id="acceptedPair?.requestOneId || null"
+    <OneOnOneWalkModal v-model="showOOOWalk" :request-one-id="acceptedPair?.requestOneId || null"
       :partner-id="Number(route.params.userId)"
-      :partner-name="profileUser?.userLoginId || ('User#' + route.params.userId)"
-    />
+      :partner-name="profileUser?.userLoginId || ('User#' + route.params.userId)" />
   </div>
 </template>
 
@@ -240,10 +221,10 @@ import PetProfileModal from "@/components/PetProfileModal";
 import postApi from "@/apis/postApi";
 import WalkRequest from "@/components/Walk/WalkRequest.vue";
 import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
-import userApi from "@/apis/userApi";
 import walkApi from "@/apis/walkApi"; // ✅ 받은/보낸 1:1 신청 목록 사용
 
 import OneOnOneWalkModal from "@/components/Walk/OneOnOneWalkModal.vue";
+import StickerWallModal from "@/components/Review/StickerWallModal.vue";
 
 const store = useStore();
 const route = useRoute();
@@ -275,6 +256,8 @@ const selectedPet = ref(null);
 
 const userId = computed(() => store.state.user?.userId || null);
 const routeUserId = ref(null);
+
+const showStickerModal = ref(false); // 열고 닫기만
 
 watch(
   () => route.params.userId,
@@ -489,19 +472,27 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.object-cover { object-fit: cover; }
+.object-cover {
+  object-fit: cover;
+}
 
 .story-ring {
-  width: 68px; height: 68px; border-radius: 50%;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
   border: 3px solid transparent;
   background: linear-gradient(45deg, #ff6ea8, #f7b2d9, #fcd5e8);
   background-origin: border-box;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
 .story-ring img {
-  width: 100%; height: 100%;
-  border-radius: 50%; object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 </style>
