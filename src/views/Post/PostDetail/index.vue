@@ -92,11 +92,23 @@
               <!-- 산책 모집글 버튼 -->
               <div class="mt-3 text-end">
                 <!-- 신청자 -->
-                <button v-if="isRecruitment && !isAuthor" class="btn btn-success btn-sm" :disabled="isApplying"
-                  @click="applyGroupWalk">
-                  <i class="bi bi-person-plus"></i>
-                  {{ isApplying ? "신청 완료" : "신청하기" }}
-                </button>
+                <template v-if="isRecruitment && !isAuthor">
+                  <!-- 모집 마감/진행/완료 상태일 땐 안내만 -->
+                  <button v-if="isClosing || isStarted || isCompleted" class="btn btn-secondary btn-sm" disabled>
+                    <i class="bi bi-lock-fill"></i>
+                    {{
+                      isCompleted
+                        ? "산책 완료됨"
+                        : (isStarted ? "산책 진행중" : "모집 마감")
+                    }}
+                  </button>
+
+                  <!-- 모집 중일 땐 신청 버튼 -->
+                  <button v-else class="btn btn-success btn-sm" :disabled="isApplying" @click="applyGroupWalk">
+                    <i class="bi bi-person-plus"></i>
+                    {{ isApplying ? "신청 완료" : "신청하기" }}
+                  </button>
+                </template>
 
                 <!-- 모집자 -->
                 <div v-if="isRecruitment && isAuthor" class="mt-3 text-end">
@@ -433,18 +445,22 @@ async function applyGroupWalk() {
     return;
   }
 
-  const participate = {
-    postId: post.value.postId,
-    userId,
-  };
+  // ✅ 모집 마감/시작/완료 상태면 신청 불가
+  if (isClosing.value || isStarted.value || isCompleted.value) {
+    alert(isCompleted.value ? "이미 산책이 완료되었습니다."
+         : (isStarted.value ? "산책이 이미 시작되었습니다."
+         : "모집이 마감되었습니다."));
+    return;
+  }
 
+  const participate = { postId: post.value.postId, userId };
   await store.dispatch("post/groupwalkStatus", {
-    status: "P", // APPLY → P
-    participate: { postId: post.value.postId, userId },
+    status: "P",
+    participate
   });
-
   isApplying.value = true;
 }
+
 
 // 모집 마감 -> 산책 시작 -> 산책 완료
 async function closeRecruitment() {
