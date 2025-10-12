@@ -201,7 +201,7 @@ async function submit() {
 
     if (res.data.result === "success") {
       alert("새 반려견이 등록되었습니다!");
-      router.push(`/Profile/${store.state.user.userId}`);
+      router.push(`/mypage/${store.state.user.userId}`);
     } else {
       alert(res.data.message || "등록 실패");
     }
@@ -213,7 +213,7 @@ async function submit() {
 
 // 뒤로가기
 function goBack() {
-  router.push(`/Profile/${store.state.user.userId}`);
+  router.push(`/mypage/${store.state.user.userId}`);
 }
 </script>
 

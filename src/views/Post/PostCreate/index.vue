@@ -20,11 +20,16 @@
 
       <div class="row g-4">
         <!-- ===== 왼쪽: 대표 이미지 미리보기 ===== -->
-        <div class="col-md-4">
+        <div class="col-md-4 text-center">
           <div class="border rounded p-3 text-center">
             <img v-if="previewImage" :src="previewImage" class="img-fluid rounded" alt="대표 미리보기" />
             <div v-else class="text-muted small">이미지 미리보기</div>
           </div>
+
+          <!-- 이미지 없을 시 문구 -->
+          <small v-if="imageError" class="text-danger d-block mt-2">
+            이미지를 최소 1장 이상 첨부해주세요
+          </small>
         </div>
 
         <!-- ===== 중앙: 글 작성 ===== -->
@@ -184,6 +189,7 @@ const previewImages = ref([]);
 const files = ref([]);
 const previewImage = ref(null);
 const submitting = ref(false);
+const imageError = ref(false);
 
 function onFileChange(e) {
   const picked = Array.from(e.target.files || []);
@@ -212,6 +218,12 @@ function removeImage(idx) {
 ======================== */
 async function submitPost() {
   if (!title.value.trim() || !content.value.trim()) return;
+
+  if (files.value.length === 0) {
+    imageError.value = true;
+    return;
+  }
+
   submitting.value = true;
   try {
     const post = {
@@ -227,8 +239,8 @@ async function submitPost() {
     if (!newId) return;
 
     if (selectedTags.value.length) {
-      await store.dispatch("post/addTags", { 
-        postId: newId, tagIds: selectedTags.value 
+      await store.dispatch("post/addTags", {
+        postId: newId, tagIds: selectedTags.value
       });
     }
 

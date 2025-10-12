@@ -76,11 +76,11 @@ const router = useRouter();
 const store = useStore();
 
 const user = ref({
-  userLoginId: "hello",
-  userPassword: "12345",
-  userName: "hello",
-  userEmail: "hello@hello.com",
-  userAddress: "Anyang",
+  userLoginId: "",
+  userPassword: "",
+  userName: "",
+  userEmail: "",
+  userAddress: "",
   userBirthDate: "",
 });
 
