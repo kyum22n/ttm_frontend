@@ -67,6 +67,13 @@ const post = {
         state.detail.participants = payload.participants || [];
       }
     },
+    
+    clearDetail(state) {
+      state.detail = null;
+      state.comments = [];
+      state.tags = [];
+    },
+
     setTags(state, tags) {
       state.tags = tags || [];
     },

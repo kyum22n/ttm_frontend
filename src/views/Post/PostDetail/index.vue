@@ -101,38 +101,24 @@
                 <!-- 모집자 -->
                 <div v-if="isRecruitment && isAuthor" class="mt-3 text-end">
                   <!-- 모집 마감 버튼 -->
-                  <button 
-                    v-if="!isClosing && !isStarted && !isCompleted" 
-                    class="btn btn-warning btn-sm"
-                    @click="closeRecruitment"
-                  >
+                  <button v-if="!isClosing && !isStarted && !isCompleted" class="btn btn-warning btn-sm"
+                    @click="closeRecruitment">
                     <i class="bi bi-flag-fill"></i>모집 마감하기
                   </button>
 
                   <!-- 산책 시작 버튼 -->
-                  <button
-                    v-else-if="isClosing && !isStarted && !isCompleted"
-                    class="btn btn-success btn-sm"
-                    @click="startWalk"
-                  >
+                  <button v-else-if="isClosing && !isStarted && !isCompleted" class="btn btn-success btn-sm"
+                    @click="startWalk">
                     <i class="bi bi-play-fill"></i> 산책 시작하기
                   </button>
 
                   <!-- 산책 완료 버튼 -->
-                  <button
-                    v-else-if="isStarted && !isCompleted"
-                    class="btn btn-danger btn-sm"
-                    @click="completeWalk"
-                  >
+                  <button v-else-if="isStarted && !isCompleted" class="btn btn-danger btn-sm" @click="completeWalk">
                     <i class="bi bi-check-circle-fill"></i> 산책 완료하기
                   </button>
 
                   <!-- 완료 후 상태 -->
-                  <button
-                    v-else
-                    class="btn btn-secondary btn-sm"
-                    disabled
-                  >
+                  <button v-else class="btn btn-secondary btn-sm" disabled>
                     <i class="bi bi-check-all"></i> 산책 완료됨
                   </button>
                 </div>
@@ -189,7 +175,7 @@
               <div v-if="authorPosts.length">
                 <div v-for="p in authorPosts.slice(0, 3)" :key="p.postId" class="mb-2">
                   <img :src="p.thumbnailUrl" class="rounded shadow-sm w-100" role="button"
-                    @click="$router.push(`/Post/PostDetail/${p.postId}`)" />
+                    @click="$router.push(`/post/${p.postId}`)" />
                 </div>
               </div>
               <div v-else class="text-muted small">게시물이 없습니다</div>
@@ -287,20 +273,20 @@ onMounted(async () => {
   console.log("현재 walkStatus: ", status);
   if (status === "C") isClosing.value = true;
   else if (status === "S") isStarted.value = true;
-  else if (status === "E") isCompleted.value= true;
-  
+  else if (status === "E") isCompleted.value = true;
+
   // 2. 작성자 정보 불러오기 (userId 기반)
   try {
     const jwt = localStorage.getItem("jwt");
     const res = await userApi.userInfo(currentPost.postUserId, jwt);
-    
+
     // 유저 정보와 프로필 이미지 데이터
     const userData = res.data.data;
     const profileImage = res.data.profileImage;
-    
+
     // 로그인 아이디
     authorName.value = userData.userLoginId || `User#${currentPost.postUserId}`;
-    
+
     // 프로필 이미지
     authorProfileImg.value = profileImage
       ? `http://localhost:8080${profileImage}`
@@ -314,7 +300,7 @@ onMounted(async () => {
     userId: currentPost.postUserId,
   });
   authorPosts.value = store.state.post.list || [];
-  
+
   // 4. 로그인한 사용자 + postId 있을 때만 좋아요 상태 확인
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = storedUser.userId;
@@ -451,7 +437,7 @@ async function applyGroupWalk() {
 
 // 모집 마감 -> 산책 시작 -> 산책 완료
 async function closeRecruitment() {
-  try{
+  try {
     await store.dispatch("post/groupwalkMarkNow", {
       postId: post.value.postId,
       code: 1, // 모집 마감
@@ -462,7 +448,7 @@ async function closeRecruitment() {
     isClosing.value = current.wapplyEndedAt != null ? true : false;
     isStarted.value = current.walkStartedAt != null ? true : false;
     isCompleted.value = current.walkEndedAt != null ? true : false;
-    
+
   } catch (err) {
     console.log("모집 마감 실패", err);
   }
@@ -480,7 +466,7 @@ async function startWalk() {
     isClosing.value = current.wapplyEndedAt != null ? true : false;
     isStarted.value = current.walkStartedAt != null ? true : false;
     isCompleted.value = current.walkEndedAt != null ? true : false;
-    
+
   } catch (err) {
     console.log("산책 완료 실패", err);
   }
