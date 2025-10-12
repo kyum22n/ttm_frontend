@@ -92,12 +92,12 @@ const store = useStore();
 const router = useRouter();
 
 const pet = ref({
-  petName: "hello",
+  petName: "",
   petBirthDay: "",
   petGender: "",
-  petWeight: "5",
-  petBreed: "hello",
-  petDesc: "hello",
+  petWeight: "",
+  petBreed: "",
+  petDesc: "",
   petAttach: null,
 });
 

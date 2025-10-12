@@ -134,7 +134,7 @@ onMounted(async () => {
   const petId = route.params.petId;
   if (!petId) {
     alert("잘못된 접근입니다.");
-    router.push(`/Profile/${store.state.user.userId}`);
+    router.push(`/mypage/${store.state.user.userId}`);
     return;
   }
 
@@ -166,7 +166,7 @@ onMounted(async () => {
   } catch (err) {
     console.error("펫 정보 불러오기 실패:", err);
     alert("펫 정보를 불러오는 중 오류가 발생했습니다.");
-    router.push(`/Profile/${store.state.user.userId}`);
+    router.push(`/mypage/${store.state.user.userId}`);
   }
 });
 
@@ -198,7 +198,7 @@ async function submit() {
 
     if (res.data && res.data.petId) {
       alert("반려견 정보가 수정되었습니다!");
-      router.push(`/Profile/${store.state.user.userId}`);
+      router.push(`/mypage/${store.state.user.userId}`);
     } else {
       alert("수정 실패. 다시 시도해주세요.");
     }
@@ -210,7 +210,7 @@ async function submit() {
 
 // 🧩 취소 시 뒤로가기
 function goBack() {
-  router.push(`/Profile/${store.state.user.userId}`);
+  router.push(`/mypage/${store.state.user.userId}`);
 }
 </script>
 
