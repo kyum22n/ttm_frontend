@@ -541,7 +541,7 @@ async function loadPetProfile() {
     const mp = pets[0];
     mainPet.value = mp;
     profile.bio = mp.petDesc || "아직 반려견 소개가 없습니다.";
-    profileImgUrl.value = `/pet/image/${mp.petId}`;
+    profileImgUrl.value = axios.defaults.baseURL + `/pet/image/${mp.petId}`;
   } catch (e) {
     console.error("펫 프로필 불러오기 실패:", e);
     profile.bio = "프로필 정보를 불러오지 못했습니다.";
@@ -563,7 +563,7 @@ async function loadAllPets() {
 }
 
 function getPetImageUrl(pet) {
-  if (pet?.petId) return `/pet/image/${pet.petId}`;
+  if (pet?.petId) return axios.defaults.baseURL + `/pet/image/${pet.petId}`;
   return "https://via.placeholder.com/80?text=No+Image";
 }
 

@@ -31,12 +31,16 @@
     <div class="container my-5" v-if="loaded">
       <div class="row">
         <!-- ===== 왼쪽: 대표 이미지 미리보기 (신규 첨부 중 첫 장) ===== -->
-        <div class="col-md-4">
-          <div class="card mb-3 shadow-sm">
+        <div class="col-md-4 text-center">
+          <div class="card mb-3 shadow-sm text-center">
             <img v-if="previewImage" :src="previewImage" class="card-img-top" alt="대표 미리보기" />
             <div v-else class="card-body text-muted text-center">
               이미지 미리보기 (신규 첨부만 표시)
             </div>
+
+            <small v-if="imageError" class="text-danger d-block text-center mt-2">
+              이미지를 최소 1장 이상 첨부해주세요
+            </small>
           </div>
         </div>
 
@@ -120,7 +124,7 @@
             <div v-for="img in existingImages" :key="img.id" class="position-relative card mb-2">
               <!-- X 버튼 -->
               <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-                @click="img.keep = !img.keep">
+                :class="img.keep ? 'btn-danger' : 'btn-secondary'" @click="toggleKeep(img)">
                 <i :class="img.keep ? 'bi bi-x-lg' : 'bi bi-arrow-clockwise'"></i>
               </button>
 
@@ -201,6 +205,7 @@ const submitting = ref(false);
 const title = ref("");
 const content = ref("");
 const isRequest = ref(false);
+const imageError = ref(false);
 
 // 태그
 const selectedTags = ref([]);
@@ -287,6 +292,14 @@ function toggleMore() {
 /* ========================
   이미지
 ======================== */
+// 이미지 유지/삭제 토글
+function toggleKeep(img) {
+  img.keep = !img.keep;
+  if (!img.keep) {
+    imageError.value = false;  // 삭제 표시(명시적)
+  }
+}
+
 // 파일 추가 (신규)
 function onFileChange(e) {
   const picked = Array.from(e.target.files || []);
@@ -304,6 +317,7 @@ function onFileChange(e) {
     reader.readAsDataURL(f);
   }
   e.target.value = "";
+  imageError.value = false;
 }
 
 // 신규 썸네일 삭제/대표 지정
@@ -313,6 +327,7 @@ function removeImage(idx) {
   if (previewImage.value === removed) {
     previewImage.value = previewImages.value[0] || null;
   }
+  imageError.value = false;
 }
 function setAsMain(idx) {
   // 신규 파일 업로드 순서를 바꾸기 위해 files도 재정렬
@@ -331,7 +346,19 @@ function setAsMain(idx) {
 async function updatePost() {
   if (!detail.value) return;
 
+  const hasKept = existingImages.value.some(img => img.keep);
+  const hasNew = files.value.length > 0;
+
+  if (!hasKept && !hasNew) {
+    imageError.value = true;
+    submitting.value = false;
+    return;
+  } else {
+    imageError.value = false;
+  }
+
   submitting.value = true;
+
   try {
     const fd = new FormData();
     fd.append("postId", String(detail.value.postId));
@@ -369,6 +396,13 @@ async function updatePost() {
     } else {
       // append: 신규 파일만
       filesToUpload.push(...files.value);
+    }
+
+    // 아무 이미지도 없으면 오류 메시지
+    if (filesToUpload.length === 0) {
+      imageError.value = true;
+      submitting.value = false;
+      return;
     }
 
     // FormData에 순서대로 추가 (대표를 맨 앞에 두고 싶으면 위에서 files 재정렬됨)

@@ -218,7 +218,8 @@ onMounted(async () => {
     pet.value = { ...pet.value };
 
     if (data.petId) {
-      previewUrl.value = `/pet/image/${data.petId}?v=${Date.now()}`;
+      previewUrl.value =
+        axios.defaults.baseURL + `/pet/image/${data.petId}?v=${Date.now()}`;
     }
   } catch (err) {
     console.error("펫 정보 불러오기 실패:", err);
