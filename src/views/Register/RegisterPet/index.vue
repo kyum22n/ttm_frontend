@@ -3,12 +3,7 @@
     <div class="row w-100">
       <!-- 왼쪽 영역 -->
       <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
-        <img
-          src="@/assets/logo_white_bigsize.png"
-          alt="로고"
-          class="img-fluid"
-          style="max-width: 300px;"
-        />
+        <img src="@/assets/logo_white_bigsize.png" alt="로고" class="img-fluid" style="max-width: 300px;" />
         <div class="d-flex gap-4">
           <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
         </div>
@@ -33,11 +28,20 @@
               />
               <input id="petImage" type="file" class="d-none" accept="image/*" @change="onFileChange" />
             </label>
+            <!-- 이미지 선택 안 했을 때 경고 표시 -->
+            <div v-if="triedSubmit && !pet.petAttach" class="text-danger small mt-1">
+              프로필 이미지를 등록해주세요.
+            </div>
           </div>
 
           <!-- 소개 -->
           <div class="mb-3">
-            <textarea v-model="pet.petDesc" class="form-control" rows="3" placeholder="반려동물을 소개해주세요"></textarea>
+            <textarea
+              v-model="pet.petDesc"
+              class="form-control"
+              rows="3"
+              placeholder="반려동물을 소개해주세요"
+            ></textarea>
           </div>
 
           <form @submit.prevent="handleRegister">
@@ -74,6 +78,10 @@
               <input v-model="pet.petBreed" type="text" class="form-control" placeholder="Breed" />
             </div>
 
+            <!-- 오류 / 성공 메시지 -->
+            <div v-if="errorMessage" class="text-danger text-center mb-2 small">{{ errorMessage }}</div>
+            <div v-if="successMessage" class="text-success text-center mb-2 small">{{ successMessage }}</div>
+
             <button type="submit" class="btn btn-brown w-100">펫 등록 완료</button>
           </form>
         </div>
@@ -103,6 +111,9 @@ const pet = ref({
 
 const previewImage = ref(null);
 const defaultImage = "@/assets/default-profile.png";
+const errorMessage = ref("");
+const successMessage = ref("");
+const triedSubmit = ref(false); // 제출 시도 여부 (이미지 필수 경고용)
 
 function onFileChange(e) {
   const file = e.target.files[0];
@@ -113,32 +124,39 @@ function onFileChange(e) {
 }
 
 async function handleRegister() {
+  triedSubmit.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  // 프로필 이미지 필수 검사
+  if (!pet.value.petAttach) {
+    return;
+  }
+
   try {
     const user = store.state.signupUser;
     if (!user) {
-      alert("회원 정보가 없습니다. 다시 회원가입을 진행해주세요.");
-      router.push("/Register/User");
+      errorMessage.value = "회원 정보가 없습니다. 다시 회원가입을 진행해주세요.";
+      setTimeout(() => router.push("/Register/User"), 1500);
       return;
     }
 
-    // API 모듈에서 FormData 생성
     const response = await userApi.userJoin(user, pet.value);
     const result = response.data;
 
     if (result.result === "success") {
-      alert("회원가입이 완료되었습니다!");
+      successMessage.value = "🎉 회원가입이 완료되었습니다! 잠시 후 로그인 화면으로 이동합니다.";
       store.commit("clearSignupUser");
-      router.push("/Auth/Login");
+      setTimeout(() => router.push("/Auth/Login"), 2000);
     } else {
-      alert(result.message);
+      errorMessage.value = result.message || "등록 중 오류가 발생했습니다.";
     }
   } catch (error) {
     console.error("회원가입 중 오류:", error);
-    alert("회원가입 중 오류가 발생했습니다.");
+    errorMessage.value = error.response?.data?.message || "서버 통신 중 오류가 발생했습니다.";
   }
 }
 </script>
-
 
 <style scoped>
 .text-brown { color: #6b4a2b; }
@@ -147,4 +165,5 @@ async function handleRegister() {
 .btn-brown:hover { background-color: #56351f; }
 .btn-outline-brown { color: #6b4a2b; border: 1px solid #6b4a2b; }
 .btn-outline-brown:hover { background-color: #f9f4ef; }
+.text-danger, .text-success { font-size: 0.9rem; transition: opacity 0.3s ease; }
 </style>

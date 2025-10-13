@@ -40,10 +40,12 @@
 <script setup>
 import { ref } from "vue";
 import axios from "axios";
+import { useRouter } from "vue-router";
 
 const email = ref("");
 const loginId = ref("");
 const message = ref("");
+const router = useRouter();
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -65,6 +67,7 @@ const findId = async () => {
     loginId.value = response.data.loginId;
     alert("loginId는 " + loginId.value + " 입니다");
     message.value = response.data.message;
+    router.push("/Auth/Login");
   } catch (err) {
     message.value = err.response?.data?.message || "서버 요청 중 오류가 발생했습니다.";
   }
@@ -83,7 +86,8 @@ const findPassword = async () => {
       loginId: loginId.value,
     });
     message.value = response.data.message;
-    alert("비밀번호가 리셋되었습니다. 메일을 확인하세요.");
+    // alert("비밀번호가 리셋되었습니다. 메일을 확인하세요.");
+    router.push("/Auth/Login");
   } catch (err) {
     message.value = err.response?.data?.message || "서버 요청 중 오류가 발생했습니다.";
   }

@@ -4,9 +4,7 @@
       <!-- 왼쪽 -->
       <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
         <img src="@/assets/logo_white_bigsize.png" alt="로고" class="img-fluid" style="max-width: 300px;" />
-        <div class="d-flex gap-0">
-          <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
-        </div>
+        <img src="@/assets/catdog.png" alt="고양이개" class="img-fluid" style="width:300px;" />
       </div>
 
       <!-- 오른쪽 -->
@@ -43,22 +41,28 @@
               <input v-model="user.userPassword" type="password" class="form-control" placeholder="비밀번호" required />
             </div>
 
-            <div class="mb-3 input-group">
+            <div class="mb-1 input-group">
               <span class="input-group-text">🔒</span>
               <input v-model="confirm" type="password" class="form-control" placeholder="비밀번호 확인" required />
             </div>
+            <small v-if="confirm && user.userPassword !== confirm" class="text-danger ms-1">
+              비밀번호가 일치하지 않습니다.
+            </small>
 
-            <div class="mb-3 input-group">
+            <div class="mt-3 mb-3 input-group">
               <span class="input-group-text">🌍</span>
               <input v-model="user.userAddress" type="text" class="form-control" placeholder="지역" />
             </div>
 
-            <div class="form-check mb-3">
+            <div class="form-check mb-1">
               <input class="form-check-input" type="checkbox" v-model="agree" id="agreeCheck" />
               <label class="form-check-label small" for="agreeCheck">개인정보 처리방침 동의</label>
             </div>
+            <small v-if="!agree && triedSubmit" class="text-danger ms-1">
+              개인정보 처리방침에 동의해야 합니다.
+            </small>
 
-            <button type="submit" class="btn btn-brown w-100">다음 (펫 등록)</button>
+            <button type="submit" class="btn btn-brown w-100 mt-3">다음 (펫 등록)</button>
           </form>
         </div>
       </div>
@@ -86,19 +90,16 @@ const user = ref({
 
 const confirm = ref("");
 const agree = ref(false);
+const triedSubmit = ref(false); // 제출 시도 여부
 
 async function goNext() {
-  if (!agree.value) {
-    alert("개인정보 처리방침에 동의해야 합니다.");
-    return;
-  }
-  if (user.value.userPassword !== confirm.value) {
-    alert("비밀번호가 일치하지 않습니다.");
+  triedSubmit.value = true;
+
+  if (user.value.userPassword !== confirm.value || !agree.value) {
     return;
   }
 
   try {
-    // 아이디 + 이메일 중복 체크
     const res = await axios.get("http://localhost:8080/user/check-duplicate", {
       params: {
         loginId: user.value.userLoginId,
@@ -107,13 +108,11 @@ async function goNext() {
     });
 
     if (res.data.result === "success") {
-      // Vuex에 유저 정보 저장 후 펫 등록 페이지로 이동
       store.commit("setSignupUser", user.value);
       router.push("/Register/Pet");
     }
-
   } catch (err) {
-    alert(err.response?.data?.message || "중복 확인 중 오류가 발생했습니다.");
+    console.error(err.response?.data?.message || "중복 확인 중 오류 발생");
   }
 }
 </script>
@@ -125,4 +124,5 @@ async function goNext() {
 .btn-brown:hover { background-color: #56351f; }
 .btn-outline-brown { color: #6b4a2b; border: 1px solid #6b4a2b; }
 .btn-outline-brown:hover { background-color: #f9f4ef; }
+.text-danger { font-size: 0.9rem; }
 </style>
