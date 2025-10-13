@@ -123,7 +123,7 @@
                 </div>
               </div>
 
-              <div class="col-lg-2" v-if="isMyProfile">
+              <!-- <div class="col-lg-2" v-if="isMyProfile">
                 <button
                   class="btn"
                   :class="
@@ -134,7 +134,7 @@
                 >
                   산책 하러가기!
                 </button>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
