@@ -1,369 +1,419 @@
 <template>
-  <div class="container py-4">
-    <!-- 프로필 헤더 -->
-    <div class="card border-0 shadow-sm mb-4">
-      <div class="card-body">
-        <div class="row align-items-center g-3">
-          <div class="col-auto">
-            <div
-              v-if="mainPet"
-              class="main-pet-card p-2 bg-white rounded shadow-sm"
-              style="width: 170px; cursor: pointer"
-              @click="openPetModal(mainPet)"
-            >
+  <div
+    class="container-fluid py-4"
+    style="
+      background-color: #faf8f5;
+
+      /* 브랜드 색상 세트 */
+      --bs-primary: #6f5034;
+      --bs-primary-rgb: 111, 80, 52;
+
+      /* 링크, 글자 */
+      --bs-link-color: #6f5034;
+      --bs-link-hover-color: #5b432c;
+
+      /* 버튼 (btn-primary) */
+      --bs-btn-bg: #6f5034;
+      --bs-btn-border-color: #6f5034;
+      --bs-btn-hover-bg: #5b432c;
+      --bs-btn-hover-border-color: #5b432c;
+      --bs-btn-active-bg: #4d3826;
+      --bs-btn-active-border-color: #4d3826;
+      --bs-btn-active-color: #fff;
+
+      /* 탭(nav-pills) */
+      --bs-nav-pills-link-active-bg: #6f5034;
+
+      /* 페이지네이션 */
+      --bs-pagination-color: #6f5034;
+      --bs-pagination-hover-color: #5b432c;
+      --bs-pagination-active-bg: #6f5034;
+      --bs-pagination-active-border-color: #6f5034;
+    "
+  >
+    >
+    <div class="container">
+      <!-- 프로필 헤더 -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row align-items-center g-3">
+            <div class="col-auto">
               <div
-                class="ratio ratio-1x1 mb-2"
-                style="overflow: hidden; border-radius: 8px"
+                v-if="mainPet"
+                class="main-pet-card p-2 bg-white rounded shadow-sm"
+                style="width: 170px; cursor: pointer"
+                @click="openPetModal(mainPet)"
               >
-                <img
-                  :src="getPetImageUrl(mainPet)"
-                  alt="main pet"
-                  style="width: 100%; height: 100%; object-fit: cover"
-                />
+                <div
+                  class="ratio ratio-1x1 mb-2"
+                  style="overflow: hidden; border-radius: 8px"
+                >
+                  <img
+                    :src="getPetImageUrl(mainPet)"
+                    alt="main pet"
+                    style="width: 100%; height: 100%; object-fit: cover"
+                  />
+                </div>
+                <div class="small">
+                  <div>
+                    <strong>{{ mainPet.petName }}</strong>
+                  </div>
+                  <div class="text-muted">
+                    {{ mainPet.petBreed || "-" }} •
+                    {{ mainPet.petWeight ? mainPet.petWeight + "kg" : "-" }}
+                  </div>
+                  <div class="text-muted">
+                    {{ mainPet.petAge ? mainPet.petAge + "세" : "" }}
+                  </div>
+                </div>
               </div>
-              <div class="small">
-                <div>
-                  <strong>{{ mainPet.petName }}</strong>
-                </div>
-                <div class="text-muted">
-                  {{ mainPet.petBreed || "-" }} •
-                  {{ mainPet.petWeight ? mainPet.petWeight + "kg" : "-" }}
-                </div>
-                <div class="text-muted">
-                  {{ mainPet.petAge ? mainPet.petAge + "세" : "" }}
-                </div>
-              </div>
-            </div>
-            <!-- no fallback avatar: left slot reserved for main pet only -->
-          </div>
-
-          <div class="col">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">
-                ID: {{ profileUser?.userLoginId || "불러오는 중..." }}
-              </h5>
-              <template v-if="isMyProfile">
-                <span class="text-muted small">·</span>
-                <RouterLink to="/Profile/EditProfile">
-                  <button class="btn btn-sm btn-outline-secondary">설정</button>
-                </RouterLink>
-              </template>
+              <!-- no fallback avatar: left slot reserved for main pet only -->
             </div>
 
-            <ul class="list-inline text-muted small mb-2 mt-2">
-              <li
-                class="list-inline-item"
-                v-for="(s, i) in profile.stats"
-                :key="i"
-              >
-                <span class="me-1">{{ s.label }}</span
-                ><strong class="text-dark">{{ s.value }}</strong>
-              </li>
-            </ul>
+            <div class="col">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h5 class="mb-0">
+                  ID: {{ profileUser?.userLoginId || "불러오는 중..." }}
+                </h5>
+                <template v-if="isMyProfile">
+                  <span class="text-muted small">·</span>
+                  <RouterLink to="/Profile/EditProfile">
+                    <button class="btn btn-sm btn-outline-secondary">
+                      설정
+                    </button>
+                  </RouterLink>
+                </template>
+              </div>
 
-            <div class="row g-3">
-              <div class="col-lg-8">
-                <div class="d-flex gap-3 align-items-start">
-                  <div class="p-3 bg-light rounded flex-grow-1">
-                    <p class="mb-0 small">{{ profile.bio }}</p>
-                    <div class="mt-3 small text-muted">
-                      <div class="d-flex gap-3 flex-wrap">
-                        <div>
-                          위치:
-                          <strong class="text-dark">{{
-                            userLocation || "미등록"
-                          }}</strong>
-                        </div>
-                        <div>
-                          펫 수:
-                          <strong class="text-dark">{{ petsCount }}</strong>
-                        </div>
-                        <div>
-                          게시물:
-                          <strong class="text-dark">{{ postsCount }}</strong>
-                        </div>
-                        <div>
-                          좋아요 합계:
-                          <strong class="text-dark">{{ totalLikes }}</strong>
-                        </div>
-                        <div v-if="memberSince">
-                          가입일:
-                          <strong class="text-dark">{{ memberSince }}</strong>
+              <ul class="list-inline text-muted small mb-2 mt-2">
+                <li
+                  class="list-inline-item"
+                  v-for="(s, i) in profile.stats"
+                  :key="i"
+                >
+                  <span class="me-1">{{ s.label }}</span
+                  ><strong class="text-dark">{{ s.value }}</strong>
+                </li>
+              </ul>
+
+              <div class="row g-3">
+                <div class="col-lg-8">
+                  <div class="d-flex gap-3 align-items-start">
+                    <div class="p-3 bg-light rounded flex-grow-1">
+                      <p class="mb-0 small">{{ profile.bio }}</p>
+                      <div class="mt-3 small text-muted">
+                        <div class="d-flex gap-3 flex-wrap">
+                          <div>
+                            위치:
+                            <strong class="text-dark">{{
+                              userLocation || "미등록"
+                            }}</strong>
+                          </div>
+                          <div>
+                            펫 수:
+                            <strong class="text-dark">{{ petsCount }}</strong>
+                          </div>
+                          <div>
+                            게시물:
+                            <strong class="text-dark">{{ postsCount }}</strong>
+                          </div>
+                          <div>
+                            좋아요 합계:
+                            <strong class="text-dark">{{ totalLikes }}</strong>
+                          </div>
+                          <div v-if="memberSince">
+                            가입일:
+                            <strong class="text-dark">{{ memberSince }}</strong>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  <div class="mt-2">
+                    <button
+                      class="btn btn-warning"
+                      @click="showStickerModal = true"
+                      :title="'내가 받은 스티커 리뷰를 모아 보여줍니다.'"
+                    >
+                      스티커 구경하기
+                    </button>
+                    <ChatRequestButton v-if="!isMyProfile" class="ms-2" />
+                    <button
+                      class="btn"
+                      :class="
+                        canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
+                      "
+                      :disabled="!canOneOnOneGo"
+                      @click="openOneOnOneModal"
+                      :title="
+                        canOneOnOneGo ? '' : '1:1 산책이 수락되면 활성화됩니다.'
+                      "
+                    >
+                      산책 하러가기!
+                    </button>
+                    <WalkRequest
+                      class="ms-2"
+                      v-if="!isMyProfile"
+                      :receive-user-id="Number(route.params.userId)"
+                    />
+                  </div>
                 </div>
 
-                <div class="mt-2">
-                  <button
-                    class="btn btn-warning"
-                    @click="showStickerModal = true"
-                    :title="'내가 받은 스티커 리뷰를 모아 보여줍니다.'"
-                  >
-                    스티커 구경하기
-                  </button>
-                  <ChatRequestButton v-if="!isMyProfile" class="ms-2" />
-                  <button
-                    class="btn ms-2"
-                    :class="
-                      canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
-                    "
-                    :disabled="!canOneOnOneGo"
-                    @click="openOneOnOneModal"
-                  >
-                    산책 하러가기!
-                  </button>
-                  <WalkRequest
-                    class="ms-2"
-                    v-if="!isMyProfile"
-                    :receive-user-id="Number(route.params.userId)"
-                  />
-                </div>
-              </div>
-
-              <!-- <div class="col-lg-2" v-if="isMyProfile">
+                <!-- <div class="col-lg-2" v-if="isMyProfile">
                 <button
-                  class="btn"
-                  :class="
-                    canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
-                  "
-                  :disabled="!canOneOnOneGo"
-                  @click="openOneOnOneModal"
+                class="btn"
+                :class="
+                canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
+                "
+                :disabled="!canOneOnOneGo"
+                @click="openOneOnOneModal"
                 >
-                  산책 하러가기!
-                </button>
-              </div> -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 하이라이트 펫 썸네일 -->
-    <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <template v-if="isMyProfile">
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          @click="router.push('/Register/AddPet')"
-        >
-          Add Pets
-        </button>
-      </template>
-
-      <div
-        v-for="pet in petList"
-        :key="pet.petId"
-        class="text-center"
-        @click="openPetModal(pet)"
-        style="cursor: pointer"
-      >
-        <div class="story-ring mx-auto mb-1">
-          <img
-            :src="getPetImageUrl(pet)"
-            alt="pet thumbnail"
-            class="rounded-circle object-cover"
-            width="64"
-            height="64"
-          />
-        </div>
-        <div class="small text-muted">{{ pet.petName }}</div>
-      </div>
-    </div>
-
-    <!-- 펫 프로필 모달 -->
-    <PetProfileModal
-      v-model:show="showPetModal"
-      :pet="selectedPet"
-      :currentUserId="store.state.user.userId"
-      @edit="goToEditPet"
-    />
-
-    <!-- 스티커 보여주기 모달 -->
-    <StickerWallModal
-      v-model:show="showStickerModal"
-      :user-id="routeUserId || store.state.user.userId"
-      :max="20"
-    />
-
-    <!-- ===== 콘텐츠 + 사이드바 ===== -->
-    <div class="row g-4">
-      <div class="col-lg-8">
-        <ul class="nav nav-pills mb-3">
-          <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button
-              class="nav-link"
-              :class="{ active: activeTab === t.key }"
-              @click="activeTab = t.key"
-            >
-              {{ t.label }}
-            </button>
-          </li>
-        </ul>
-
-        <section class="mt-5">
-          <h5 class="fw-bold mb-3">내 게시물</h5>
-
-          <div v-if="loadingMyPosts" class="text-center text-muted py-5">
-            불러오는 중...
-          </div>
-
-          <div
-            v-else-if="myPosts.length === 0"
-            class="text-center text-muted py-5"
-          >
-            아직 작성한 게시물이 없습니다.
-          </div>
-
-          <div v-else class="row g-3">
-            <div
-              v-for="post in myPosts"
-              :key="post.postId"
-              class="col-md-6 col-lg-4"
-            >
-              <div class="card h-100 border-0 shadow-sm">
-                <div class="ratio ratio-4x3">
-                  <img
-                    :src="post.thumbnailUrl || '/default_post.png'"
-                    class="card-img-top object-cover"
-                    alt="게시물 이미지"
-                  />
-                </div>
-                <div class="card-body">
-                  <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
-                  <p class="card-text text-muted small">
-                    {{ post.postContent }}
-                  </p>
-                </div>
-                <div
-                  class="card-footer bg-white d-flex justify-content-between align-items-center"
-                >
-                  <small class="text-muted">{{
-                    formatDate(post.createdAt)
-                  }}</small>
-                  <span class="text-muted small"
-                    >♥ {{ post.postLikeCount }}</span
-                  >
-                </div>
-
-                <router-link
-                  :to="`/post/${post.postId}`"
-                  class="stretched-link"
-                ></router-link>
+                산책 하러가기!
+              </button>
+            </div> -->
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
 
-        <!-- 페이지네이션 -->
-        <nav class="mt-4">
-          <ul class="pagination pagination-sm">
-            <li class="page-item" :class="{ disabled: page === 1 }">
-              <button class="page-link" @click="page--" :disabled="page === 1">
-                Prev
-              </button>
-            </li>
-            <li
-              class="page-item"
-              v-for="n in totalPages"
-              :key="n"
-              :class="{ active: page === n }"
-            >
-              <button class="page-link" @click="page = n">{{ n }}</button>
-            </li>
-            <li class="page-item" :class="{ disabled: page === totalPages }">
+      <!-- 하이라이트 펫 썸네일 -->
+      <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
+        <template v-if="isMyProfile">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="router.push('/Register/AddPet')"
+          >
+            Add Pets
+          </button>
+        </template>
+
+        <div
+          v-for="pet in petList"
+          :key="pet.petId"
+          class="text-center"
+          @click="openPetModal(pet)"
+          style="cursor: pointer"
+        >
+          <div class="story-ring mx-auto mb-1">
+            <img
+              :src="getPetImageUrl(pet)"
+              alt="pet thumbnail"
+              class="rounded-circle object-cover"
+              width="64"
+              height="64"
+            />
+          </div>
+          <div class="small text-muted">{{ pet.petName }}</div>
+        </div>
+      </div>
+
+      <!-- 펫 프로필 모달 -->
+      <PetProfileModal
+        v-model:show="showPetModal"
+        :pet="selectedPet"
+        :currentUserId="store.state.user.userId"
+        @edit="goToEditPet"
+      />
+
+      <!-- 스티커 보여주기 모달 -->
+      <StickerWallModal
+        v-model:show="showStickerModal"
+        :user-id="routeUserId || store.state.user.userId"
+        :max="20"
+      />
+
+      <!-- ===== 콘텐츠 + 사이드바 ===== -->
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <ul class="nav nav-pills mb-3">
+            <li v-for="t in tabs" :key="t.key" class="nav-item">
               <button
-                class="page-link"
-                @click="page++"
-                :disabled="page === totalPages"
+                class="nav-link"
+                :class="{ active: activeTab === t.key }"
+                @click="activeTab = t.key"
               >
-                Next
+                {{ t.label }}
               </button>
             </li>
           </ul>
-        </nav>
-      </div>
 
-      <!-- 사이드바 -->
-      <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-3">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <strong>필터</strong>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                @click="resetFiltersAndReload"
-              >
-                초기화
-              </button>
+          <section class="mt-5">
+            <h5 class="fw-bold mb-3">내 게시물</h5>
+
+            <div v-if="loadingMyPosts" class="text-center text-muted py-5">
+              불러오는 중...
             </div>
-            <div class="mb-3">
-              <label class="form-label small">태그</label>
-              <div class="d-flex flex-wrap gap-2">
-                <div v-for="t in tags" :key="t.tagId" class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    :id="`tag-${t.tagId}`"
-                    :value="t.tagName"
-                    v-model="filters.cats"
-                    @change="applyFilters"
-                  />
-                  <label
-                    class="form-check-label small"
-                    :for="`tag-${t.tagId}`"
-                    >{{ t.tagName }}</label
+
+            <div
+              v-else-if="myPosts.length === 0"
+              class="text-center text-muted py-5"
+            >
+              아직 작성한 게시물이 없습니다.
+            </div>
+
+            <div v-else class="row g-3">
+              <div
+                v-for="post in myPosts"
+                :key="post.postId"
+                class="col-md-6 col-lg-4"
+              >
+                <div class="card h-100 border-0 shadow-sm">
+                  <div class="ratio ratio-4x3">
+                    <img
+                      :src="post.thumbnailUrl || '/default_post.png'"
+                      class="card-img-top object-cover"
+                      alt="게시물 이미지"
+                    />
+                  </div>
+                  <div class="card-body">
+                    <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
+                    <p class="card-text text-muted small">
+                      {{ post.postContent }}
+                    </p>
+                  </div>
+                  <div
+                    class="card-footer bg-white d-flex justify-content-between align-items-center"
                   >
+                    <small class="text-muted">{{
+                      formatDate(post.createdAt)
+                    }}</small>
+                    <span class="text-muted small"
+                      >♥ {{ post.postLikeCount }}</span
+                    >
+                  </div>
+
+                  <router-link
+                    :to="`/post/${post.postId}`"
+                    class="stretched-link"
+                  ></router-link>
                 </div>
               </div>
             </div>
+          </section>
 
-            <div class="mb-2">
-              <label class="form-label small">정렬</label>
-              <select v-model="filters.sort" class="form-select form-select-sm">
-                <option value="latest">최신순</option>
-                <option value="likes">좋아요순</option>
-              </select>
-            </div>
-            <router-link
-              to="/post/create"
-              class="btn btn-primary w-100 btn-sm mt-3"
-              style="
-                --bs-btn-bg: #6f5034;
-                --bs-btn-border-color: #6f5034;
-                --bs-btn-hover-bg: #5b432c;
-                --bs-btn-hover-border-color: #5b432c;
-                --bs-btn-active-bg: #4d3826;
-                --bs-btn-active-border-color: #4d3826;
-                --bs-btn-focus-shadow-rgb: 111, 80, 52;
-              "
-            >
-              ✏️ 게시글 작성하기
-            </router-link>
-          </div>
+          <!-- 페이지네이션 -->
+          <nav class="mt-4">
+            <ul class="pagination pagination-sm justify-content-center">
+              <li class="page-item" :class="{ disabled: page === 1 }">
+                <button
+                  class="page-link"
+                  @click="page--"
+                  :disabled="page === 1"
+                >
+                  Prev
+                </button>
+              </li>
+              <li
+                class="page-item"
+                v-for="n in totalPages"
+                :key="n"
+                :class="{ active: page === n }"
+              >
+                <button class="page-link" @click="page = n">{{ n }}</button>
+              </li>
+              <li class="page-item" :class="{ disabled: page === totalPages }">
+                <button
+                  class="page-link"
+                  @click="page++"
+                  :disabled="page === totalPages"
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
 
-        <div class="card border-0 shadow-sm">
-          <div class="card-body">
-            <strong class="d-block mb-2">통계</strong>
-            <div class="d-flex justify-content-between small text-muted">
-              <span>게시물</span><span>{{ posts.length }}</span>
+        <!-- 사이드바 -->
+        <div class="col-lg-4">
+          <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3"
+              >
+                <strong>필터</strong>
+                <button
+                  class="btn btn-sm btn-outline-secondary"
+                  @click="resetFiltersAndReload"
+                >
+                  초기화
+                </button>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">태그</label>
+                <div class="d-flex flex-wrap gap-2">
+                  <div v-for="t in tags" :key="t.tagId" class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      :id="`tag-${t.tagId}`"
+                      :value="t.tagName"
+                      v-model="filters.cats"
+                      @change="applyFilters"
+                    />
+                    <label
+                      class="form-check-label small"
+                      :for="`tag-${t.tagId}`"
+                      >{{ t.tagName }}</label
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label small">정렬</label>
+                <select
+                  v-model="filters.sort"
+                  class="form-select form-select-sm"
+                >
+                  <option value="latest">최신순</option>
+                  <option value="likes">좋아요순</option>
+                </select>
+              </div>
+              <router-link
+                to="/post/create"
+                class="btn btn-primary w-100 btn-sm mt-3"
+                style="
+                  --bs-btn-bg: #6f5034;
+                  --bs-btn-border-color: #6f5034;
+                  --bs-btn-hover-bg: #5b432c;
+                  --bs-btn-hover-border-color: #5b432c;
+                  --bs-btn-active-bg: #4d3826;
+                  --bs-btn-active-border-color: #4d3826;
+                  --bs-btn-focus-shadow-rgb: 111, 80, 52;
+                "
+              >
+                ✏️ 게시글 작성하기
+              </router-link>
             </div>
-            <div class="d-flex justify-content-between small text-muted">
-              <span>좋아요 합계</span><span>{{ totalLikes }}</span>
+          </div>
+
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <strong class="d-block mb-2">통계</strong>
+              <div class="d-flex justify-content-between small text-muted">
+                <span>게시물</span><span>{{ posts.length }}</span>
+              </div>
+              <div class="d-flex justify-content-between small text-muted">
+                <span>좋아요 합계</span><span>{{ totalLikes }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ✅ 1:1 산책 진행 모달 -->
-    <OneOnOneWalkModal
-      v-model="showOOOWalk"
-      :request-one-id="acceptedPair?.requestOneId || null"
-      :partner-id="Number(route.params.userId)"
-      :partner-name="profileUser?.userLoginId || 'User#' + route.params.userId"
-    />
+      <!-- ✅ 1:1 산책 진행 모달 -->
+      <OneOnOneWalkModal
+        v-model="showOOOWalk"
+        :request-one-id="acceptedPair?.requestOneId || null"
+        :partner-id="Number(route.params.userId)"
+        :partner-name="
+          profileUser?.userLoginId || 'User#' + route.params.userId
+        "
+      />
+    </div>
   </div>
 </template>
 
@@ -780,6 +830,7 @@ onMounted(async () => {
   transition: transform 0.12s ease, box-shadow 0.12s ease;
   cursor: pointer;
 }
+
 .main-pet-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
@@ -799,6 +850,7 @@ onMounted(async () => {
   border-radius: 50%;
   border: 4px solid rgba(255, 110, 168, 0.1);
 }
+
 .main-pet-left .small {
   line-height: 1;
 }
