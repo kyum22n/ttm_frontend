@@ -18,7 +18,7 @@ const store = createStore({
       profileImage: "",
     },
     // 이미지 캐시 무효화를 위한 버전값 (타임스탬프)
-    imageVersion: Date.now(),
+    // imageVersion: Date.now(),
     signupUser: null,
     jwt: "",
     searchResults: [],
