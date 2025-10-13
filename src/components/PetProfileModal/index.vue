@@ -106,6 +106,7 @@
 
 <script setup>
 import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
+import axios from "axios";
 import { useStore } from "vuex";
 import * as bootstrap from "bootstrap";
 import { useRouter } from "vue-router";
@@ -132,7 +133,7 @@ function getPetImageUrl(pet) {
   if (!pet || !pet.petId) {
     return "https://via.placeholder.com/100?text=No+Image";
   }
-  return `/pet/image/${pet.petId}`;
+  return axios.defaults.baseURL + `/pet/image/${pet.petId}`;
 }
 
 // ✅ 모달 인스턴스 초기화 (단 한 번만)

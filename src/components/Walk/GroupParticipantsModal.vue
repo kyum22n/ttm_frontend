@@ -4,7 +4,7 @@
     <div class="gp-card">
       <div class="gp-header">
         <h5 class="m-0">신청 내역</h5>
-        
+
       </div>
 
       <div class="gp-body">
