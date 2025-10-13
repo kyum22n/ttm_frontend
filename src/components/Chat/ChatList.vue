@@ -123,7 +123,8 @@ async function fetchPartnerMeta(userId) {
     const { data: fp } = await axios.get(`/pet/${userId}/first-pet`)
     petName = fp?.petName || ''
     if (fp?.imageUrl) {
-      avatar = fp.imageUrl.startsWith('/') ? fp.imageUrl : `/${fp.imageUrl}`
+      const path = fp.imageUrl.startsWith('/') ? fp.imageUrl : `/${fp.imageUrl}`
+      avatar = axios.defaults.baseURL.replace(/\/$/, '') + path
     }
   } catch {
     // no-op

@@ -169,10 +169,10 @@ async function loadPartnerMeta() {
   try {
     const { data } = await axios.get("/pet/find-allpetbyuser", { params: { petUserId: props.partnerId } })
     const pets = Array.isArray(data) ? data : []
-    if (pets.length > 0) {
+      if (pets.length > 0) {
       pets.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt))
       const main = pets[0]
-      partnerMeta.value = { petName: main?.petName || "", avatar: main?.petId ? `/pet/image/${main.petId}` : "" }
+      partnerMeta.value = { petName: main?.petName || "", avatar: main?.petId ? axios.defaults.baseURL.replace(/\/$/, '') + `/pet/image/${main.petId}` : "" }
     } else {
       partnerMeta.value = { petName:"", avatar:"" }
     }

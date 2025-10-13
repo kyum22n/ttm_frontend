@@ -103,7 +103,7 @@ async function loadPartnerMeta() {
       const main = pets[0]
       partnerMeta.value = {
         petName: main?.petName || "",
-        avatar:  main?.petId ? `/pet/image/${main.petId}` : "",
+        avatar:  main?.petId ? axios.defaults.baseURL.replace(/\/$/, '') + `/pet/image/${main.petId}` : "",
       }
     }
   } catch { /* ignore */ }

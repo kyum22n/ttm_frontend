@@ -167,7 +167,7 @@ async function load() {
             pets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
             const main = pets[0];
             petName = main?.petName || "";
-            if (main?.petId) avatar = `/pet/image/${main.petId}`;
+            if (main?.petId) avatar = axios.defaults.baseURL.replace(/\/$/, '') + `/pet/image/${main.petId}`;
           }
           metaMap.value.set(p.userId, { petName, avatar });
         } catch { /* ignore */ }
