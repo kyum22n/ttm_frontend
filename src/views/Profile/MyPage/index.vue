@@ -346,20 +346,6 @@
 
         <div class="card border-0 shadow-sm">
           <div class="card-body">
-            <div class="card border-0 shadow-sm mb-3">
-              <div class="card-body">
-                <ReviewDisplayBox
-                  title="해시태그"
-                  :tags="tagsFromReviews"
-                  :max-visible="10"
-                  prefix="#"
-                  pill
-                  clickable
-                  @select="onSelect"
-                />
-              </div>
-            </div>
-
             <strong class="d-block mb-2">통계</strong>
             <div class="d-flex justify-content-between small text-muted">
               <span>게시물</span><span>{{ posts.length }}</span>
@@ -383,7 +369,7 @@
 </template>
 
 <script setup>
-import ReviewDisplayBox from "@/components/ReviewDisplayBox.vue";
+
 import { computed, reactive, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
