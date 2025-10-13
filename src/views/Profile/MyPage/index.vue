@@ -5,56 +5,135 @@
       <div class="card-body">
         <div class="row align-items-center g-3">
           <div class="col-auto">
-            <img v-if="profileImgUrl" :src="profileImgUrl" alt="프로필" class="rounded-circle object-cover" width="88"
-              height="88" />
+            <div
+              v-if="mainPet"
+              class="main-pet-card p-2 bg-white rounded shadow-sm"
+              style="width: 170px; cursor: pointer"
+              @click="openPetModal(mainPet)"
+            >
+              <div
+                class="ratio ratio-1x1 mb-2"
+                style="overflow: hidden; border-radius: 8px"
+              >
+                <img
+                  :src="getPetImageUrl(mainPet)"
+                  alt="main pet"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                />
+              </div>
+              <div class="small">
+                <div>
+                  <strong>{{ mainPet.petName }}</strong>
+                </div>
+                <div class="text-muted">
+                  {{ mainPet.petBreed || "-" }} •
+                  {{ mainPet.petWeight ? mainPet.petWeight + "kg" : "-" }}
+                </div>
+                <div class="text-muted">
+                  {{ mainPet.petAge ? mainPet.petAge + "세" : "" }}
+                </div>
+              </div>
+            </div>
+            <!-- no fallback avatar: left slot reserved for main pet only -->
           </div>
 
           <div class="col">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-              <h5 class="mb-0">ID: {{ profileUser?.userLoginId || "불러오는 중..." }}</h5>
-
-              <span class="text-muted small">·</span>
-              <RouterLink to="/Profile/EditProfile">
-                <button class="btn btn-sm btn-outline-secondary">설정</button>
-              </RouterLink>
+              <h5 class="mb-0">
+                ID: {{ profileUser?.userLoginId || "불러오는 중..." }}
+              </h5>
+              <template v-if="isMyProfile">
+                <span class="text-muted small">·</span>
+                <RouterLink to="/Profile/EditProfile">
+                  <button class="btn btn-sm btn-outline-secondary">설정</button>
+                </RouterLink>
+              </template>
             </div>
 
             <ul class="list-inline text-muted small mb-2 mt-2">
-              <li class="list-inline-item" v-for="(s, i) in profile.stats" :key="i">
-                <span class="me-1">{{ s.label }}</span><strong class="text-dark">{{ s.value }}</strong>
+              <li
+                class="list-inline-item"
+                v-for="(s, i) in profile.stats"
+                :key="i"
+              >
+                <span class="me-1">{{ s.label }}</span
+                ><strong class="text-dark">{{ s.value }}</strong>
               </li>
             </ul>
 
             <div class="row g-3">
               <div class="col-lg-8">
-                <div class="p-3 bg-light rounded">
-                  <p class="mb-0 small">{{ profile.bio }}</p>
+                <div class="d-flex gap-3 align-items-start">
+                  <div class="p-3 bg-light rounded flex-grow-1">
+                    <p class="mb-0 small">{{ profile.bio }}</p>
+                    <div class="mt-3 small text-muted">
+                      <div class="d-flex gap-3 flex-wrap">
+                        <div>
+                          위치:
+                          <strong class="text-dark">{{
+                            userLocation || "미등록"
+                          }}</strong>
+                        </div>
+                        <div>
+                          펫 수:
+                          <strong class="text-dark">{{ petsCount }}</strong>
+                        </div>
+                        <div>
+                          게시물:
+                          <strong class="text-dark">{{ postsCount }}</strong>
+                        </div>
+                        <div>
+                          좋아요 합계:
+                          <strong class="text-dark">{{ totalLikes }}</strong>
+                        </div>
+                        <div v-if="memberSince">
+                          가입일:
+                          <strong class="text-dark">{{ memberSince }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-2">
+                  <button
+                    class="btn btn-warning"
+                    @click="showStickerModal = true"
+                    :title="'내가 받은 스티커 리뷰를 모아 보여줍니다.'"
+                  >
+                    스티커 구경하기
+                  </button>
+                  <ChatRequestButton v-if="!isMyProfile" class="ms-2" />
+                  <button
+                    v-if="isMyProfile"
+                    class="btn ms-2"
+                    :class="
+                      canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
+                    "
+                    :disabled="!canOneOnOneGo"
+                    @click="openOneOnOneModal"
+                  >
+                    산책 하러가기!
+                  </button>
+                  <WalkRequest
+                    class="ms-2"
+                    v-if="!isMyProfile"
+                    :receive-user-id="Number(route.params.userId)"
+                  />
                 </div>
               </div>
 
-              <div class="col-lg-2 text-lg-end">
-                <!-- 1:1 산책 신청 버튼 (기존) -->
-                <WalkRequest :receive-user-id="Number(route.params.userId)" />
-              </div>
-
-              <div class="col-lg-2">
-                <!-- ✅ 1:1 산책 수락(A) 건이 있을 때에만 활성화 -->
-                <button class="btn" :class="canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'"
-                  :disabled="!canOneOnOneGo" @click="openOneOnOneModal"
-                  :title="canOneOnOneGo ? '' : '1:1 산책이 수락되면 활성화됩니다.'">
+              <div class="col-lg-2" v-if="isMyProfile">
+                <button
+                  class="btn"
+                  :class="
+                    canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
+                  "
+                  :disabled="!canOneOnOneGo"
+                  @click="openOneOnOneModal"
+                >
                   산책 하러가기!
                 </button>
-              </div>
-
-              <!-- ✅ 새 버튼: 스티커 구경하기 -->
-              <div class="col-lg-2">
-                <button class="btn btn-warning" @click="showStickerModal = true" :title="'내가 받은 스티커 리뷰를 모아 보여줍니다.'">
-                  스티커 구경하기
-                </button>
-              </div>
-
-              <div>
-                <ChatRequestButton />
               </div>
             </div>
           </div>
@@ -64,35 +143,60 @@
 
     <!-- 하이라이트 펫 썸네일 -->
     <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-      <button class="btn btn-outline-secondary btn-sm" @click="router.push('/Register/AddPet')">Add Pets</button>
+      <template v-if="isMyProfile">
+        <button
+          class="btn btn-outline-secondary btn-sm"
+          @click="router.push('/Register/AddPet')"
+        >
+          Add Pets
+        </button>
+      </template>
 
-      <div v-for="pet in petList" :key="pet.petId" class="text-center" @click="openPetModal(pet)"
-        style="cursor: pointer">
+      <div
+        v-for="pet in petList"
+        :key="pet.petId"
+        class="text-center"
+        @click="openPetModal(pet)"
+        style="cursor: pointer"
+      >
         <div class="story-ring mx-auto mb-1">
-          <img :src="getPetImageUrl(pet)" alt="pet thumbnail" class="rounded-circle object-cover" width="64"
-            height="64" />
+          <img
+            :src="getPetImageUrl(pet)"
+            alt="pet thumbnail"
+            class="rounded-circle object-cover"
+            width="64"
+            height="64"
+          />
         </div>
         <div class="small text-muted">{{ pet.petName }}</div>
       </div>
     </div>
 
     <!-- 펫 프로필 모달 -->
-    <PetProfileModal v-model:show="showPetModal" :pet="selectedPet" :currentUserId="store.state.user.userId"
-      @edit="goToEditPet" />
+    <PetProfileModal
+      v-model:show="showPetModal"
+      :pet="selectedPet"
+      :currentUserId="store.state.user.userId"
+      @edit="goToEditPet"
+    />
 
     <!-- 스티커 보여주기 모달 -->
-    + <StickerWallModal
-   v-model:show="showStickerModal"
-   :user-id="userId || store.state.user.userId"
-   :max="20"
-/>
+    <StickerWallModal
+      v-model:show="showStickerModal"
+      :user-id="routeUserId || store.state.user.userId"
+      :max="20"
+    />
 
     <!-- ===== 콘텐츠 + 사이드바 ===== -->
     <div class="row g-4">
       <div class="col-lg-8">
         <ul class="nav nav-pills mb-3">
           <li v-for="t in tabs" :key="t.key" class="nav-item">
-            <button class="nav-link" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
+            <button
+              class="nav-link"
+              :class="{ active: activeTab === t.key }"
+              @click="activeTab = t.key"
+            >
               {{ t.label }}
             </button>
           </li>
@@ -101,18 +205,30 @@
         <section class="mt-5">
           <h5 class="fw-bold mb-3">내 게시물</h5>
 
-          <div v-if="loadingMyPosts" class="text-center text-muted py-5">불러오는 중...</div>
+          <div v-if="loadingMyPosts" class="text-center text-muted py-5">
+            불러오는 중...
+          </div>
 
-          <div v-else-if="myPosts.length === 0" class="text-center text-muted py-5">
+          <div
+            v-else-if="myPosts.length === 0"
+            class="text-center text-muted py-5"
+          >
             아직 작성한 게시물이 없습니다.
           </div>
 
           <div v-else class="row g-3">
-            <div v-for="post in myPosts" :key="post.postId" class="col-md-6 col-lg-4">
+            <div
+              v-for="post in myPosts"
+              :key="post.postId"
+              class="col-md-6 col-lg-4"
+            >
               <div class="card h-100 border-0 shadow-sm">
                 <div class="ratio ratio-4x3">
-                  <img :src="post.thumbnailUrl || '/default_post.png'" class="card-img-top object-cover"
-                    alt="게시물 이미지" />
+                  <img
+                    :src="post.thumbnailUrl || '/default_post.png'"
+                    class="card-img-top object-cover"
+                    alt="게시물 이미지"
+                  />
                 </div>
                 <div class="card-body">
                   <h6 class="card-title mb-1">{{ post.postTitle }}</h6>
@@ -120,12 +236,21 @@
                     {{ post.postContent }}
                   </p>
                 </div>
-                <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                  <small class="text-muted">{{ formatDate(post.createdAt) }}</small>
-                  <span class="text-muted small">♥ {{ post.postLikeCount }}</span>
+                <div
+                  class="card-footer bg-white d-flex justify-content-between align-items-center"
+                >
+                  <small class="text-muted">{{
+                    formatDate(post.createdAt)
+                  }}</small>
+                  <span class="text-muted small"
+                    >♥ {{ post.postLikeCount }}</span
+                  >
                 </div>
 
-                <router-link :to="`/post/${post.postId}`" class="stretched-link"></router-link>
+                <router-link
+                  :to="`/post/${post.postId}`"
+                  class="stretched-link"
+                ></router-link>
               </div>
             </div>
           </div>
@@ -135,13 +260,26 @@
         <nav class="mt-4">
           <ul class="pagination pagination-sm">
             <li class="page-item" :class="{ disabled: page === 1 }">
-              <button class="page-link" @click="page--" :disabled="page === 1">Prev</button>
+              <button class="page-link" @click="page--" :disabled="page === 1">
+                Prev
+              </button>
             </li>
-            <li class="page-item" v-for="n in totalPages" :key="n" :class="{ active: page === n }">
+            <li
+              class="page-item"
+              v-for="n in totalPages"
+              :key="n"
+              :class="{ active: page === n }"
+            >
               <button class="page-link" @click="page = n">{{ n }}</button>
             </li>
             <li class="page-item" :class="{ disabled: page === totalPages }">
-              <button class="page-link" @click="page++" :disabled="page === totalPages">Next</button>
+              <button
+                class="page-link"
+                @click="page++"
+                :disabled="page === totalPages"
+              >
+                Next
+              </button>
             </li>
           </ul>
         </nav>
@@ -153,20 +291,30 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <strong>필터</strong>
-              <button class="btn btn-sm btn-outline-secondary" @click="resetFilters">초기화</button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                @click="resetFiltersAndReload"
+              >
+                초기화
+              </button>
             </div>
-
             <div class="mb-3">
-              <label class="form-label small">검색</label>
-              <input v-model="filters.q" type="search" class="form-control form-control-sm" placeholder="키워드..." />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small">종류</label>
+              <label class="form-label small">태그</label>
               <div class="d-flex flex-wrap gap-2">
-                <div v-for="c in categories" :key="c" class="form-check">
-                  <input class="form-check-input" type="checkbox" :id="`cat-${c}`" :value="c" v-model="filters.cats" />
-                  <label class="form-check-label small" :for="`cat-${c}`">{{ c }}</label>
+                <div v-for="t in tags" :key="t.tagId" class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :id="`tag-${t.tagId}`"
+                    :value="t.tagName"
+                    v-model="filters.cats"
+                    @change="applyFilters"
+                  />
+                  <label
+                    class="form-check-label small"
+                    :for="`tag-${t.tagId}`"
+                    >{{ t.tagName }}</label
+                  >
                 </div>
               </div>
             </div>
@@ -178,8 +326,21 @@
                 <option value="likes">좋아요순</option>
               </select>
             </div>
-
-            <button class="btn btn-dark w-100 btn-sm mt-2" @click="applyFilters">적용</button>
+            <router-link
+              to="/post/create"
+              class="btn btn-primary w-100 btn-sm mt-3"
+              style="
+                --bs-btn-bg: #6f5034;
+                --bs-btn-border-color: #6f5034;
+                --bs-btn-hover-bg: #5b432c;
+                --bs-btn-hover-border-color: #5b432c;
+                --bs-btn-active-bg: #4d3826;
+                --bs-btn-active-border-color: #4d3826;
+                --bs-btn-focus-shadow-rgb: 111, 80, 52;
+              "
+            >
+              ✏️ 게시글 작성하기
+            </router-link>
           </div>
         </div>
 
@@ -187,8 +348,15 @@
           <div class="card-body">
             <div class="card border-0 shadow-sm mb-3">
               <div class="card-body">
-                <ReviewDisplayBox title="해시태그" :tags="tagsFromReviews" :max-visible="10" prefix="#" pill clickable
-                  @select="onSelect" />
+                <ReviewDisplayBox
+                  title="해시태그"
+                  :tags="tagsFromReviews"
+                  :max-visible="10"
+                  prefix="#"
+                  pill
+                  clickable
+                  @select="onSelect"
+                />
               </div>
             </div>
 
@@ -205,9 +373,12 @@
     </div>
 
     <!-- ✅ 1:1 산책 진행 모달 -->
-    <OneOnOneWalkModal v-model="showOOOWalk" :request-one-id="acceptedPair?.requestOneId || null"
+    <OneOnOneWalkModal
+      v-model="showOOOWalk"
+      :request-one-id="acceptedPair?.requestOneId || null"
       :partner-id="Number(route.params.userId)"
-      :partner-name="profileUser?.userLoginId || ('User#' + route.params.userId)" />
+      :partner-name="profileUser?.userLoginId || 'User#' + route.params.userId"
+    />
   </div>
 </template>
 
@@ -244,6 +415,7 @@ const tabs = [
 const categories = ["강아지", "고양이", "일상", "산책", "모임"];
 const activeTab = ref("all");
 const filters = reactive({ q: "", cats: [], sort: "latest" });
+const tags = ref([]);
 const page = ref(1);
 const pageSize = 6;
 
@@ -253,9 +425,41 @@ const loadingMyPosts = ref(true);
 const petList = ref([]);
 const showPetModal = ref(false);
 const selectedPet = ref(null);
+const mainPet = ref(null);
 
 const userId = computed(() => store.state.user?.userId || null);
 const routeUserId = ref(null);
+
+// Extra profile info to show in the bio box
+const userLocation = computed(
+  () => profileUser.value?.userAddress || profileUser.value?.userLocation || ""
+);
+const petsCount = computed(() => (petList.value ? petList.value.length : 0));
+const postsCount = computed(() => (myPosts.value ? myPosts.value.length : 0));
+const totalLikes = computed(() => {
+  return (myPosts.value || []).reduce(
+    (acc, p) => acc + (p.postLikeCount || 0),
+    0
+  );
+});
+const memberSince = computed(() => {
+  const d = profileUser.value?.createdAt || profileUser.value?.regDate || null;
+  if (!d) return "";
+  try {
+    return new Date(d).toLocaleDateString("ko-KR");
+  } catch (e) {
+    return d;
+  }
+});
+
+// 현재 보고 있는 프로필이 내 프로필인지 판단 (안정적으로 처리)
+const isMyProfile = computed(() => {
+  const routeId = route.params.userId ? Number(route.params.userId) : null;
+  const me = store.state.user?.userId ?? null;
+  // route에 userId가 없다면 현재 로그인한 사용자의 프로필 페이지로 간주
+  if (!routeId) return me != null;
+  return routeId === me;
+});
 
 const showStickerModal = ref(false); // 열고 닫기만
 
@@ -269,6 +473,7 @@ watch(
       loadUserPosts();
       loadProfileUser();
       loadMyPosts();
+      loadTags();
       checkAcceptedPair();
     }
   },
@@ -289,7 +494,9 @@ async function loadProfileUser() {
 async function loadPetProfile() {
   try {
     const uid = routeUserId.value || store.state.user.userId;
-    const resPets = await axios.get("/pet/find-allpetbyuser", { params: { petUserId: uid } });
+    const resPets = await axios.get("/pet/find-allpetbyuser", {
+      params: { petUserId: uid },
+    });
     const pets = resPets.data || [];
     if (pets.length === 0) {
       profile.bio = "등록된 반려견이 없습니다.";
@@ -297,9 +504,10 @@ async function loadPetProfile() {
       return;
     }
     pets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    const mainPet = pets[0];
-    profile.bio = mainPet.petDesc || "아직 반려견 소개가 없습니다.";
-    profileImgUrl.value = `/pet/image/${mainPet.petId}`;
+    const mp = pets[0];
+    mainPet.value = mp;
+    profile.bio = mp.petDesc || "아직 반려견 소개가 없습니다.";
+    profileImgUrl.value = `/pet/image/${mp.petId}`;
   } catch (e) {
     console.error("펫 프로필 불러오기 실패:", e);
     profile.bio = "프로필 정보를 불러오지 못했습니다.";
@@ -310,7 +518,9 @@ async function loadPetProfile() {
 async function loadAllPets() {
   try {
     const uid = routeUserId.value || store.state.user.userId;
-    const res = await axios.get("/pet/find-allpetbyuser", { params: { petUserId: uid } });
+    const res = await axios.get("/pet/find-allpetbyuser", {
+      params: { petUserId: uid },
+    });
     petList.value = res.data || [];
   } catch (err) {
     console.error("펫 목록 로드 실패:", err);
@@ -330,7 +540,9 @@ function goToEditPet(pet) {
 async function openPetModal(pet) {
   selectedPet.value = { ...pet };
   try {
-    const res = await axios.get("/user/info", { params: { userId: pet.petUserId } });
+    const res = await axios.get("/user/info", {
+      params: { userId: pet.petUserId },
+    });
     if (res.data?.data) {
       selectedPet.value.userLoginId = res.data.data.userLoginId;
       selectedPet.value.userAddress = res.data.data.userAddress;
@@ -391,15 +603,83 @@ function formatDate(iso) {
 }
 
 const filteredPosts = computed(() => {
-  let list = posts.value.filter((p) => (activeTab.value === "all" ? true : p.type === activeTab.value));
-  if (filters.q) list = list.filter((p) => (p.title + p.subtitle + p.desc).includes(filters.q));
-  if (filters.sort === "likes") list = [...list].sort((a, b) => b.likes - a.likes);
+  let list = posts.value.filter((p) =>
+    activeTab.value === "all" ? true : p.type === activeTab.value
+  );
+  if (filters.q)
+    list = list.filter((p) =>
+      (p.title + p.subtitle + p.desc).includes(filters.q)
+    );
+  if (filters.sort === "likes")
+    list = [...list].sort((a, b) => b.likes - a.likes);
   const start = (page.value - 1) * pageSize;
   return list.slice(start, start + pageSize);
 });
-const totalPages = computed(() => Math.max(1, Math.ceil(posts.value.length / pageSize)));
-function resetFilters() { filters.q = ""; filters.cats = []; filters.sort = "latest"; }
-function applyFilters() { page.value = 1; }
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(posts.value.length / pageSize))
+);
+function resetFilters() {
+  filters.q = "";
+  filters.cats = [];
+  filters.sort = "latest";
+}
+// Ensure UI resets by reloading user's posts
+async function resetFiltersAndReload() {
+  resetFilters();
+  await loadMyPosts();
+}
+async function applyFilters() {
+  page.value = 1;
+  try {
+    const uid = routeUserId.value || store.state.user.userId;
+    if (!filters.cats || filters.cats.length === 0) {
+      // reload the user's posts
+      await loadMyPosts();
+      // apply sort
+      if (filters.sort === "likes") {
+        myPosts.value = [...myPosts.value].sort(
+          (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
+        );
+      } else {
+        myPosts.value = [...myPosts.value].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+    } else {
+      const selectedTag = filters.cats[filters.cats.length - 1];
+      await store.dispatch("post/fetchListByTag", selectedTag);
+      const list = store.getters["post/getList"] || [];
+      // keep only posts by this profile user
+      let filtered = list.filter((p) => Number(p.postUserId) === Number(uid));
+      // ensure thumbnailUrl exists (store action already sets it)
+      filtered = filtered.map((p) => ({ ...p }));
+      if (filters.sort === "likes") {
+        filtered.sort(
+          (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
+        );
+      } else {
+        filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      myPosts.value = filtered;
+    }
+  } catch (e) {
+    console.error("필터 적용 실패:", e);
+  }
+}
+
+async function loadTags() {
+  try {
+    await store.dispatch("post/fetchTags");
+    tags.value = store.getters["post/getTags"];
+  } catch (e) {
+    console.warn("태그 로드 실패:", e);
+    tags.value = [];
+  }
+}
 
 // ===== 리뷰 해시태그 (그대로) =====
 const reviews = computed(() => store.getters["review/reviews"] || []);
@@ -407,7 +687,10 @@ const tagsFromReviews = computed(() => {
   const ids = reviews.value.map((r) => r?.reviewTagId).filter(Boolean);
   return [...new Set(ids)].map((id) => String(id));
 });
-function onSelect(tag) { filters.q = tag.replace("#", ""); applyFilters(); }
+function onSelect(tag) {
+  filters.q = tag.replace("#", "");
+  applyFilters();
+}
 
 // ===== 1:1 산책 수락 여부 확인 =====
 const acceptedPair = ref(null); // { requestOneId, requestUserId, receiveUserId, rstatus }
@@ -417,19 +700,27 @@ async function checkAcceptedPair() {
   try {
     const me = userId.value;
     const other = Number(route.params.userId);
-    if (!me || !other) { acceptedPair.value = null; return; }
+    if (!me || !other) {
+      acceptedPair.value = null;
+      return;
+    }
 
     // 내 기준 받은/보낸 둘 다 조회
     const [rec, sent] = await Promise.allSettled([
-      walkApi.getReceivedRequests(me),   // 내가 받은
-      walkApi.getOneOnOneRequests(me),  // 내가 보낸
+      walkApi.getReceivedRequests(me), // 내가 받은
+      walkApi.getOneOnOneRequests(me), // 내가 보낸
     ]);
 
-    const recvList = rec.status === "fulfilled" ? (rec.value?.data?.walkReceiveList || []) : [];
-    const sentList = sent.status === "fulfilled" ? (sent.value?.data?.walkRequestList || []) : [];
+    const recvList =
+      rec.status === "fulfilled" ? rec.value?.data?.walkReceiveList || [] : [];
+    const sentList =
+      sent.status === "fulfilled"
+        ? sent.value?.data?.walkRequestList || []
+        : [];
 
     // A(수락) 상태이고, 둘의 페어가 일치하는 요청 1건 찾기
-    const isAccepted = (row) => String((row?.rstatus || "P")).toUpperCase() === "A";
+    const isAccepted = (row) =>
+      String(row?.rstatus || "P").toUpperCase() === "A";
     const pairMatch = (row) =>
       (row.requestUserId === me && row.receiveUserId === other) ||
       (row.requestUserId === other && row.receiveUserId === me);
@@ -439,12 +730,14 @@ async function checkAcceptedPair() {
       sentList.find((x) => isAccepted(x) && pairMatch(x)) ||
       null;
 
-    acceptedPair.value = found ? {
-      requestOneId: found.requestOneId,
-      requestUserId: found.requestUserId,
-      receiveUserId: found.receiveUserId,
-      rstatus: found.rstatus
-    } : null;
+    acceptedPair.value = found
+      ? {
+          requestOneId: found.requestOneId,
+          requestUserId: found.requestUserId,
+          receiveUserId: found.receiveUserId,
+          rstatus: found.rstatus,
+        }
+      : null;
   } catch (e) {
     console.warn("1:1 수락 페어 확인 실패:", e);
     acceptedPair.value = null;
@@ -494,5 +787,35 @@ onMounted(async () => {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+}
+
+/* Main pet card styling */
+.main-pet-card {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 10px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  cursor: pointer;
+}
+.main-pet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Bio bubble tweak */
+.p-3.bg-light {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Left big pet avatar */
+.main-pet-left img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 110, 168, 0.1);
+}
+.main-pet-left .small {
+  line-height: 1;
 }
 </style>

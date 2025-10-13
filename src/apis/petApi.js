@@ -34,7 +34,8 @@ function update(pet) {
 
 // 펫 삭제
 function remove(petId) {
-  return axios.delete(`/pet/remove/${petId}`);
+  // Backend expects DELETE /pet/remove?petId={petId}
+  return axios.delete(`/pet/remove`, { params: { petId } });
 }
 
 // 유저의 모든 펫 조회
@@ -49,9 +50,9 @@ function petFind(petId) {
 
 /** 좋아요 등록/취소 */
 function petLike(userId, petId) {
-    return axios.post("/like/pet-like", null, {
-        params: {userId, petId}
-    });
+  return axios.post("/like/pet-like", null, {
+    params: { userId, petId },
+  });
 }
 
 // 특정 펫 좋아요 상태 확인
@@ -60,8 +61,6 @@ function getPetLikeStatus(userId, petId) {
     params: { userId, petId },
   });
 }
-
-
 
 // 첫번째 펫 참조 조회
 async function firstPetOfUser(userId) {
@@ -83,7 +82,7 @@ async function avatarUrlByUser(userId, basePrefix = "") {
 // 펫 목록 랜덤으로 불러오기
 async function getRandomList(limit = 7) {
   return axios.get("/pet/random-list", {
-    params: { limit }
+    params: { limit },
   });
 }
 
@@ -97,7 +96,7 @@ const petApi = {
   firstPetOfUser,
   avatarUrlByUser,
   getPetLikeStatus,
-  getRandomList
+  getRandomList,
 };
 
 export default petApi;

@@ -8,8 +8,19 @@
           <!-- 왼쪽: 아바타 미리보기 -->
           <div class="col-12 col-md-4 d-flex flex-column align-items-center">
             <div class="avatar-wrap mb-3">
-              <img v-if="previewUrl" :src="previewUrl" class="rounded-circle object-cover border" width="220" height="220" alt="미리보기" />
-              <div v-else class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width: 220px; height: 220px">
+              <img
+                v-if="previewUrl"
+                :src="previewUrl"
+                class="rounded-circle object-cover border"
+                width="220"
+                height="220"
+                alt="미리보기"
+              />
+              <div
+                v-else
+                class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
+                style="width: 220px; height: 220px"
+              >
                 <i class="bi bi-image text-muted fs-1"></i>
               </div>
             </div>
@@ -17,7 +28,12 @@
             <div class="d-grid gap-2 w-100" style="max-width: 260px">
               <label class="btn btn-outline-secondary btn-sm rounded-pill">
                 사진 변경
-                <input type="file" accept="image/*" class="d-none" @change="onSelectImage" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  @change="onSelectImage"
+                />
               </label>
             </div>
           </div>
@@ -31,7 +47,13 @@
                   <span class="input-group-text">
                     <i class="bi bi-heart text-brown"></i>
                   </span>
-                  <input v-model.trim="pet.petName" type="text" class="form-control" placeholder="반려견 이름" required />
+                  <input
+                    v-model.trim="pet.petName"
+                    type="text"
+                    class="form-control"
+                    placeholder="반려견 이름"
+                    required
+                  />
                 </div>
 
                 <!-- 생년월일 -->
@@ -40,16 +62,28 @@
                   <span class="input-group-text">
                     <i class="bi bi-calendar3 text-brown"></i>
                   </span>
-                  <input v-model="pet.petBirthDay" type="date" class="form-control" />
+                  <input
+                    v-model="pet.petBirthDay"
+                    type="date"
+                    class="form-control"
+                  />
                 </div>
-                <p v-if="!pet.petBirthDay" class="text-muted small mt-1">등록된 생일 정보가 없습니다.</p>
+                <p v-if="!pet.petBirthDay" class="text-muted small mt-1">
+                  등록된 생일 정보가 없습니다.
+                </p>
 
                 <!-- 품종 -->
                 <div class="input-group">
                   <span class="input-group-text">
                     <i class="bi bi-emoji-smile text-brown"></i>
                   </span>
-                  <input v-model.trim="pet.petBreed" type="text" class="form-control" placeholder="품종 (예: 푸들)" required />
+                  <input
+                    v-model.trim="pet.petBreed"
+                    type="text"
+                    class="form-control"
+                    placeholder="품종 (예: 푸들)"
+                    required
+                  />
                 </div>
 
                 <!-- 성별 -->
@@ -68,21 +102,44 @@
                   <span class="input-group-text">
                     <i class="bi bi-capslock text-brown"></i>
                   </span>
-                  <input v-model.number="pet.petWeight" type="number" class="form-control" placeholder="몸무게 (kg)" min="0" required />
+                  <input
+                    v-model.number="pet.petWeight"
+                    type="number"
+                    class="form-control"
+                    placeholder="몸무게 (kg)"
+                    min="0"
+                    required
+                  />
                   <span class="input-group-text">kg</span>
                 </div>
 
                 <!-- 소개 -->
                 <div class="form-floating">
-                  <textarea v-model.trim="pet.petDesc" class="form-control" placeholder="소개를 입력하세요" style="height: 100px"></textarea>
+                  <textarea
+                    v-model.trim="pet.petDesc"
+                    class="form-control"
+                    placeholder="소개를 입력하세요"
+                    style="height: 100px"
+                  ></textarea>
                   <label>소개</label>
                 </div>
 
                 <!-- 버튼 -->
                 <div class="text-center mt-3">
-                  <button type="submit" class="btn btn-brown px-5 py-2 rounded-pill"><span class="paw me-2">🐾</span> 수정 완료</button>
+                  <button
+                    type="submit"
+                    class="btn btn-brown px-5 py-2 rounded-pill"
+                  >
+                    <span class="paw me-2">🐾</span> 수정 완료
+                  </button>
 
-                  <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill ms-2" @click="goBack">취소</button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary px-4 py-2 rounded-pill ms-2"
+                    @click="goBack"
+                  >
+                    취소
+                  </button>
                 </div>
               </div>
             </form>

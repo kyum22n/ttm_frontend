@@ -1,18 +1,42 @@
 <template>
-  <div class="modal fade" id="petProfileModal" tabindex="-1" aria-hidden="true" ref="modalEl">
+  <div
+    class="modal fade"
+    id="petProfileModal"
+    tabindex="-1"
+    aria-hidden="true"
+    ref="modalEl"
+  >
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content p-3" style="border-radius: 15px; border: 2px solid #7a5a3a">
+      <div
+        class="modal-content p-3"
+        style="border-radius: 15px; border: 2px solid #7a5a3a"
+      >
         <!-- 헤더 -->
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="fw-bold m-0" style="color: #7a5a3a">ID: {{ pet?.userLoginId }}</h5>
-          <button type="button" class="btn btn-sm btn-outline-secondary" @click="closeModal">닫기</button>
+          <h5 class="fw-bold m-0" style="color: #7a5a3a">
+            ID: {{ pet?.userLoginId }}
+          </h5>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            @click="closeModal"
+          >
+            닫기
+          </button>
         </div>
 
         <!-- 프로필 -->
         <div class="d-flex gap-3">
-          <img :src="getPetImageUrl(pet)" alt="pet" class="rounded-circle border" style="width: 100px; height: 100px; object-fit: cover" />
+          <img
+            :src="getPetImageUrl(pet)"
+            alt="pet"
+            class="rounded-circle border"
+            style="width: 100px; height: 100px; object-fit: cover"
+          />
 
-          <div class="d-flex flex-column justify-content-center small flex-grow-1">
+          <div
+            class="d-flex flex-column justify-content-center small flex-grow-1"
+          >
             <p class="mb-1">
               <strong>{{ pet?.petName }}</strong>
             </p>
@@ -26,15 +50,34 @@
 
           <!-- 좋아요 -->
           <div class="text-center">
-            <button class="btn btn-link p-0" @click="toggleLike" :disabled="isOwner">
-              <i class="bi" :class="isLiked ? 'bi-heart-fill text-danger' : 'bi-heart text-secondary'" style="font-size: 1.4rem"></i>
+            <button
+              class="btn btn-link p-0"
+              @click="toggleLike"
+              :disabled="isOwner"
+            >
+              <i
+                class="bi"
+                :class="
+                  isLiked
+                    ? 'bi-heart-fill text-danger'
+                    : 'bi-heart text-secondary'
+                "
+                style="font-size: 1.4rem"
+              ></i>
             </button>
             <p class="small mb-0">{{ likeCount }}</p>
           </div>
         </div>
 
         <!-- 소개글 -->
-        <div class="mt-3 p-3" style="background: #fff; border-radius: 10px; box-shadow: 3px 3px 0 #7a5a3a">
+        <div
+          class="mt-3 p-3"
+          style="
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 3px 3px 0 #7a5a3a;
+          "
+        >
           <p class="m-0 text-center" style="white-space: pre-line">
             {{ pet?.petDesc || "소개글이 없습니다." }}
           </p>
@@ -42,8 +85,19 @@
 
         <!-- 버튼 -->
         <div class="mt-3 text-center">
-          <button v-if="isOwner" class="btn btn-primary btn-sm" @click="editPet">✏️ 편집</button>
-          <button v-else class="btn btn-success btn-sm" @click="requestChat">💬 채팅 신청</button>
+          <template v-if="isOwner">
+            <button class="btn btn-primary btn-sm me-2" @click="editPet">
+              ✏️ 편집
+            </button>
+            <button class="btn btn-danger btn-sm" @click="confirmDelete">
+              🗑️ 삭제
+            </button>
+          </template>
+          <template v-else>
+            <button class="btn btn-success btn-sm" @click="requestChat">
+              💬 채팅 신청
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -64,7 +118,7 @@ const props = defineProps({
   currentUserId: { type: Number, required: true },
 });
 
-const emit = defineEmits(["update:show", "edit", "chat"]);
+const emit = defineEmits(["update:show", "edit", "chat", "deleted"]);
 
 const store = useStore();
 const modalEl = ref(null);
@@ -130,7 +184,9 @@ function closeModal() {
   emit("update:show", false);
 }
 
-const isOwner = computed(() => props.pet && props.pet.petUserId === props.currentUserId);
+const isOwner = computed(
+  () => props.pet && props.pet.petUserId === props.currentUserId
+);
 
 async function toggleLike() {
   try {
@@ -157,6 +213,37 @@ function editPet() {
 function requestChat() {
   emit("chat", props.pet);
   closeModal();
+}
+
+async function handleDeleteConfirm() {
+  if (!props.pet || !props.pet.petId) return;
+
+  // 즉시 모달을 숨겨서 사용자에게 삭제가 진행 중임을 보여줌
+  try {
+    modalInstance?.hide();
+  } catch (_) {}
+  emit("update:show", false);
+
+  try {
+    await store.dispatch("pet/remove", props.pet.petId);
+    // 필요하면 부모에게 삭제 사실 통지
+    emit("deleted", props.pet.petId);
+  } catch (e) {
+    console.error("펫 삭제 실패:", e);
+    // 백엔드 삭제 실패 시 사용자 알림
+    try {
+      // 간단한 피드백: alert (원하시면 토스트로 교체)
+      alert("펫 삭제에 실패했습니다. 다시 시도해 주세요.");
+    } catch (_) {}
+  }
+}
+
+function confirmDelete() {
+  const ok = window.confirm(
+    "정말로 이 반려견을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+  );
+  if (!ok) return;
+  handleDeleteConfirm();
 }
 
 const displayBirthDay = computed(() => {
