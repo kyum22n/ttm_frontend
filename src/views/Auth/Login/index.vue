@@ -4,34 +4,28 @@
   >
     <!-- ===== 로고 + 캐릭터 ===== -->
     <div class="logo-container position-relative mb-3">
-      <!-- 중앙 로고 -->
       <img
         src="@/assets/logo_brown_bigsize.png"
         alt="나와산책가개 로고"
         class="logo-main"
       />
-
-      <!-- 고양이 -->
       <img src="@/assets/cat.png" alt="고양이" class="cat-img" />
-
-      <!-- 강아지 -->
       <img src="@/assets/dog.png" alt="강아지" class="dog-img" />
     </div>
 
-    <!-- ===== 로그인 카드 + 길 ===== -->
+    <!-- 로그인 래퍼 -->
     <div class="login-wrapper position-relative">
       <div
         class="card border-0 shadow-lg p-4 text-white text-center"
-        style="background-color: #7b4a2d; width: 400px; border-radius: 18px;"
+        style="background-color: #7b4a2d; width: 400px; border-radius: 18px"
       >
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-semibold mb-0">Login</h5>
           <router-link
             to="/Register/User"
             class="text-white small text-decoration-none"
+            >Sign up</router-link
           >
-            Sign up
-          </router-link>
         </div>
 
         <form @submit.prevent="handleLogin">
@@ -65,27 +59,36 @@
             <router-link
               to="/Auth/FindAccount"
               class="text-white small text-decoration-none"
+              >계정 찾기</router-link
             >
-              계정 찾기
-            </router-link>
           </div>
 
           <button
             type="submit"
             class="btn w-100 fw-bold rounded-pill"
-            style="background-color: #ffe9b3; color: #000;"
+            :disabled="loading"
+            style="background-color: #ffe9b3; color: #000"
           >
-            Login
+            {{ loading ? "로그인 중..." : "Login" }}
           </button>
         </form>
-      </div>
 
-      <!-- 길 이미지 (로그인 박스 아래 붙이기) -->
-      <img
-        src="@/assets/Bg1 1.png"
-        alt="길 배경"
-        class="ground-img position-absolute start-50 translate-middle-x"
-      />
+        <div v-if="loginError" class="mt-3 text-start">
+          <div class="alert alert-danger py-2 px-3 small mb-0">
+            {{ loginError }}
+          </div>
+        </div>
+        <div v-else-if="loading" class="mt-2 text-start small text-muted">
+          로그인 중… 잠시만 기다려주세요.
+        </div>
+
+        <!-- 길 이미지: 카드 내부에 배치하여 카드 배경과 버튼 사이에 위치 -->
+        <img
+          src="@/assets/Bg1 1.png"
+          alt="길 배경"
+          class="ground-img position-absolute start-50 translate-middle-x"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -104,8 +107,13 @@ const loginForm = ref({
   password: "",
 });
 
+const loginError = ref("");
+const loading = ref(false);
+
 async function handleLogin() {
   try {
+    loading.value = true;
+    loginError.value = "";
     const response = await userLoginApi.userLogin(loginForm.value);
     const result = response.data;
 
@@ -122,11 +130,29 @@ async function handleLogin() {
       store.dispatch("saveAuth", { user, jwt: result.jwt });
       router.push("/Post/MainFeed");
     } else {
-      alert(result.message || "로그인 실패");
+      loginError.value = result.message || "로그인 실패";
+      setTimeout(() => (loginError.value = ""), 5000);
     }
   } catch (e) {
     console.error(e);
-    alert("로그인 중 오류 발생");
+    // 서버가 보낸 메시지는 HTTP 400 (잘못된 아이디/비밀번호 등 사용자 입력 오류)일 때만 표시.
+    // 그 외(500 등) 내부 서버 오류나 SQL 에러는 사용자에게 노출하지 않고 일반 안내문으로 대체합니다.
+    let serverMsg = null;
+    if (e?.response) {
+      const status = e.response.status;
+      if (status === 400) {
+        serverMsg = e.response.data?.message || "로그인 실패";
+      } else {
+        serverMsg = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      }
+    } else {
+      serverMsg = "네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.";
+    }
+
+    loginError.value = serverMsg;
+    setTimeout(() => (loginError.value = ""), 5000);
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -186,8 +212,8 @@ async function handleLogin() {
 
 /* 길은 로그인 박스 하단에 붙음 */
 .ground-img {
-  width: 500px;
-  bottom: -55px;
+  width: 550px;
+  bottom: -57px;
   z-index: 1; /* 카드보다 아래 */
   filter: drop-shadow(0px 4px 8px rgba(166, 124, 82, 0.4));
   transition: filter 0.3s ease;

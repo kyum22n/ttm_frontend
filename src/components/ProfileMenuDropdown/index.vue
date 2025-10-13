@@ -8,7 +8,7 @@
   >
     <slot name="toggle">
       <button
-        class="btn btn-outline-secondary rounded-pill px-3"
+        class="btn btn-outline-secondary rounded-pill px-3 text-white"
         type="button"
         @pointerdown.stop.prevent="onTogglePointer"
         :aria-expanded="isOpen ? 'true' : 'false'"
@@ -193,5 +193,22 @@ watch(
 }
 .dropdown-menu.show {
   display: block !important;
+}
+
+/* Make the toggle button text and border white by default, and keep white on hover/focus. */
+.btn.btn-outline-secondary.text-white {
+  color: #fff;
+  border-color: #fff;
+}
+.btn.btn-outline-secondary.text-white:hover,
+.btn.btn-outline-secondary.text-white:focus {
+  color: #fff;
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+.btn.btn-outline-secondary.text-white:disabled {
+  opacity: 0.6;
+  color: #fff;
+  border-color: #fff;
 }
 </style>

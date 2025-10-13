@@ -140,7 +140,7 @@
                     </button>
                     <ChatRequestButton v-if="!isMyProfile" class="ms-2" />
                     <button
-                      class="btn"
+                      class="btn ms-2"
                       :class="
                         canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
                       "
