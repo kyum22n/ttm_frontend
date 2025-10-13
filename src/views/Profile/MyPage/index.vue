@@ -31,7 +31,6 @@
       --bs-pagination-active-border-color: #6f5034;
     "
   >
-    
     <div class="container">
       <!-- 프로필 헤더 -->
       <div class="card border-0 shadow-sm mb-4">
@@ -445,8 +444,7 @@ const profile = reactive({ bio: "로딩 중입니다...", stats: [] });
 const posts = ref([]);
 const tabs = [
   { key: "all", label: "전체" },
-  { key: "story", label: "스토리" },
-  { key: "group", label: "그룹산책" },
+  { key: "group", label: "산책" },
   { key: "feed", label: "피드" },
 ];
 const activeTab = ref("all");
@@ -653,10 +651,16 @@ const filteredMyPosts = computed(() => {
   const sort = filters.value.sort;
   let list = myPosts.value.filter((p) => {
     const isReq = (p.isRequest || "").trim();
-    return (
-      activeTab.value === "all" ||
-      (activeTab.value === "recruit" && isReq === "Y")
-    );
+    // 탭 키를 MainFeed와 동일한 의미로 매핑합니다:
+    // - all: 전체
+    // - group: 산책 모집글 (isRequest === 'Y')
+    // - feed: 일반 게시글 (isRequest !== 'Y')
+    // - story: 현재 데이터 모델에 명확한 구분 필드가 없어 feed와 동일하게 처리합니다 (추후 확장 가능)
+    if (activeTab.value === "all") return true;
+    if (activeTab.value === "group") return isReq === "Y";
+    if (activeTab.value === "feed") return isReq !== "Y";
+    if (activeTab.value === "story") return isReq !== "Y";
+    return true;
   });
 
   // 정렬
@@ -666,7 +670,8 @@ const filteredMyPosts = computed(() => {
     );
   } else {
     return [...list].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 });
@@ -692,7 +697,6 @@ async function applyFilters() {
 
     if (!filters.value.cats || filters.value.cats.length === 0) {
       await loadMyPosts();
-      
     } else {
       const selectedTag = filters.value.cats[filters.value.cats.length - 1];
       await store.dispatch("post/fetchListByTag", selectedTag);
