@@ -13,7 +13,7 @@
         @pointerdown.stop.prevent="onTogglePointer"
         :aria-expanded="isOpen ? 'true' : 'false'"
       >
-        {{ label }}
+        {{ label }} 
       </button>
     </slot>
 
