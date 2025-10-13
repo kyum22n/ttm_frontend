@@ -112,7 +112,7 @@
 
                 <!-- 모집자 -->
                 <div v-if="isRecruitment && isAuthor" class="mt-3 text-end">
-                  <!-- ✅ 신청 내역 보기 -->
+                  <!-- 신청 내역 보기 -->
                   <button class="btn btn-outline-primary btn-sm" @click="showParticipants = true">
                     <i class="bi bi-people"></i> 신청 내역 보기
                   </button>
@@ -140,18 +140,18 @@
                 </div>
               </div>
 
-              <!-- ✅ 산책 완료 + 승인 참가자일 때만 노출 -->
+              <!-- 산책 완료 + 승인 참가자일 때만 노출 -->
               <div class="mt-2 text-end" v-if="isRecruitment && isCompleted && isParticipantApproved">
                 <button class="btn btn-outline-success btn-sm" @click="showSticker = true">
                   <i class="bi bi-emoji-heart-eyes"></i> 스티커 남기기
                 </button>
               </div>
 
-              <!-- ✅ 모달 추가 -->
+              <!-- 모달 추가 -->
               <GroupParticipantsModal v-if="post" v-model="showParticipants" :post-id="post.postId"
                 :is-author="isAuthor" />
 
-              <!-- ✅ 스티커 모달 -->
+              <!-- 스티커 모달 -->
               <StickerGiveModal v-if="post" v-model="showSticker" :post-id="post.postId" />
 
             </div>
@@ -168,7 +168,7 @@
               </div>
 
               <ul class="list-group list-group-flush">
-                <!-- 🟢 로딩 중일 때 -->
+                <!-- 로딩 중일 때 -->
                 <li v-if="loadingComments" class="list-group-item text-center text-muted py-3">
                   <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
                   댓글 불러오는 중...
@@ -259,7 +259,7 @@ const isStarted = ref(false);
 const isCompleted = ref(false);
 
 const commentsWithProfiles = ref([]); // 댓글 + 작성자 프로필 통합 리스트
-const loadingComments = ref(false); // 🟢 로딩 상태 추가
+const loadingComments = ref(false); // 로딩 상태 추가
 
 // 날짜 포맷
 function formatDate(iso) {
@@ -367,11 +367,11 @@ watch(
       return;
     }
 
-    loadingComments.value = true; // 🟢 로딩 시작
+    loadingComments.value = true; // 로딩 시작
     const jwt = localStorage.getItem("jwt");
 
     try {
-      // 🟢 모든 userInfo 요청을 병렬로 처리
+      // 모든 userInfo 요청을 병렬로 처리
       const requests = newComments.map(async (c) => {
         try {
           const res = await userApi.userInfo(c.cwriter, jwt);
@@ -395,19 +395,19 @@ watch(
         }
       });
 
-      // 🟢 모든 요청 병렬 실행 후 결과 대입
+      // 모든 요청 병렬 실행 후 결과 대입
       commentsWithProfiles.value = await Promise.all(requests);
     } catch (e) {
       console.error("댓글 전체 프로필 로딩 실패:", e);
       commentsWithProfiles.value = [];
     } finally {
-      loadingComments.value = false; // 🟢 로딩 종료
+      loadingComments.value = false; // 로딩 종료
     }
   },
   { immediate: true }
 );
 
-// 🟢 라우트 변경 시 모든 상태 초기화
+// 라우트 변경 시 모든 상태 초기화
 watch(
   () => route.params.id,
   async (newId, oldId) => {
@@ -428,7 +428,7 @@ watch(
   }
 );
 
-// 🟢 컴포넌트 언마운트 시 클린업
+// 컴포넌트 언마운트 시 클린업
 onBeforeUnmount(() => {
   commentsWithProfiles.value = [];
   newComment.value = "";
@@ -458,7 +458,7 @@ async function applyGroupWalk() {
     return;
   }
 
-  // ✅ 모집 마감/시작/완료 상태면 신청 불가
+  // 모집 마감/시작/완료 상태면 신청 불가
   if (isClosing.value || isStarted.value || isCompleted.value) {
     alert(isCompleted.value ? "이미 산책이 완료되었습니다."
       : (isStarted.value ? "산책이 이미 시작되었습니다."

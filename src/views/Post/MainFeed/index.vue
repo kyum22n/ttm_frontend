@@ -199,14 +199,13 @@
 </template>
 
 <script setup>
-import { computed, ref, reactive, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import logoBrown from "@/assets/logo_brown.png";
 import heroImage from "@/assets/heroImage_main.jpg";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import userApi from "@/apis/userApi";
-import petApi from "@/apis/petApi";
 
 const router = useRouter();
 const store = useStore();
@@ -223,7 +222,7 @@ async function fetchRandomDogs() {
     dogs.value = store.getters["pet/getRandomList"];
 
   } catch (e) {
-    console.log("🐶 펫 목록 불러오기 실패:", e);
+    console.log("펫 목록 불러오기 실패:", e);
   }
 }
 
@@ -311,7 +310,7 @@ watch(activeTab, async (newTab) => {
         thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
       }));
     } catch (e) {
-      console.log("🚫 모집글 불러오기 실패:", e);
+      console.log("모집글 불러오기 실패:", e);
       posts.value = [];
     }
   } else {
@@ -343,16 +342,14 @@ function changePage(pageNo) {
   사이드바 필터
 ======================== */
 /* 필터 상태 */
-const filters = reactive({
-  q: "",
+const filters = ref({
   cats: [], //선택된 카테고리
   sort: "latest", //최신순
 });
 
 function resetFilters() {
-  filters.q = "";
-  filters.cats = [];
-  filters.sort = "latest";
+  filters.value.cats = [];
+  filters.value.sort = "latest";
   store.dispatch("post/fetchList", 1).then(() => {
     posts.value = store.getters["post/getList"];
   });
@@ -360,13 +357,13 @@ function resetFilters() {
 
 async function applyFilters() {
   try {
-    if (filters.cats.length === 0) {
+    if (filters.value.cats.length === 0) {
       // 태그 선택 없으면 전체 게시물 다시 불러오기
       await store.dispatch("post/fetchList", 1);
       posts.value = store.getters["post/getList"];
     } else {
       // 선택된 태그들 중 마지막 태그로 필터링
-      const selectedTag = filters.cats[filters.cats.length - 1];
+      const selectedTag = filters.value.cats[filters.value.cats.length - 1];
       await store.dispatch("post/fetchListByTag", selectedTag);
       posts.value = store.getters["post/getList"];
     }
@@ -377,30 +374,26 @@ async function applyFilters() {
 
 
 const filteredPosts = computed(() => {
+  // 탭/검색 필터
+  const sort = filters.value.sort;
   let list = posts.value.filter((p) => {
     const isReq = (p.isRequest || "").trim();
-    const matchTab =
+    return (
       activeTab.value === "all" ||
-      (activeTab.value === "recruit" && isReq === "Y");
-
-    const matchQ =
-      filters.q === "" ||
-      (p.postTitle && p.postTitle.includes(filters.q)) ||
-      (p.postContent && p.postContent.includes(filters.q));
-
-    return matchTab && matchQ;
+      (activeTab.value === "recruit" && isReq === "Y")
+    );
   });
 
   // 정렬
-  if (filters.sort === "likes") {
-    list.sort((a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0));
-  } else if (filters.sort === "latest") {
-    list.sort(
+  if (sort === "likes") {
+    return [...list].sort(
+      (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
+    );
+  } else {
+    return [...list].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
-
-  return list;
 });
 
 

@@ -31,6 +31,7 @@
       --bs-pagination-active-border-color: #6f5034;
     "
   >
+    
     <div class="container">
       <!-- 프로필 헤더 -->
       <div class="card border-0 shadow-sm mb-4">
@@ -254,7 +255,7 @@
 
             <div v-else class="row g-3">
               <div
-                v-for="post in myPosts"
+                v-for="post in filteredMyPosts"
                 :key="post.postId"
                 class="col-md-6 col-lg-4"
               >
@@ -403,7 +404,7 @@
         </div>
       </div>
 
-      <!-- ✅ 1:1 산책 진행 모달 -->
+      <!-- 1:1 산책 진행 모달 -->
       <OneOnOneWalkModal
         v-model="showOOOWalk"
         :request-one-id="acceptedPair?.requestOneId || null"
@@ -425,7 +426,7 @@ import PetProfileModal from "@/components/PetProfileModal";
 import postApi from "@/apis/postApi";
 import WalkRequest from "@/components/Walk/WalkRequest.vue";
 import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
-import walkApi from "@/apis/walkApi"; // ✅ 받은/보낸 1:1 신청 목록 사용
+import walkApi from "@/apis/walkApi"; // 받은/보낸 1:1 신청 목록 사용
 
 import OneOnOneWalkModal from "@/components/Walk/OneOnOneWalkModal.vue";
 import StickerWallModal from "@/components/Review/StickerWallModal.vue";
@@ -434,6 +435,9 @@ const store = useStore();
 const route = useRoute();
 const router = useRouter();
 
+/* ========================
+  상태
+======================== */
 const profileUser = ref(null);
 const profileImgUrl = ref(null);
 const profile = reactive({ bio: "로딩 중입니다...", stats: [] });
@@ -445,9 +449,11 @@ const tabs = [
   { key: "group", label: "그룹산책" },
   { key: "feed", label: "피드" },
 ];
-const categories = ["강아지", "고양이", "일상", "산책", "모임"];
 const activeTab = ref("all");
-const filters = reactive({ q: "", cats: [], sort: "latest" });
+const filters = ref({
+  cats: [], //선택된 카테고리
+  sort: "latest", //최신순
+});
 const tags = ref([]);
 const page = ref(1);
 const pageSize = 6;
@@ -639,69 +645,59 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString("ko-KR");
 }
 
-const filteredPosts = computed(() => {
-  let list = posts.value.filter((p) =>
-    activeTab.value === "all" ? true : p.type === activeTab.value
-  );
-  if (filters.q)
-    list = list.filter((p) =>
-      (p.title + p.subtitle + p.desc).includes(filters.q)
+/* ========================
+  필터
+======================== */
+const filteredMyPosts = computed(() => {
+  // 탭/검색 필터
+  const sort = filters.value.sort;
+  let list = myPosts.value.filter((p) => {
+    const isReq = (p.isRequest || "").trim();
+    return (
+      activeTab.value === "all" ||
+      (activeTab.value === "recruit" && isReq === "Y")
     );
-  if (filters.sort === "likes")
-    list = [...list].sort((a, b) => b.likes - a.likes);
-  const start = (page.value - 1) * pageSize;
-  return list.slice(start, start + pageSize);
+  });
+
+  // 정렬
+  if (sort === "likes") {
+    return [...list].sort(
+      (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
+    );
+  } else {
+    return [...list].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
 });
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(posts.value.length / pageSize))
-);
+
 function resetFilters() {
-  filters.q = "";
-  filters.cats = [];
-  filters.sort = "latest";
+  filters.value.cats = [];
+  filters.value.sort = "latest";
+  store.dispatch("post/fetchList", 1).then(() => {
+    posts.value = store.getters["post/getList"];
+  });
 }
-// UI 초기화를 위해 사용자의 게시물을 다시 불러옵니다
+
+// Ensure UI resets by reloading user's posts
 async function resetFiltersAndReload() {
   resetFilters();
   await loadMyPosts();
 }
+
 async function applyFilters() {
   page.value = 1;
   try {
-    const uid = routeUserId.value || store.state.user.userId;
-    if (!filters.cats || filters.cats.length === 0) {
-      // 사용자의 게시물을 다시 불러옵니다
+    const uId = routeUserId.value || store.state.user.userId;
+
+    if (!filters.value.cats || filters.value.cats.length === 0) {
       await loadMyPosts();
-      // 정렬 적용
-      if (filters.sort === "likes") {
-        myPosts.value = [...myPosts.value].sort(
-          (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
-        );
-      } else {
-        myPosts.value = [...myPosts.value].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
+      
     } else {
-      const selectedTag = filters.cats[filters.cats.length - 1];
+      const selectedTag = filters.value.cats[filters.value.cats.length - 1];
       await store.dispatch("post/fetchListByTag", selectedTag);
       const list = store.getters["post/getList"] || [];
-      // 프로필 유저에 해당하는 게시물만 필터링
-      let filtered = list.filter((p) => Number(p.postUserId) === Number(uid));
-      // 썸네일url이 존재한다고 보증 (스토어가 그렇게 관리함)
-      filtered = filtered.map((p) => ({ ...p }));
-      if (filters.sort === "likes") {
-        filtered.sort(
-          (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
-        );
-      } else {
-        filtered.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      }
-      myPosts.value = filtered;
+      myPosts.value = list.filter((p) => Number(p.postUserId) === Number(uId));
     }
   } catch (e) {
     console.error("필터 적용 실패:", e);
@@ -716,17 +712,6 @@ async function loadTags() {
     console.warn("태그 로드 실패:", e);
     tags.value = [];
   }
-}
-
-// ===== 리뷰 해시태그 (그대로) =====
-const reviews = computed(() => store.getters["review/reviews"] || []);
-const tagsFromReviews = computed(() => {
-  const ids = reviews.value.map((r) => r?.reviewTagId).filter(Boolean);
-  return [...new Set(ids)].map((id) => String(id));
-});
-function onSelect(tag) {
-  filters.q = tag.replace("#", "");
-  applyFilters();
 }
 
 // ===== 1:1 산책 수락 여부 확인 =====
