@@ -238,11 +238,12 @@ function onPickAvatar(e) {
     pet.value = pet.value || {};
     pet.value.petAttach = file;
 
-    // 이전 Blob URL 해제 (메모리 누수 방지)
-    if (profileImgUrl.value) {
+    // 이전 object URL 해제 (메모리 누수 방지) — blob URL만 revoke
+    if (profileImgUrl.value && profileImgUrl.value.startsWith("blob:")) {
       URL.revokeObjectURL(profileImgUrl.value);
     }
 
+    // 로컬 파일은 object URL로 미리보기
     profileImgUrl.value = URL.createObjectURL(file);
   }
 }
@@ -284,13 +285,12 @@ onMounted(async () => {
     console.error("Pet 정보 로드 실패", e);
   }
 
-  // 3. 프로필 이미지
+  // 3. 프로필 이미지 (서버가 제공하는 경로는 절대 URL로 사용)
   if (store.state.user.profileImage) {
-    const res = await axios.get(
-      `http://localhost:8080${store.state.user.profileImage}`,
-      { responseType: "blob" }
-    );
-    profileImgUrl.value = URL.createObjectURL(res.data);
+    const imgPath = store.state.user.profileImage;
+    profileImgUrl.value = imgPath.startsWith("http")
+      ? imgPath
+      : axios.defaults.baseURL + imgPath;
   }
 });
 
@@ -343,23 +343,22 @@ async function submit() {
       return;
     }
 
-    // ✅ 새 이미지 즉시 재요청 (캐시 방지)
-    // DB 업데이트 및 이미지 요청 이후
+    // ✅ 새 이미지 즉시 사용 (캐시 방지)
     if (pet.value?.petId) {
-      const res = await axios.get(
-        `/pet/image/${pet.value.petId}?v=${Date.now()}`,
-        {
-          responseType: "blob",
-        }
-      );
-      if (profileImgUrl.value) URL.revokeObjectURL(profileImgUrl.value);
-      profileImgUrl.value = URL.createObjectURL(res.data);
+      const newPath = `/pet/image/${pet.value.petId}?v=${Date.now()}`;
+      // 이전이 blob 기반 object URL이면 해제
+      if (profileImgUrl.value && profileImgUrl.value.startsWith("blob:")) {
+        URL.revokeObjectURL(profileImgUrl.value);
+      }
+      profileImgUrl.value = axios.defaults.baseURL + newPath;
 
       // ✅ 새 프로필 이미지 경로 store에 강제 반영 (변경 감지 확실히)
       store.commit("setUser", {
         ...store.state.user,
-        profileImage: `/pet/image/${pet.value.petId}?v=${Date.now()}`, // timestamp 추가!
+        profileImage: newPath, // timestamp 추가!
       });
+      // 이미지가 변경되었음을 알려 다른 컴포넌트가 URL을 다시 구성하게 함
+      store.commit("bumpImageVersion");
     }
 
     alert("프로필 및 펫 이미지가 성공적으로 수정되었습니다!");

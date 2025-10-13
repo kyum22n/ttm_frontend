@@ -159,7 +159,8 @@ onMounted(async () => {
     pet.petBreed = "말티즈";
     pet.petGender = "M";
     pet.petAge = 3;
-    petPreview.value = defaultImg; // DB 이미지 불러오면 Blob → URL.createObjectURL 로 교체
+    // DB 이미지가 있다면 서버 URL로 사용 (캐시 방지 쿼리 추가 가능)
+    petPreview.value = defaultImg; // 기본값(로컬 에셋) 사용 — 서버 이미지가 있으면 axios.defaults.baseURL + `/pet/image/${petId}` 로 설정하세요
   }
 });
 </script>

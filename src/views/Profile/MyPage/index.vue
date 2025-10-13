@@ -31,7 +31,6 @@
       --bs-pagination-active-border-color: #6f5034;
     "
   >
-    >
     <div class="container">
       <!-- 프로필 헤더 -->
       <div class="card border-0 shadow-sm mb-4">
@@ -464,7 +463,7 @@ const mainPet = ref(null);
 const userId = computed(() => store.state.user?.userId || null);
 const routeUserId = ref(null);
 
-// Extra profile info to show in the bio box
+// 바이오 박스에 표시할 추가 프로필 정보
 const userLocation = computed(
   () => profileUser.value?.userAddress || profileUser.value?.userLocation || ""
 );
@@ -486,11 +485,11 @@ const memberSince = computed(() => {
   }
 });
 
-// 현재 보고 있는 프로필이 내 프로필인지 판단 (안정적으로 처리)
+// 현재 보고 있는 프로필이 내 프로필인지 판단합니다 (안정적인 처리)
 const isMyProfile = computed(() => {
   const routeId = route.params.userId ? Number(route.params.userId) : null;
   const me = store.state.user?.userId ?? null;
-  // route에 userId가 없다면 현재 로그인한 사용자의 프로필 페이지로 간주
+  // route에 userId가 없다면 현재 로그인한 사용자의 프로필 페이지로 간주합니다
   if (!routeId) return me != null;
   return routeId === me;
 });
@@ -541,7 +540,8 @@ async function loadPetProfile() {
     const mp = pets[0];
     mainPet.value = mp;
     profile.bio = mp.petDesc || "아직 반려견 소개가 없습니다.";
-    profileImgUrl.value = axios.defaults.baseURL + `/pet/image/${mp.petId}`;
+    const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
+    profileImgUrl.value = axios.defaults.baseURL + `/pet/image/${mp.petId}` + v;
   } catch (e) {
     console.error("펫 프로필 불러오기 실패:", e);
     profile.bio = "프로필 정보를 불러오지 못했습니다.";
@@ -563,7 +563,10 @@ async function loadAllPets() {
 }
 
 function getPetImageUrl(pet) {
-  if (pet?.petId) return axios.defaults.baseURL + `/pet/image/${pet.petId}`;
+  if (pet?.petId) {
+    const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
+    return axios.defaults.baseURL + `/pet/image/${pet.petId}` + v;
+  }
   return "https://via.placeholder.com/80?text=No+Image";
 }
 
@@ -657,7 +660,7 @@ function resetFilters() {
   filters.cats = [];
   filters.sort = "latest";
 }
-// Ensure UI resets by reloading user's posts
+// UI 초기화를 위해 사용자의 게시물을 다시 불러옵니다
 async function resetFiltersAndReload() {
   resetFilters();
   await loadMyPosts();
@@ -667,9 +670,9 @@ async function applyFilters() {
   try {
     const uid = routeUserId.value || store.state.user.userId;
     if (!filters.cats || filters.cats.length === 0) {
-      // reload the user's posts
+      // 사용자의 게시물을 다시 불러옵니다
       await loadMyPosts();
-      // apply sort
+      // 정렬 적용
       if (filters.sort === "likes") {
         myPosts.value = [...myPosts.value].sort(
           (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
@@ -684,9 +687,9 @@ async function applyFilters() {
       const selectedTag = filters.cats[filters.cats.length - 1];
       await store.dispatch("post/fetchListByTag", selectedTag);
       const list = store.getters["post/getList"] || [];
-      // keep only posts by this profile user
+      // 프로필 유저에 해당하는 게시물만 필터링
       let filtered = list.filter((p) => Number(p.postUserId) === Number(uid));
-      // ensure thumbnailUrl exists (store action already sets it)
+      // 썸네일url이 존재한다고 보증 (스토어가 그렇게 관리함)
       filtered = filtered.map((p) => ({ ...p }));
       if (filters.sort === "likes") {
         filtered.sort(
@@ -823,7 +826,7 @@ onMounted(async () => {
   object-fit: cover;
 }
 
-/* Main pet card styling */
+/* 메인 펫 카드 */
 .main-pet-card {
   border: 1px solid rgba(0, 0, 0, 0.06);
   padding: 10px;
@@ -836,13 +839,13 @@ onMounted(async () => {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
-/* Bio bubble tweak */
+/* 설명란 */
 .p-3.bg-light {
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Left big pet avatar */
+/* 왼쪽 큰 펫 아바타 */
 .main-pet-left img {
   width: 110px;
   height: 110px;

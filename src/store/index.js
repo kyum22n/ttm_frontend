@@ -17,6 +17,8 @@ const store = createStore({
       userBirthDate: "",
       profileImage: "",
     },
+    // 이미지 캐시 무효화를 위한 버전값 (타임스탬프)
+    imageVersion: Date.now(),
     signupUser: null,
     jwt: "",
     searchResults: [],
@@ -45,7 +47,8 @@ const store = createStore({
     setJwt(state, payload) {
       state.jwt = payload;
     },
-    setSignupUser(state, payload) { // 회원가입 임시 저장용
+    setSignupUser(state, payload) {
+      // 회원가입 임시 저장용
       state.signupUser = payload;
     },
     clearUser(state) {
@@ -71,6 +74,9 @@ const store = createStore({
     },
     setSearchResults(state, results) {
       state.searchResults = results || [];
+    },
+    bumpImageVersion(state) {
+      state.imageVersion = Date.now();
     },
   },
   actions: {
@@ -119,7 +125,7 @@ const store = createStore({
     async searchUserByLoginId({ commit }, query) {
       try {
         const res = await userApi.searchUserByLoginId(query);
-        if(res.data.result === "success") {
+        if (res.data.result === "success") {
           commit("setSearchResults", res.data.user);
         } else {
           commit("setSearchResults", []);
@@ -128,7 +134,7 @@ const store = createStore({
         console.log("유저 검색 실패: ", e);
         commit("setSearchResults", []);
       }
-    }
+    },
   },
   modules: { post, review, pet },
 });
