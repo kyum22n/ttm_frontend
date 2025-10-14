@@ -64,11 +64,18 @@
               :key="w.requestOneId"
               class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div class="d-flex align-items-center gap-3">
+              <!-- ▼ 프로필로 이동: 왼쪽 정보 영역만 클릭 가능 -->
+              <div
+                class="d-flex align-items-center gap-3 clickable"
+                @click="goProfile(w.requestUserId)"
+              >
                 <img
                   class="avatar"
                   :src="metaMap.get(w.requestUserId)?.avatar || FALLBACK_AVATAR"
                   alt="상대 프로필"
+                  loading="lazy"
+                  decoding="async"
+                  @error="onImgErr"
                 />
                 <div class="room-texts">
                   <div class="room-title">
@@ -148,11 +155,18 @@
               :key="w.requestOneId"
               class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div class="d-flex align-items-center gap-3">
+              <!-- ▼ 프로필로 이동: 왼쪽 정보 영역만 클릭 가능 -->
+              <div
+                class="d-flex align-items-center gap-3 clickable"
+                @click="goProfile(w.receiveUserId)"
+              >
                 <img
                   class="avatar"
                   :src="metaMap.get(w.receiveUserId)?.avatar || FALLBACK_AVATAR"
                   alt="상대 프로필"
+                  loading="lazy"
+                  decoding="async"
+                  @error="onImgErr"
                 />
                 <div class="room-texts">
                   <div class="room-title">
@@ -209,6 +223,9 @@
                     FALLBACK_AVATAR
                   "
                   alt="작성자 프로필"
+                  loading="lazy"
+                  decoding="async"
+                  @error="onImgErr"
                 />
                 <div class="room-texts">
                   <div class="room-title">
@@ -307,6 +324,10 @@ function statusLabel(s) {
       return "대기";
   }
 }
+// 이미지 에러 시 대체
+function onImgErr(e) {
+  if (e?.target) e.target.src = FALLBACK_AVATAR;
+}
 
 /** 그룹 상태 라벨/클래스 (요청사항 반영) */
 function partStatusLabel(s) {
@@ -340,29 +361,56 @@ function goPost(postId) {
   router.push(`/post/${postId}`);
 }
 
-/** (공통) 첫 펫 기준으로 메타 가져오기 */
+/** 프로필로 이동: /mypage/:userId */
+function goProfile(userId) {
+  if (!userId) return;
+  router.push(`/mypage/${userId}`);
+}
+
+/** (공통) 첫 펫 기준으로 메타 가져오기
+ *  1순위: /pet/{userId}/first-pet (가벼운 메타+imageUrl)
+ *  실패/204 → 2순위: /pet/find-allpetbyuser (첫 요소만 사용)
+ */
 async function fetchUserMeta(userId) {
   if (!userId) return null;
   if (metaCache.has(userId)) return metaCache.get(userId);
 
   let petName = "";
   let avatar = "";
+
   try {
-    const petsRes = await axios.get("/pet/find-allpetbyuser", {
-      params: { petUserId: userId },
-    });
-    const pets = Array.isArray(petsRes?.data) ? petsRes.data : [];
-    if (pets.length > 0) {
-      pets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      const main = pets[0];
-      petName = main?.petName || "";
-      if (main?.petId)
-        avatar =
-          axios.defaults.baseURL.replace(/\/$/, "") +
-          `/pet/image/${main.petId}`;
+    // 1) 경량 엔드포인트 우선
+    const fp = await axios.get(`/pet/${userId}/first-pet`);
+    if (fp?.status === 200 && fp.data) {
+      petName = fp.data.petName || "";
+      if (fp.data.imageUrl) {
+        const base = (axios.defaults.baseURL || "").replace(/\/$/, "");
+        avatar = base + fp.data.imageUrl; // 예: /pet/image/{petId}
+      }
     }
   } catch {
     /* no-op */
+  }
+
+  if (!petName && !avatar) {
+    // 2) 폴백: 모든 펫 조회 → 첫 펫만 사용 (응답은 BLOB 없음)
+    try {
+      const petsRes = await axios.get("/pet/find-allpetbyuser", {
+        params: { petUserId: userId },
+      });
+      const pets = Array.isArray(petsRes?.data) ? petsRes.data : [];
+      if (pets.length > 0) {
+        // 서버가 created_at ASC로 주므로 0번째가 첫 펫
+        const main = pets[0];
+        petName = main?.petName || "";
+        if (main?.petId) {
+          const base = (axios.defaults.baseURL || "").replace(/\/$/, "");
+          avatar = base + `/pet/image/${main.petId}`;
+        }
+      }
+    } catch {
+      /* no-op */
+    }
   }
 
   const meta = { petName, avatar };
