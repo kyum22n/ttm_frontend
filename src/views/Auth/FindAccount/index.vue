@@ -39,7 +39,7 @@
 
 <script setup>
 import { ref } from "vue";
-import axios from "axios";
+import userLoginApi from "@/apis/userLoginApi";
 import { useRouter } from "vue-router";
 
 const email = ref("");
@@ -63,10 +63,8 @@ const findId = async () => {
   }
 
   try {
-    const response = await axios.post("/user-login/find-id", { email: email.value });
-    loginId.value = response.data.loginId;
-    alert("loginId는 " + loginId.value + " 입니다");
-    message.value = response.data.message;
+    const {data} = await userLoginApi.findId(email.value);
+    alert(`회원님의 아이디는 ${data.loginId} 입니다`);
     router.push("/Auth/Login");
   } catch (err) {
     message.value = err.response?.data?.message || "서버 요청 중 오류가 발생했습니다.";
@@ -82,11 +80,8 @@ const findPassword = async () => {
   }
 
   try {
-    const response = await axios.post("/user-login/find-password", {
-      loginId: loginId.value,
-    });
-    message.value = response.data.message;
-    // alert("비밀번호가 리셋되었습니다. 메일을 확인하세요.");
+    const {data} = await userLoginApi.findPassword(loginId.value);
+    alert(data.message || "비밀번호가 리셋되었습니다. 메일을 확인하세요.");
     router.push("/Auth/Login");
   } catch (err) {
     message.value = err.response?.data?.message || "서버 요청 중 오류가 발생했습니다.";
