@@ -51,6 +51,9 @@
                     :src="getPetImageUrl(mainPet)"
                     alt="main pet"
                     style="width: 100%; height: 100%; object-fit: cover"
+                    loading="lazy"
+                    decoding="async"
+                    @error="onImgErr"
                   />
                 </div>
                 <div class="small">
@@ -158,19 +161,6 @@
                     />
                   </div>
                 </div>
-
-                <!-- <div class="col-lg-2" v-if="isMyProfile">
-                <button
-                class="btn"
-                :class="
-                canOneOnOneGo ? 'btn-primary' : 'btn-outline-secondary'
-                "
-                :disabled="!canOneOnOneGo"
-                @click="openOneOnOneModal"
-                >
-                산책 하러가기!
-              </button>
-            </div> -->
               </div>
             </div>
           </div>
@@ -202,6 +192,9 @@
               class="rounded-circle object-cover"
               width="64"
               height="64"
+              loading="lazy"
+              decoding="async"
+              @error="onImgErr"
             />
           </div>
           <div class="small text-muted">{{ pet.petName }}</div>
@@ -264,6 +257,9 @@
                       :src="post.thumbnailUrl || '/default_post.png'"
                       class="card-img-top object-cover"
                       alt="게시물 이미지"
+                      loading="lazy"
+                      decoding="async"
+                      @error="onPostImgErr"
                     />
                   </div>
                   <div class="card-body">
@@ -425,8 +421,7 @@ import PetProfileModal from "@/components/PetProfileModal";
 import postApi from "@/apis/postApi";
 import WalkRequest from "@/components/Walk/WalkRequest.vue";
 import ChatRequestButton from "@/components/Chat/ChatRequestButton.vue";
-import walkApi from "@/apis/walkApi"; // 받은/보낸 1:1 신청 목록 사용
-
+import walkApi from "@/apis/walkApi";
 import OneOnOneWalkModal from "@/components/Walk/OneOnOneWalkModal.vue";
 import StickerWallModal from "@/components/Review/StickerWallModal.vue";
 
@@ -449,8 +444,8 @@ const tabs = [
 ];
 const activeTab = ref("all");
 const filters = ref({
-  cats: [], //선택된 카테고리
-  sort: "latest", //최신순
+  cats: [],
+  sort: "latest",
 });
 const tags = ref([]);
 const page = ref(1);
@@ -467,18 +462,14 @@ const mainPet = ref(null);
 const userId = computed(() => store.state.user?.userId || null);
 const routeUserId = ref(null);
 
-// 바이오 박스에 표시할 추가 프로필 정보
 const userLocation = computed(
   () => profileUser.value?.userAddress || profileUser.value?.userLocation || ""
 );
 const petsCount = computed(() => (petList.value ? petList.value.length : 0));
 const postsCount = computed(() => (myPosts.value ? myPosts.value.length : 0));
-const totalLikes = computed(() => {
-  return (myPosts.value || []).reduce(
-    (acc, p) => acc + (p.postLikeCount || 0),
-    0
-  );
-});
+const totalLikes = computed(() =>
+  (myPosts.value || []).reduce((acc, p) => acc + (p.postLikeCount || 0), 0)
+);
 const memberSince = computed(() => {
   const d = profileUser.value?.createdAt || profileUser.value?.regDate || null;
   if (!d) return "";
@@ -489,26 +480,24 @@ const memberSince = computed(() => {
   }
 });
 
-// 현재 보고 있는 프로필이 내 프로필인지 판단합니다 (안정적인 처리)
 const isMyProfile = computed(() => {
   const routeId = route.params.userId ? Number(route.params.userId) : null;
   const me = store.state.user?.userId ?? null;
-  // route에 userId가 없다면 현재 로그인한 사용자의 프로필 페이지로 간주합니다
   if (!routeId) return me != null;
   return routeId === me;
 });
 
-const showStickerModal = ref(false); // 열고 닫기만
+const showStickerModal = ref(false);
 
 watch(
   () => route.params.userId,
   (newVal) => {
     if (newVal) {
       routeUserId.value = Number(newVal);
-      loadPetProfile();
+      loadProfileUser();
+      loadPetProfile();   // ✅ 경량 API 우선 사용
       loadAllPets();
       loadUserPosts();
-      loadProfileUser();
       loadMyPosts();
       loadTags();
       checkAcceptedPair();
@@ -517,6 +506,20 @@ watch(
   { immediate: true }
 );
 
+/** 공통: 베이스 URL */
+function baseUrl() {
+  return (axios.defaults.baseURL || "").replace(/\/$/, "");
+}
+
+/** 이미지 에러 시 폴백 */
+function onImgErr(e) {
+  if (e?.target) e.target.src = "https://via.placeholder.com/100?text=No+Image";
+}
+function onPostImgErr(e) {
+  if (e?.target) e.target.src = "/default_post.png";
+}
+
+/** ✅ 프로필 유저 정보 */
 async function loadProfileUser() {
   try {
     const uid = Number(route.params.userId) || store.state.user.userId;
@@ -528,16 +531,39 @@ async function loadProfileUser() {
   }
 }
 
+/** 메인 펫은 store 기반으로 변경 */
 async function loadPetProfile() {
+  const uid = Number(route.params.userId) || store.state.user.userId;
+  if (!uid) return;
+
   try {
-    const uid = routeUserId.value || store.state.user.userId;
-    const resPets = await axios.get("/pet/find-allpetbyuser", {
-      params: { petUserId: uid },
-    });
-    const pets = resPets.data || [];
+    // 1) store의 액션 사용
+    const data = await store.dispatch("pet/fetchFirstPet", uid);
+    if (data) {
+      mainPet.value = {
+        petId: data.petId,
+        petName: data.petName,
+        petBreed: data.petBreed,
+        createdAt: data.createdAt,
+        petUserId: uid,
+      };
+      profile.bio = "반려견과 함께한 이야기를 나눠보세요!";
+      const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
+      profileImgUrl.value = baseUrl() + data.imageUrl + v;
+      return;
+    }
+  } catch {
+    // no-op → fallback
+  }
+
+  // 2) 폴백: 전체 리스트에서 첫 펫 선택 (서버가 BLOB을 싣지 않는 전제)
+  try {
+    await store.dispatch("pet/fetchList", uid);
+    const pets = store.getters["pet/getList"] || [];
     if (pets.length === 0) {
       profile.bio = "등록된 반려견이 없습니다.";
       profileImgUrl.value = "https://via.placeholder.com/100?text=No+Image";
+      mainPet.value = null;
       return;
     }
     pets.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
@@ -545,31 +571,32 @@ async function loadPetProfile() {
     mainPet.value = mp;
     profile.bio = mp.petDesc || "아직 반려견 소개가 없습니다.";
     const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
-    profileImgUrl.value = axios.defaults.baseURL + `/pet/image/${mp.petId}` + v;
+    profileImgUrl.value = baseUrl() + `/pet/image/${mp.petId}` + v;
   } catch (e) {
     console.error("펫 프로필 불러오기 실패:", e);
     profile.bio = "프로필 정보를 불러오지 못했습니다.";
     profileImgUrl.value = "https://via.placeholder.com/100?text=No+Image";
+    mainPet.value = null;
   }
 }
 
+/** 유저의 모든 펫 목록 조회 — store 액션 사용 */
 async function loadAllPets() {
   try {
-    const uid = routeUserId.value || store.state.user.userId;
-    const res = await axios.get("/pet/find-allpetbyuser", {
-      params: { petUserId: uid },
-    });
-    petList.value = res.data || [];
+    const uid = Number(route.params.userId) || store.state.user.userId;
+    await store.dispatch("pet/fetchList", uid);
+    petList.value = store.getters["pet/getList"];
   } catch (err) {
     console.error("펫 목록 로드 실패:", err);
     petList.value = [];
   }
 }
 
+/** 펫 이미지 URL */
 function getPetImageUrl(pet) {
   if (pet?.petId) {
     const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
-    return axios.defaults.baseURL + `/pet/image/${pet.petId}` + v;
+    return baseUrl() + `/pet/image/${pet.petId}` + v;
   }
   return "https://via.placeholder.com/80?text=No+Image";
 }
@@ -578,25 +605,23 @@ function goToEditPet(pet) {
   router.push(`/Register/EditPet/${pet.petId}`);
 }
 
+/** 펫 모달 오픈 시 store 기반으로 변경 */
 async function openPetModal(pet) {
   selectedPet.value = { ...pet };
   try {
-    const res = await axios.get("/user/info", {
-      params: { userId: pet.petUserId },
-    });
-    if (res.data?.data) {
-      selectedPet.value.userLoginId = res.data.data.userLoginId;
-      selectedPet.value.userAddress = res.data.data.userAddress;
+    const detail = await store.dispatch("pet/fetchDetail", pet.petId);
+    if (detail) {
+      selectedPet.value = { ...selectedPet.value, ...detail };
     }
   } catch (e) {
-    console.error("유저 정보 불러오기 실패:", e);
+    console.error("펫 상세 정보 불러오기 실패:", e);
   }
   showPetModal.value = true;
 }
 
 async function loadUserPosts() {
   try {
-    const uid = routeUserId.value || store.state.user.userId;
+    const uid = Number(route.params.userId) || store.state.user.userId;
     const res = await postApi.getUserPost(uid);
     if (res.data?.posts) {
       posts.value = res.data.posts.map((p) => ({
@@ -624,9 +649,10 @@ async function loadMyPosts() {
     if (!uid) return;
     const res = await postApi.getUserPost(uid);
     if (res.data?.posts) {
+      const base = baseUrl();
       myPosts.value = res.data.posts.map((p) => ({
         ...p,
-        thumbnailUrl: `http://localhost:8080/post/image/${p.postId}`,
+        thumbnailUrl: `${base}/post/image/${p.postId}`,
       }));
     } else {
       myPosts.value = [];
@@ -647,15 +673,9 @@ function formatDate(iso) {
   필터
 ======================== */
 const filteredMyPosts = computed(() => {
-  // 탭/검색 필터
   const sort = filters.value.sort;
   let list = myPosts.value.filter((p) => {
     const isReq = (p.isRequest || "").trim();
-    // 탭 키를 MainFeed와 동일한 의미로 매핑합니다:
-    // - all: 전체
-    // - group: 산책 모집글 (isRequest === 'Y')
-    // - feed: 일반 게시글 (isRequest !== 'Y')
-    // - story: 현재 데이터 모델에 명확한 구분 필드가 없어 feed와 동일하게 처리합니다 (추후 확장 가능)
     if (activeTab.value === "all") return true;
     if (activeTab.value === "group") return isReq === "Y";
     if (activeTab.value === "feed") return isReq !== "Y";
@@ -663,7 +683,6 @@ const filteredMyPosts = computed(() => {
     return true;
   });
 
-  // 정렬
   if (sort === "likes") {
     return [...list].sort(
       (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
@@ -684,7 +703,6 @@ function resetFilters() {
   });
 }
 
-// Ensure UI resets by reloading user's posts
 async function resetFiltersAndReload() {
   resetFilters();
   await loadMyPosts();
@@ -693,7 +711,7 @@ async function resetFiltersAndReload() {
 async function applyFilters() {
   page.value = 1;
   try {
-    const uId = routeUserId.value || store.state.user.userId;
+    const uId = Number(route.params.userId) || store.state.user.userId;
 
     if (!filters.value.cats || filters.value.cats.length === 0) {
       await loadMyPosts();
@@ -708,18 +726,8 @@ async function applyFilters() {
   }
 }
 
-async function loadTags() {
-  try {
-    await store.dispatch("post/fetchTags");
-    tags.value = store.getters["post/getTags"];
-  } catch (e) {
-    console.warn("태그 로드 실패:", e);
-    tags.value = [];
-  }
-}
-
 // ===== 1:1 산책 수락 여부 확인 =====
-const acceptedPair = ref(null); // { requestOneId, requestUserId, receiveUserId, rstatus }
+const acceptedPair = ref(null);
 const canOneOnOneGo = computed(() => !!acceptedPair.value?.requestOneId);
 
 async function checkAcceptedPair() {
@@ -731,10 +739,9 @@ async function checkAcceptedPair() {
       return;
     }
 
-    // 내 기준 받은/보낸 둘 다 조회
     const [rec, sent] = await Promise.allSettled([
-      walkApi.getReceivedRequests(me), // 내가 받은
-      walkApi.getOneOnOneRequests(me), // 내가 보낸
+      walkApi.getReceivedRequests(me),
+      walkApi.getOneOnOneRequests(me),
     ]);
 
     const recvList =
@@ -744,7 +751,6 @@ async function checkAcceptedPair() {
         ? sent.value?.data?.walkRequestList || []
         : [];
 
-    // A(수락) 상태이고, 둘의 페어가 일치하는 요청 1건 찾기
     const isAccepted = (row) =>
       String(row?.rstatus || "P").toUpperCase() === "A";
     const pairMatch = (row) =>
@@ -770,18 +776,27 @@ async function checkAcceptedPair() {
   }
 }
 
-// 모달 오픈
 const showOOOWalk = ref(false);
 function openOneOnOneModal() {
   if (!canOneOnOneGo.value) return;
   showOOOWalk.value = true;
 }
 
+async function loadTags() {
+  try {
+    await store.dispatch("post/fetchTags");
+    tags.value = store.getters["post/getTags"] || [];
+  } catch (e) {
+    console.warn("태그 로드 실패:", e);
+    tags.value = [];
+  }
+}
+
 onMounted(async () => {
   if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
   await Promise.all([
     loadProfileUser(),
-    loadPetProfile(),
+    loadPetProfile(), // ✅ store 기반으로 변경
     loadAllPets(),
     loadUserPosts(),
     loadMyPosts(),
@@ -789,6 +804,7 @@ onMounted(async () => {
   await checkAcceptedPair();
 });
 </script>
+
 
 <style scoped>
 .object-cover {

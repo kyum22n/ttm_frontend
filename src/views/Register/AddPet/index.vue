@@ -154,7 +154,7 @@
 import { ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import axios from "axios";
+import petApi from "@/apis/petApi";
 
 const store = useStore();
 const router = useRouter();
@@ -189,25 +189,13 @@ async function submit() {
       alert("이름과 이미지는 필수입니다!");
       return;
     }
+    await store.dispatch("pet/register", pet.value);
 
-    const formData = new FormData();
-    for (const key in pet.value) {
-      if (pet.value[key] != null) formData.append(key, pet.value[key]);
-    }
-
-    const res = await axios.post("/pet/register", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    if (res.data.result === "success") {
-      alert("새 반려견이 등록되었습니다!");
-      router.push(`/mypage/${store.state.user.userId}`);
-    } else {
-      alert(res.data.message || "등록 실패");
-    }
+    alert("새 반려견이 등록되었습니다!");
+    router.push(`/mypage/${store.state.user.userId}`);
   } catch (err) {
     console.error("펫 등록 실패:", err);
-    alert("업데이트 중 오류가 발생했습니다.");
+    alert("등록 중 오류가 발생했습니다.");
   }
 }
 

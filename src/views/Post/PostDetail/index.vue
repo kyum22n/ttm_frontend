@@ -82,11 +82,17 @@
                 <span>{{ post.postLikeCount }} Likes</span>
               </div>
 
-              <!-- 수정 버튼 (작성자 && 일반글만) -->
-              <div v-if="isAuthor && !isRecruitment" class="text-end mt-3">
-                <router-link :to="`/post/update/${post.postId}`" class="btn btn-outline-secondary btn-sm">
+              <div v-if="isAuthor" class="text-end mt-3 d-flex justify-content-end gap-2">
+                <!-- 수정 버튼 (작성자 && 일반글만) -->
+                <router-link v-if="!isRecruitment" :to="`/post/update/${post.postId}`"
+                  class="btn btn-outline-secondary btn-sm">
                   ✏️ 수정하기
                 </router-link>
+
+                <!-- 삭제 버튼 (작성자) -->
+                <button class="btn btn-outline-danger btn-sm" @click="deletePost">
+                  삭제하기
+                </button>
               </div>
 
               <!-- 산책 모집글 버튼 -->
@@ -174,16 +180,35 @@
                   댓글 불러오는 중...
                 </li>
 
-                <!-- 댓글 리스트 -->
-                <li v-else v-for="(c, i) in commentsWithProfiles" :key="i"
-                  class="list-group-item d-flex align-items-start">
-                  <img :src="c.profileImage || 'https://placekitten.com/32/32'" class="rounded-circle me-2" width="32"
-                    height="32" alt="댓글 작성자" style="object-fit: cover;" />
-                  <div>
-                    <strong>{{ c.userLoginId || c.cwriter }}</strong>:
-                    {{ c.commentContent }}
-                  </div>
-                </li>
+                <ul class="list-group list-group-flush">
+                  <li v-for="(c, i) in commentsWithProfiles" :key="i"
+                    class="list-group-item d-flex align-items-center justify-content-between">
+                    <!-- 왼쪽: 프로필 + 내용 -->
+                    <div class="d-flex align-items-center flex-grow-1">
+                      <img :src="c.profileImage || 'https://placekitten.com/32/32'" class="rounded-circle me-2"
+                        width="32" height="32" alt="댓글 작성자" style="object-fit: cover;" />
+                      <div class="text-break">
+                        <strong>{{ c.userLoginId || c.cwriter }}</strong>:
+                        {{ c.commentContent }}
+                      </div>
+                    </div>
+
+                    <!-- 오른쪽: ... 버튼 (작성자일 때만) -->
+                    <div v-if="c.cwriter === userId" class="position-relative ms-2">
+                      <button class="btn btn-sm btn-light border-0 px-1" @click="toggleCommentMenu(i)">
+                        <i class="bi bi-three-dots"></i>
+                      </button>
+
+                      <!-- 메뉴 -->
+                      <div v-if="activeMenuIndex === i" class="position-absolute bg-white border rounded shadow-sm"
+                        style="top: 100%; right: 0; width: 110px; z-index: 1000;">
+                        <button class="dropdown-item small" @click="startEditComment(c)">✏️ 수정</button>
+                        <button class="dropdown-item small text-danger" @click="deleteComment(c)">🗑️ 삭제</button>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+
               </ul>
             </div>
           </div>
@@ -258,8 +283,10 @@ const isClosing = ref(false);
 const isStarted = ref(false);
 const isCompleted = ref(false);
 
+// 댓글
 const commentsWithProfiles = ref([]); // 댓글 + 작성자 프로필 통합 리스트
 const loadingComments = ref(false); // 로딩 상태 추가
+const activeMenuIndex = ref(null);
 
 // 날짜 포맷
 function formatDate(iso) {
@@ -450,6 +477,49 @@ async function addComment() {
   newComment.value = "";
 }
 
+// 댓글 수정/삭제 메뉴
+function toggleCommentMenu(index) {
+  if (activeMenuIndex.value === index) {
+    activeMenuIndex.value = null;
+  } else {
+    activeMenuIndex.value = index;
+  }
+}
+
+// 댓글 수정
+async function startEditComment(comment) {
+  activeMenuIndex.value = null;
+  const newContent = comment.commentContent;
+  if (!newContent || newContent.trim() === "") return;
+
+  try {
+    await store.dispatch("post/updateComment", {
+      commentId: comment.commentId,
+      cpostId: post.value.postId,
+      cwriter: userId,
+      commentContent: newContent.trim(),
+    });
+    await store.dispatch("post/fetchDetail", post.value.postId);
+  } catch (err) {
+    console.log("댓글 수정 실패:", err);
+  }
+}
+
+// 댓글 삭제
+async function deleteComment(comment) {
+  activeMenuIndex.value = null;
+
+  try {
+    await store.dispatch("post/deleteComment", {
+      commentId: comment.commentId,
+      postId: post.value.postId,
+    });
+    await store.dispatch("post/fetchDetail", post.value.postId);
+  } catch (err) {
+    console.log("댓글 삭제 실패: ", err);
+  }
+}
+
 // 모집글 신청
 async function applyGroupWalk() {
   if (!userId) {
@@ -535,5 +605,17 @@ const isParticipantApproved = computed(() => {
   // applyStatus가 'A'로 들어오고 있을 때 기준
   return list.some(p => p.userId === userId && (p.applyStatus || p.APPLY_STATUS) === 'A');
 });
+
+// 글 삭제
+async function deletePost() {
+  try {
+    await store.dispatch("post/remove", post.value.postId);
+    router.push("/Post/MainFeed");
+
+  } catch (err) {
+    console.log("게시물 삭제 실패", err);
+  }
+
+}
 
 </script>
