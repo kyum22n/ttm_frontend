@@ -82,9 +82,15 @@ const pet = {
 
     // 특정 펫 상세
     async fetchDetail(context, petId) {
+    try {
       const res = await petApi.petFind(petId);
       context.commit("setDetail", res.data);
-    },
+      return res.data; // Profile.vue에서 detail 병합용으로 반환
+    } catch (e) {
+      console.error("펫 상세 정보 조회 실패:", e);
+      return null;
+    }
+  },
 
     // 등록
     async register(context, pet) {
@@ -155,6 +161,18 @@ const pet = {
 
       context.commit("setRandomList", petsWithImages);
     },
+  },
+  // 첫 번째 펫 (프로필 대표용)
+  async fetchFirstPet(context, userId) {
+    try {
+      const data = await petApi.firstPetOfUser(userId);
+      // petApi.firstPetOfUser()는 이미 axios 호출을 내부에서 처리함
+      // 결과: { petId, petName, petBreed, imageUrl, createdAt }
+      return data;
+    } catch (e) {
+      console.error("첫 번째 펫 불러오기 실패:", e);
+      return null;
+    }
   },
 };
 

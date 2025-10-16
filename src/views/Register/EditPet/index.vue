@@ -157,7 +157,6 @@
 import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter, useRoute } from "vue-router";
-import axios from "axios";
 
 const store = useStore();
 const router = useRouter();
@@ -196,8 +195,9 @@ onMounted(async () => {
   }
 
   try {
-    const res = await axios.get("/pet/find", { params: { petId } });
-    const data = res.data.pet;
+    // ✅ store의 pet/fetchDetail 사용
+    const res = await store.dispatch("pet/fetchDetail", petId);
+    const data = res.pet || res || {};
 
     // ✅ 날짜 문자열 정규화
     if (data.petBirthDay) {
@@ -218,8 +218,7 @@ onMounted(async () => {
     pet.value = { ...pet.value };
 
     if (data.petId) {
-      previewUrl.value =
-        axios.defaults.baseURL + `/pet/image/${data.petId}?v=${Date.now()}`;
+      previewUrl.value = `http://localhost:8080/pet/image/${data.petId}?v=${Date.now()}`;
     }
   } catch (err) {
     console.error("펫 정보 불러오기 실패:", err);
@@ -250,11 +249,10 @@ async function submit() {
       formData.append("petUserId", store.state.user.userId);
     }
 
-    const res = await axios.put("/pet/update", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // ✅ axios 직접 호출 → store의 update 액션으로 변경
+    const res = await store.dispatch("pet/update", pet.value);
 
-    if (res.data && res.data.petId) {
+    if (res?.data?.petId || res?.data?.result === "success") {
       alert("반려견 정보가 수정되었습니다!");
       router.push(`/mypage/${store.state.user.userId}`);
     } else {
@@ -271,6 +269,7 @@ function goBack() {
   router.push(`/mypage/${store.state.user.userId}`);
 }
 </script>
+
 
 <style scoped>
 .profile-frame {

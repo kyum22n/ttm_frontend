@@ -8,6 +8,8 @@ axios.defaults.baseURL = "http://localhost:8080";
 // JWT 토큰을 axios 요청 헤더에 자동으로 추가
 // 서버와 통신할 때 사용자 인증하기 위해
 // Bearer <jwt> 형식으로 들어감
+
+// 초기 세팅용
 function addAuthHeader(jwt) {
   axios.defaults.headers.common["Authorization"] = "Bearer " + jwt;
 }
@@ -18,6 +20,7 @@ function removeAuthHeader() {
 }
 
 // 요청 인터셉터
+// 매 요청 자동 적용용
 axios.interceptors.request.use(
   (config) => {
     const token = store.state.jwt || localStorage.getItem("jwt");
