@@ -50,9 +50,7 @@ function petFind(petId) {
 
 /** 좋아요 등록/취소 */
 function petLike(userId, petId) {
-  return axios.post("/like/pet-like", null, {
-    params: { userId, petId },
-  });
+  return axios.post("/like/pet-like", null, {params: { userId, petId },});
 }
 
 // 특정 펫 좋아요 상태 확인

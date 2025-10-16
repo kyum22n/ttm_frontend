@@ -519,6 +519,7 @@ function onPostImgErr(e) {
   if (e?.target) e.target.src = "/default_post.png";
 }
 
+/** ✅ 프로필 유저 정보 */
 async function loadProfileUser() {
   try {
     const uid = Number(route.params.userId) || store.state.user.userId;
@@ -530,25 +531,25 @@ async function loadProfileUser() {
   }
 }
 
-/** ✅ 메인 펫은 경량 API(/pet/{userId}/first-pet) 우선 */
+/** 메인 펫은 store 기반으로 변경 */
 async function loadPetProfile() {
   const uid = Number(route.params.userId) || store.state.user.userId;
   if (!uid) return;
 
   try {
-    // 1) 경량 API 시도
-    const fp = await axios.get(`/pet/${uid}/first-pet`);
-    if (fp?.status === 200 && fp.data) {
+    // 1) store의 액션 사용
+    const data = await store.dispatch("pet/fetchFirstPet", uid);
+    if (data) {
       mainPet.value = {
-        petId: fp.data.petId,
-        petName: fp.data.petName,
-        petBreed: fp.data.petBreed,
-        createdAt: fp.data.createdAt,
+        petId: data.petId,
+        petName: data.petName,
+        petBreed: data.petBreed,
+        createdAt: data.createdAt,
         petUserId: uid,
       };
       profile.bio = "반려견과 함께한 이야기를 나눠보세요!";
       const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
-      profileImgUrl.value = baseUrl() + fp.data.imageUrl + v;
+      profileImgUrl.value = baseUrl() + data.imageUrl + v;
       return;
     }
   } catch {
@@ -557,10 +558,8 @@ async function loadPetProfile() {
 
   // 2) 폴백: 전체 리스트에서 첫 펫 선택 (서버가 BLOB을 싣지 않는 전제)
   try {
-    const resPets = await axios.get("/pet/find-allpetbyuser", {
-      params: { petUserId: uid },
-    });
-    const pets = resPets.data || [];
+    await store.dispatch("pet/fetchList", uid);
+    const pets = store.getters["pet/getList"] || [];
     if (pets.length === 0) {
       profile.bio = "등록된 반려견이 없습니다.";
       profileImgUrl.value = "https://via.placeholder.com/100?text=No+Image";
@@ -581,19 +580,19 @@ async function loadPetProfile() {
   }
 }
 
+/** 유저의 모든 펫 목록 조회 — store 액션 사용 */
 async function loadAllPets() {
   try {
     const uid = Number(route.params.userId) || store.state.user.userId;
-    const res = await axios.get("/pet/find-allpetbyuser", {
-      params: { petUserId: uid },
-    });
-    petList.value = res.data || [];
+    await store.dispatch("pet/fetchList", uid);
+    petList.value = store.getters["pet/getList"];
   } catch (err) {
     console.error("펫 목록 로드 실패:", err);
     petList.value = [];
   }
 }
 
+/** 펫 이미지 URL */
 function getPetImageUrl(pet) {
   if (pet?.petId) {
     const v = store.state.imageVersion ? `?v=${store.state.imageVersion}` : "";
@@ -606,18 +605,16 @@ function goToEditPet(pet) {
   router.push(`/Register/EditPet/${pet.petId}`);
 }
 
+/** 펫 모달 오픈 시 store 기반으로 변경 */
 async function openPetModal(pet) {
   selectedPet.value = { ...pet };
   try {
-    const res = await axios.get("/user/info", {
-      params: { userId: pet.petUserId },
-    });
-    if (res.data?.data) {
-      selectedPet.value.userLoginId = res.data.data.userLoginId;
-      selectedPet.value.userAddress = res.data.data.userAddress;
+    const detail = await store.dispatch("pet/fetchDetail", pet.petId);
+    if (detail) {
+      selectedPet.value = { ...selectedPet.value, ...detail };
     }
   } catch (e) {
-    console.error("유저 정보 불러오기 실패:", e);
+    console.error("펫 상세 정보 불러오기 실패:", e);
   }
   showPetModal.value = true;
 }
@@ -690,7 +687,7 @@ const filteredMyPosts = computed(() => {
     return [...list].sort(
       (a, b) => (b.postLikeCount || 0) - (a.postLikeCount || 0)
     );
-    } else {
+  } else {
     return [...list].sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -795,12 +792,11 @@ async function loadTags() {
   }
 }
 
-
 onMounted(async () => {
   if (!store.getters.isLogin) await store.dispatch("loadAuthFromStorage");
   await Promise.all([
     loadProfileUser(),
-    loadPetProfile(),  // ✅ 경량 API 우선
+    loadPetProfile(), // ✅ store 기반으로 변경
     loadAllPets(),
     loadUserPosts(),
     loadMyPosts(),
@@ -808,6 +804,7 @@ onMounted(async () => {
   await checkAcceptedPair();
 });
 </script>
+
 
 <style scoped>
 .object-cover {
