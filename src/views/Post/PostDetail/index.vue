@@ -610,8 +610,8 @@ const isParticipantApproved = computed(() => {
 async function deletePost() {
   try {
     await store.dispatch("post/remove", post.value.postId);
+    alert("게시물이 삭제되었습니다.");
     router.push("/Post/MainFeed");
-
   } catch (err) {
     console.log("게시물 삭제 실패", err);
   }
